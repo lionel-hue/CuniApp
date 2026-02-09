@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Redirige tout vers index.php sauf les vrais fichiers/dossiers
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Sécurise l’accès à Laravel (empêche d’ouvrir .env, artisan, etc.)
+<FilesMatch "(\.env|artisan|composer\.json|composer\.lock|server\.php|phpunit\.xml|\.gitignore)">
+    Require all denied
+</FilesMatch>
