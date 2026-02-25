@@ -17,7 +17,6 @@ class SettingsController extends Controller
     {
         $settings = Setting::all()->groupBy('group');
         $user = User::find(Auth::id());
-        
         return view('settings.index', compact('settings', 'user'));
     }
 
@@ -77,7 +76,6 @@ class SettingsController extends Controller
     public function updateProfile(Request $request)
     {
         $user = User::find(Auth::id());
-        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
@@ -95,7 +93,7 @@ class SettingsController extends Controller
             }
             $user->password = Hash::make($request->new_password);
         }
-        
+
         $user->save();
 
         // Create notification for profile update
@@ -119,10 +117,10 @@ class SettingsController extends Controller
             'saillies' => \App\Models\Saillie::all(),
             'mises_bas' => \App\Models\MiseBas::all(),
         ];
-        
+
         $filename = 'cuniapp_export_' . date('Y-m-d') . '.json';
         $json = json_encode($data, JSON_PRETTY_PRINT);
-        
+
         return response($json, 200)
             ->header('Content-Type', 'application/json')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
@@ -133,7 +131,7 @@ class SettingsController extends Controller
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
         \Illuminate\Support\Facades\Artisan::call('config:clear');
         \Illuminate\Support\Facades\Artisan::call('view:clear');
-        
+
         return redirect()->route('settings.index')
             ->with('success', 'Cache vidé avec succès !');
     }
