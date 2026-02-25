@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Tableau de Bord Élevage - CuniApp')</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         :root {
             /* Primary Colors */
@@ -21,7 +22,7 @@
             --primary-light: #3B82F6;
             --primary-dark: #1D4ED8;
             --primary-subtle: #EFF6FF;
-            
+
             /* Accent Colors */
             --accent-cyan: #06B6D4;
             --accent-purple: #8B5CF6;
@@ -29,7 +30,7 @@
             --accent-green: #10B981;
             --accent-orange: #F59E0B;
             --accent-red: #EF4444;
-            
+
             /* Neutral Colors */
             --white: #FFFFFF;
             --gray-50: #F9FAFB;
@@ -42,7 +43,7 @@
             --gray-700: #374151;
             --gray-800: #1F2937;
             --gray-900: #111827;
-            
+
             /* Semantic Colors */
             --surface: #FFFFFF;
             --surface-alt: #F9FAFB;
@@ -50,13 +51,13 @@
             --text-primary: #1F2937;
             --text-secondary: #6B7280;
             --text-tertiary: #9CA3AF;
-            
+
             /* Effects */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            
+
             --radius-sm: 6px;
             --radius: 8px;
             --radius-md: 12px;
@@ -529,30 +530,30 @@
                 align-items: flex-start;
                 padding: 16px;
             }
-            
+
             .header-nav {
                 width: 100%;
                 justify-content: flex-start;
             }
-            
+
             .cuni-main {
                 padding: 16px;
             }
-            
+
             .page-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            
+
             .footer-content {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             .tabs-container {
                 padding: 4px 4px 0 4px;
             }
-            
+
             .tab-btn {
                 padding: 10px 14px;
                 font-size: 13px;
@@ -563,17 +564,17 @@
             .brand-title {
                 font-size: 18px;
             }
-            
+
             .nav-link {
                 padding: 8px 12px;
                 font-size: 13px;
             }
-            
+
             .footer-links {
                 flex-direction: column;
                 gap: 12px;
             }
-            
+
             .footer-stats {
                 flex-direction: column;
                 gap: 8px;
@@ -736,11 +737,11 @@
             .table-responsive {
                 overflow-x: auto;
             }
-            
+
             .table {
                 min-width: 800px;
             }
-            
+
             .action-buttons {
                 flex-direction: column;
                 gap: 4px;
@@ -844,33 +845,6 @@
             background: none;
             text-align: left;
             cursor: pointer;
-        }
-
-        .dropdown-item-custom:hover {
-            background: var(--gray-50);
-            color: var(--primary);
-        }
-
-        .dropdown-item-custom.danger:hover {
-            background: rgba(239, 68, 68, 0.05);
-            color: var(--accent-red);
-        }
-
-        /* Dropdown Item Enhancements */
-        .dropdown-item-custom {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            color: var(--text-primary);
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s;
-            width: 100%;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
             border-radius: var(--radius);
         }
 
@@ -892,6 +866,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header class="cuni-header">
@@ -908,87 +883,76 @@
                     <p class="brand-tagline">Gestion intelligente de votre cheptel</p>
                 </div>
             </div>
-            
+
             <nav class="header-nav">
                 <!-- Primary Navigation (Always Visible) -->
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2"></i>
                     <span>Dashboard</span>
                 </a>
-                
                 <a href="{{ route('lapins.index') }}" class="nav-link {{ request()->routeIs('lapins.*') ? 'active' : '' }}">
                     <i class="bi-plus-lg"></i>
                     <span>Total</span>
                 </a>
-                
                 <a href="{{ route('males.index') }}" class="nav-link {{ request()->routeIs('males.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span>Mâles</span>
                 </a>
-                
                 <a href="{{ route('femelles.index') }}" class="nav-link {{ request()->routeIs('femelles.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-down-right-square"></i>
                     <span>Femelles</span>
                 </a>
-                
+
                 <!-- "More" Dropdown for Secondary Items -->
                 <div class="relative" x-data="{ open: false }">
-                    <button 
-                        @click="open = !open" 
-                        class="nav-link flex items-center gap-1 {{ 
-                            request()->routeIs('saillies.*', 'mises-bas.*', 'settings.*', 'notifications.*') ? 'active' : '' 
-                        }}"
-                        aria-label="Plus d'options">
+                    <button @click="open = !open" class="nav-link flex items-center gap-1 {{ request()->routeIs('saillies.*', 'mises-bas.*', 'settings.*', 'notifications.*') ? 'active' : '' }}" aria-label="Plus d'options">
                         <i class="bi bi-grid-3x3-gap"></i>
                         <span>Plus</span>
                         <i class="bi bi-chevron-down text-xs ml-1"></i>
                     </button>
-                    
-                    <div 
-                        x-show="open" 
-                        @click.outside="open = false"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95"
-                        x-transition:enter-end="opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-75"
-                        x-transition:leave-start="opacity-100 scale-100"
-                        x-transition:leave-end="opacity-0 scale-95"
-                        class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
-                        
+                    <div x-show="open" @click.outside="open = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
                         <a href="{{ route('saillies.index') }}" class="dropdown-item-custom {{ request()->routeIs('saillies.*') ? 'active' : '' }}">
-                            <i class="bi bi-heart text-primary"></i>
-                            Saillies
+                            <i class="bi bi-heart text-primary"></i> Saillies
                         </a>
-                        
                         <a href="{{ route('mises-bas.index') }}" class="dropdown-item-custom {{ request()->routeIs('mises-bas.*') ? 'active' : '' }}">
-                            <i class="bi bi-egg text-primary"></i>
-                            Mises Bas
+                            <i class="bi bi-egg text-primary"></i> Mises Bas
                         </a>
-                        
                         <a href="{{ route('notifications.index') }}" class="dropdown-item-custom {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
-                            <i class="bi bi-bell text-primary"></i>
-                            Notifications
-                            @php 
+                            <i class="bi bi-bell text-primary"></i> Notifications
+                            @php
                                 $unread = \App\Models\Notification::where('user_id', auth()->id())
                                     ->where('is_read', false)
-                                    ->count(); 
+                                    ->count();
                             @endphp
                             @if($unread > 0)
-                                <span class="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                    {{ $unread > 9 ? '9+' : $unread }}
-                                </span>
+                            <span class="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {{ $unread > 9 ? '9+' : $unread }}
+                            </span>
                             @endif
                         </a>
-                        
                         <hr class="my-1 border-gray-100">
-                        
                         <a href="{{ route('settings.index') }}" class="dropdown-item-custom {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                            <i class="bi bi-gear text-primary"></i>
-                            Paramètres
+                            <i class="bi bi-gear text-primary"></i> Paramètres
                         </a>
                     </div>
                 </div>
-                
+
+                <!-- Notifications Bell -->
+                @php
+                    $unreadCount = \App\Models\Notification::where('user_id', auth()->id())
+                        ->where('is_read', false)
+                        ->count();
+                @endphp
+                <a href="{{ route('notifications.index') }}" class="nav-link flex items-center gap-1 relative {{ request()->routeIs('notifications.*') ? 'active' : '' }}" title="Notifications" aria-label="Notifications">
+                    <i class="bi bi-bell" style="font-size: 1.15rem;"></i>
+                    @if($unreadCount > 0)
+                    <span class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[0.65rem] font-bold text-white bg-red-500 rounded-full border-2 border-white">
+                        {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                    </span>
+                    @endif
+                </a>
+
+                <!-- Profile Dropdown -->
                 <div class="user-profile-dropdown" id="userDropdown">
                     <div class="user-trigger" onclick="toggleDropdown()">
                         <div class="user-avatar">
@@ -999,8 +963,7 @@
                     </div>
                     <div class="dropdown-menu-custom" id="dropdownMenu">
                         <a href="{{ route('profile.edit') }}" class="dropdown-item-custom">
-                            <i class="bi bi-person-circle"></i>
-                            Mon Profil
+                            <i class="bi bi-person-circle"></i> Mon Profil
                         </a>
                         <hr style="margin: 4px 0; border: 0; border-top: 1px solid var(--surface-border);">
                         <form method="POST" action="{{ route('logout') }}" style="display: inline;">
@@ -1033,12 +996,7 @@
                 if (this.toasts.has(id)) return;
 
                 const toast = document.createElement('div');
-                toast.className = `pointer-events-auto relative flex items-start gap-3 p-4 rounded-xl shadow-lg transform transition-all duration-300 animate-fade-in-up ${
-                    options.type === 'success' ? 'bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500' :
-                    options.type === 'warning' ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-500' :
-                    options.type === 'error' ? 'bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500' :
-                    'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600'
-                }`;
+                toast.className = `pointer-events-auto relative flex items-start gap-3 p-4 rounded-xl shadow-lg transform transition-all duration-300 animate-fade-in-up ${options.type === 'success' ? 'bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500' : options.type === 'warning' ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-500' : options.type === 'error' ? 'bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500' : 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600'}`;
                 toast.dataset.id = id;
 
                 const iconMap = {
@@ -1055,8 +1013,7 @@
                         <p class="text-sm text-gray-700 mt-1">${options.message}</p>
                         ${options.action_url ? `
                             <button class="mt-2 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 group" data-url="${options.action_url}">
-                                Voir les détails
-                                <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                                Voir les détails <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i>
                             </button>
                         ` : ''}
                     </div>
@@ -1067,11 +1024,7 @@
                         <span class="mt-1 text-xs text-gray-500">${this.timeAgo(options.timestamp)}</span>
                     </div>
                     <div class="absolute bottom-0 left-0 right-0 h-1 bg-current opacity-20 rounded-b-xl">
-                        <div class="h-full bg-current opacity-100 rounded-b-xl transition-all duration-${options.duration || 5000} ease-linear" style="width: 100%; background: ${
-                            options.type === 'success' ? '#10b981' :
-                            options.type === 'warning' ? '#f59e0b' :
-                            options.type === 'error' ? '#ef4444' : '#3b82f6'
-                        }"></div>
+                        <div class="h-full bg-current opacity-100 rounded-b-xl transition-all duration-${options.duration || 5000} ease-linear" style="width: 100%; background: ${options.type === 'success' ? '#10b981' : options.type === 'warning' ? '#f59e0b' : options.type === 'error' ? '#ef4444' : '#3b82f6'}"></div>
                     </div>
                 `;
 
@@ -1122,7 +1075,6 @@
             dismiss(id) {
                 const toast = this.toasts.get(id);
                 if (!toast) return;
-
                 toast.classList.add('animate-fade-out-down');
                 setTimeout(() => {
                     toast.remove();
@@ -1145,9 +1097,9 @@
 
         // Handle flash notifications
         @if(session('toast'))
-            document.addEventListener('DOMContentLoaded', () => {
-                toastSystem.show(@json(session('toast')));
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            toastSystem.show(@json(session('toast')));
+        });
         @endif
 
         // Handle AJAX notifications
@@ -1173,17 +1125,17 @@
     <!-- Main Content -->
     <main class="cuni-main">
         @if (session('success'))
-            <div class="alert-cuni success">
-                <i class="bi bi-check-circle-fill"></i>
-                <div>{{ session('success') }}</div>
-            </div>
+        <div class="alert-cuni success">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>{{ session('success') }}</div>
+        </div>
         @endif
 
         @if (session('error'))
-            <div class="alert-cuni error">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>{{ session('error') }}</div>
-            </div>
+        <div class="alert-cuni error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>{{ session('error') }}</div>
+        </div>
         @endif
 
         @yield('content')
@@ -1248,13 +1200,14 @@
     @include('components.modal-system')
 
     @if(session('verification_pending'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(() => {
-                    openVerificationModal('{{ session('verification_email') }}');
-                }, 500);
-            });
-        </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                openVerificationModal('{{ session('verification_email') }}');
+            }, 500);
+        });
+    </script>
     @endif
 </body>
+
 </html>
