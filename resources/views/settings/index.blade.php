@@ -40,6 +40,7 @@
 
 <!-- Tabs Navigation -->
 <div class="tabs-container">
+
     <button class="tab-btn active" data-tab="general-tab">
         <i class="bi bi-house"></i>
         Général
@@ -51,10 +52,6 @@
     <button class="tab-btn" data-tab="profile-tab">
         <i class="bi bi-person"></i>
         Profil
-    </button>
-    <button class="tab-btn" data-tab="notifications-tab">
-        <i class="bi bi-bell"></i>
-        Notifications
     </button>
     <button class="tab-btn" data-tab="system-tab">
         <i class="bi bi-hdd"></i>
@@ -206,69 +203,6 @@
                     <button type="submit" class="btn-cuni primary">
                         <i class="bi bi-save"></i>
                         Mettre à jour le profil
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Tab Content: Notifications -->
-<div class="tab-content" id="notifications-tab">
-    <div class="cuni-card">
-        <div class="card-header-custom">
-            <h3 class="card-title">
-                <i class="bi bi-bell"></i>
-                Préférences de Notifications
-            </h3>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('settings.update') }}" method="POST">
-                @csrf
-                <div class="settings-grid">
-                    <div class="form-group">
-                        <label class="form-label">Thème de l'application</label>
-                        <select name="theme" class="form-select">
-                            <option value="dark" {{ \App\Models\Setting::get('theme', 'dark') == 'dark' ? 'selected' : '' }}>
-                                Sombre
-                            </option>
-                            <option value="light" {{ \App\Models\Setting::get('theme', 'dark') == 'light' ? 'selected' : '' }}>
-                                Clair
-                            </option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Langue</label>
-                        <select name="language" class="form-select">
-                            <option value="fr" {{ \App\Models\Setting::get('language', 'fr') == 'fr' ? 'selected' : '' }}>
-                                Français
-                            </option>
-                            <option value="en" {{ \App\Models\Setting::get('language', 'fr') == 'en' ? 'selected' : '' }}>
-                                English
-                            </option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" name="notifications_email" 
-                                   {{ \App\Models\Setting::get('notifications_email', '0') == '1' ? 'checked' : '' }}
-                                   style="width: 18px; height: 18px;">
-                            <span class="form-label" style="margin: 0;">Notifications par email</span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" name="notifications_dashboard" 
-                                   {{ \App\Models\Setting::get('notifications_dashboard', '0') == '1' ? 'checked' : '' }}
-                                   style="width: 18px; height: 18px;">
-                            <span class="form-label" style="margin: 0;">Notifications sur le dashboard</span>
-                        </label>
-                    </div>
-                </div>
-                <div style="margin-top: 24px;">
-                    <button type="submit" class="btn-cuni primary">
-                        <i class="bi bi-save"></i>
-                        Enregistrer
                     </button>
                 </div>
             </form>
