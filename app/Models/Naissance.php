@@ -142,4 +142,13 @@ class Naissance extends Model
             'sex_verified_at' => now(),
         ]);
     }
+
+    /**
+     * Scope a query to only include records from the current month.
+     */
+    public function scopeThisMonth($query)
+    {
+        return $query->whereYear('date_naissance', now()->year)
+            ->whereMonth('date_naissance', now()->month);
+    }
 }
