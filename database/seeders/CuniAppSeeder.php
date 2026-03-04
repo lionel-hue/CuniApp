@@ -1483,7 +1483,7 @@ class CuniAppSeeder extends Seeder
                 'type' => $type,
                 'category' => $category,
                 'unit_price' => $unitPrice,
-                'total_amount' => $totalAmount,
+                //'total_amount' => $totalAmount,
                 'buyer_name' => $buyerName,
                 'buyer_contact' => $buyerContact,
                 'buyer_address' => $buyerAddress,
