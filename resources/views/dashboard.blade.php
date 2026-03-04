@@ -1146,7 +1146,7 @@
                 <div class="widget activity-widget">
                     <div class="widget-head">
                         <h3>Activité récente</h3>
-                        <a href="{{ route('dashboard') }}" class="text-link">Tout voir</a>
+                        <a href="{{ route('activites.index') }}" class="text-link">Tout voir</a>
                     </div>
 
                     <div class="timeline">
@@ -1180,165 +1180,202 @@
 
                 <!-- Notifications Widget -->
                 <div class="widget alerts-widget">
+                    <div class="widget-head">
+                        <h3>Notifications</h3>
+                        <a href="{{ route('notifications.index') }}" class="text-link flex items-center gap-1"> Voir tout
+                            <i class="bi bi-arrow-right"></i> </a>
+                    </div>
+                    <div class="alerts-list">
+                        @php
+                            $recentNotifs = \App\Models\Notification::where('user_id', auth()->id())
+                                ->where('is_read', false)
+                                ->orderBy('created_at', 'desc')
+                                ->limit(5)
+                                ->get();
+                        @endphp
+                        @forelse($recentNotifs as $notif)
+                            <a href="{{ route('notifications.read', $notif->id) }}"
+                                class="alert-row {{ $notif->type }}">
+                                <div class="alert-indicator"></div>
+                                <div class="alert-text">
+                                    <div class="alert-title flex items-center gap-2">
+                                        <i class="bi {{ $notif->icon }} text-sm"></i> {{ $notif->title }}
+                                    </div>
+                                    <div class="alert-time">{{ $notif->created_at->diffForHumans() }}</div>
+                                </div>
+                                @if (!$notif->is_read)
+                                    <span class="badge"
+                                        style="background: rgba(239, 68, 68, 0.1); color: #EF4444; font-size: 11px; padding: 2px 8px;">
+                                        Nouveau </span>
+                                @endif
+                            </a>
+                        @empty
+                            <div class="text-center py-4 text-gray-500">
+                                <i class="bi bi-bell-slash text-2xl mb-2 opacity-50"></i>
+                                <p>Aucune notification non lue</p>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const calendarGrid = document.getElementById('calendarGrid');
-                const currentMonthSpan = document.getElementById('currentMonth');
-                const prevMonthBtn = document.getElementById('prevMonth');
-                const nextMonthBtn = document.getElementById('nextMonth');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const currentMonthSpan = document.getElementById('currentMonth');
+            const prevMonthBtn = document.getElementById('prevMonth');
+            const nextMonthBtn = document.getElementById('nextMonth');
 
-                // ✅ Récupération des événements depuis Laravel
-                const events = @json($events);
+            // ✅ Récupération des événements depuis Laravel
+            const events = @json($events);
 
-                let currentDate = new Date();
-                const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre',
-                    'Octobre', 'Novembre', 'Décembre'
-                ];
-                const weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+            let currentDate = new Date();
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre',
+                'Octobre', 'Novembre', 'Décembre'
+            ];
+            const weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-                // ✅ Fonction utilitaire pour formater une date en YYYY-MM-DD
-                function formatDateKey(date) {
-                    const y = date.getFullYear();
-                    const m = String(date.getMonth() + 1).padStart(2, '0');
-                    const d = String(date.getDate()).padStart(2, '0');
-                    return `${y}-${m}-${d}`;
-                }
+            // ✅ Fonction utilitaire pour formater une date en YYYY-MM-DD
+            function formatDateKey(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
 
-                // ✅ Fonction pour récupérer les événements d'une date donnée
-                function getEventsForDate(dateKey) {
-                    const result = [];
+            // ✅ Fonction pour récupérer les événements d'une date donnée
+            function getEventsForDate(dateKey) {
+                const result = [];
 
-                    // Saillies
-                    if (events.saillies) {
-                        events.saillies.forEach(e => {
-                            if (e.date === dateKey) result.push({
-                                type: 'purple',
-                                label: e.label
-                            });
+                // Saillies
+                if (events.saillies) {
+                    events.saillies.forEach(e => {
+                        if (e.date === dateKey) result.push({
+                            type: 'purple',
+                            label: e.label
                         });
-                    }
-
-                    // Naissances
-                    if (events.naissances) {
-                        events.naissances.forEach(e => {
-                            if (e.date === dateKey) result.push({
-                                type: 'green',
-                                label: e.label
-                            });
-                        });
-                    }
-
-                    // ✅ Sexuations (J+10)
-                    if (events.sexuations) {
-                        events.sexuations.forEach(e => {
-                            if (e.date === dateKey) result.push({
-                                type: 'blue',
-                                label: e.label
-                            });
-                        });
-                    }
-
-                    return result;
-                }
-
-                function renderCalendar(date) {
-                    calendarGrid.innerHTML = '';
-
-                    // En-tête des jours
-                    weekdays.forEach(day => {
-                        const dayEl = document.createElement('div');
-                        dayEl.className = 'cal-day header';
-                        dayEl.textContent = day;
-                        calendarGrid.appendChild(dayEl);
                     });
-
-                    const year = date.getFullYear();
-                    const month = date.getMonth();
-                    const firstDay = new Date(year, month, 1).getDay();
-                    const daysInMonth = new Date(year, month + 1, 0).getDate();
-                    const today = new Date();
-                    const startDay = firstDay === 0 ? 6 : firstDay - 1;
-
-                    currentMonthSpan.textContent = `${months[month]} ${year}`;
-
-                    // Jours vides avant le 1er du mois
-                    for (let i = 0; i < startDay; i++) {
-                        calendarGrid.appendChild(document.createElement('div'));
-                    }
-
-                    // Jours du mois
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        const dayEl = document.createElement('div');
-                        dayEl.className = 'cal-day';
-                        dayEl.textContent = day;
-
-                        // Jour actuel
-                        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                            dayEl.classList.add('today');
-                        }
-
-                        // ✅ Vérification des événements pour ce jour
-                        const dateKey = formatDateKey(new Date(year, month, day));
-                        const dayEvents = getEventsForDate(dateKey);
-
-                        if (dayEvents.length > 0) {
-                            dayEl.classList.add('event');
-
-                            // Couleur principale (priorité: sexuation > naissance > saillie)
-                            const priority = ['blue', 'green', 'purple'];
-                            const mainEvent = dayEvents.find(e => priority.includes(e.type)) || dayEvents[0];
-                            dayEl.classList.add(mainEvent.type);
-
-                            // ✅ Tooltip avec tous les événements du jour
-                            // ✅ Tooltip simple en texte (fonctionne avec l'attribut title natif)
-                            const tooltipText = dayEvents.map(e => e.label).join(' | ');
-                            dayEl.setAttribute('title', tooltipText);
-                            dayEl.style.cursor = 'pointer';
-                        }
-
-                        calendarGrid.appendChild(dayEl);
-                    }
                 }
 
-                // Gestion des boutons mois précédent/suivant
-                prevMonthBtn.addEventListener('click', () => {
-                    currentDate.setMonth(currentDate.getMonth() - 1);
-                    renderCalendar(currentDate);
-                });
-
-                nextMonthBtn.addEventListener('click', () => {
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                    renderCalendar(currentDate);
-                });
-
-                // Animation des éléments au chargement
-                setTimeout(() => {
-                    document.querySelectorAll('.progress-bar').forEach(bar => {
-                        const width = bar.style.width;
-                        bar.style.width = '0%';
-                        setTimeout(() => {
-                            bar.style.width = width;
-                        }, 100);
+                // Naissances
+                if (events.naissances) {
+                    events.naissances.forEach(e => {
+                        if (e.date === dateKey) result.push({
+                            type: 'green',
+                            label: e.label
+                        });
                     });
-                }, 500);
+                }
 
-                const elements = document.querySelectorAll('.metric-card, .perf-card, .action-tile, .widget');
-                elements.forEach((el, index) => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(10px)';
-                    setTimeout(() => {
-                        el.style.transition = 'all 0.4s ease';
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    }, index * 50);
+                // ✅ Sexuations (J+10)
+                if (events.sexuations) {
+                    events.sexuations.forEach(e => {
+                        if (e.date === dateKey) result.push({
+                            type: 'blue',
+                            label: e.label
+                        });
+                    });
+                }
+
+                return result;
+            }
+
+            function renderCalendar(date) {
+                calendarGrid.innerHTML = '';
+
+                // En-tête des jours
+                weekdays.forEach(day => {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'cal-day header';
+                    dayEl.textContent = day;
+                    calendarGrid.appendChild(dayEl);
                 });
 
-                // ✅ Rendu initial
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const today = new Date();
+                const startDay = firstDay === 0 ? 6 : firstDay - 1;
+
+                currentMonthSpan.textContent = `${months[month]} ${year}`;
+
+                // Jours vides avant le 1er du mois
+                for (let i = 0; i < startDay; i++) {
+                    calendarGrid.appendChild(document.createElement('div'));
+                }
+
+                // Jours du mois
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'cal-day';
+                    dayEl.textContent = day;
+
+                    // Jour actuel
+                    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                        dayEl.classList.add('today');
+                    }
+
+                    // ✅ Vérification des événements pour ce jour
+                    const dateKey = formatDateKey(new Date(year, month, day));
+                    const dayEvents = getEventsForDate(dateKey);
+
+                    if (dayEvents.length > 0) {
+                        dayEl.classList.add('event');
+
+                        // Couleur principale (priorité: sexuation > naissance > saillie)
+                        const priority = ['blue', 'green', 'purple'];
+                        const mainEvent = dayEvents.find(e => priority.includes(e.type)) || dayEvents[0];
+                        dayEl.classList.add(mainEvent.type);
+
+                        // ✅ Tooltip avec tous les événements du jour
+                        // ✅ Tooltip simple en texte (fonctionne avec l'attribut title natif)
+                        const tooltipText = dayEvents.map(e => e.label).join(' | ');
+                        dayEl.setAttribute('title', tooltipText);
+                        dayEl.style.cursor = 'pointer';
+                    }
+
+                    calendarGrid.appendChild(dayEl);
+                }
+            }
+
+            // Gestion des boutons mois précédent/suivant
+            prevMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
                 renderCalendar(currentDate);
             });
-        </script>
-    @endsection
+
+            nextMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar(currentDate);
+            });
+
+            // Animation des éléments au chargement
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 500);
+
+            const elements = document.querySelectorAll('.metric-card, .perf-card, .action-tile, .widget');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    el.style.transition = 'all 0.4s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+
+            // ✅ Rendu initial
+            renderCalendar(currentDate);
+        });
+    </script>
+@endsection
