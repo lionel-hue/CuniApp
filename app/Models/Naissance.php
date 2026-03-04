@@ -26,7 +26,9 @@ class Naissance extends Model
         'reminder_count',
         'is_archived',
         'archived_at',
-        'heure_naissance' => 'string'
+        'heure_naissance' => 'string',
+        'date_sevrage_prevue' => 'date',
+        'date_vaccination_prevue' => 'date',
     ];
 
     protected $casts = [
