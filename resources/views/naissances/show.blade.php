@@ -51,8 +51,8 @@
                             <label class="form-label">Date de naissance</label>
                             <p>
                                 {{-- ✅ ADD null check --}}
-                                @if ($naissance->date_naissance)
-                                    {{ $naissance->date_naissance->format('d/m/Y') }}
+                                @if ($naissance->miseBas?->date_mise_bas)
+                                    {{ \Carbon\Carbon::parse($naissance->miseBas->date_mise_bas)->format('d/m/Y') }}
                                 @else
                                     <span class="text-muted">Non définie</span>
                                 @endif
