@@ -104,9 +104,20 @@
                         @forelse($naissances as $naissance)
                             <tr class="border-bottom border-light">
                                 <td class="ps-4 fw-semibold text-dark">
-                                    {{ $naissance->miseBas?->date_mise_bas ? \Carbon\Carbon::parse($naissance->miseBas->date_mise_bas)->format('d/m/Y') : '-' }}
+                                    {{-- ✅ FIXED: Proper null-safe access with Carbon check --}}
+                                    @if ($naissance->miseBas?->date_mise_bas)
+                                        {{ \Carbon\Carbon::parse($naissance->miseBas->date_mise_bas)->format('d/m/Y') }}
+                                    @else
+                                        -
+                                    @endif
+
                                     @if ($naissance->heure_naissance)
-                                        <small class="text-muted">({{ $naissance->heure_naissance->format('H:i') }})</small>
+                                        <small class="text-muted">
+                                            ({{ // ✅ heure_naissance is a TIME string, not Carbon
+                                                is_string($naissance->heure_naissance)
+                                                    ? $naissance->heure_naissance
+                                                    : \Carbon\Carbon::parse($naissance->heure_naissance)->format('H:i') }})
+                                        </small>
                                     @endif
                                 </td>
                                 <td>{{ $naissance->femelle->nom ?? 'N/A' }}<small
