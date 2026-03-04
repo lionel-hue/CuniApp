@@ -8,6 +8,7 @@ use App\Models\Saillie;
 use App\Models\MiseBas;
 use App\Models\Sale;
 use Carbon\Carbon;
+use App\Models\Naissance;
 
 class DashboardController extends Controller
 {
@@ -47,145 +48,142 @@ class DashboardController extends Controller
         $femelles = Femelle::latest()->paginate(10);
 
 
-
+        // Événements pour le calendrier
         // Événements pour le calendrier
         $events = [
-            // Saillies : uniquement les colonnes qui existent
+            // Saillies (violet)
             'saillies' => Saillie::with(['femelle', 'male'])
                 ->select('id', 'date_saillie', 'femelle_id', 'male_id')
                 ->get()
                 ->map(function ($saillie) {
-                    // Récupérer les noms avec fallback intelligent
                     $nomFemelle = $saillie->femelle?->nom
                         ?? $saillie->femelle?->tag
                         ?? $saillie->femelle?->name
                         ?? "F#{$saillie->femelle_id}";
-
                     $nomMale = $saillie->male?->nom
                         ?? $saillie->male?->tag
                         ?? $saillie->male?->name
                         ?? "M#{$saillie->male_id}";
-
                     return [
-                        'date' => $saillie->date_saillie,
+                        'date' => $saillie->date_saillie
+                            ? \Carbon\Carbon::parse($saillie->date_saillie)->format('Y-m-d')
+                            : null,
                         'label' => "{$nomFemelle} × {$nomMale}",
                         'saillie_id' => $saillie->id,
                     ];
                 })
+                ->filter(fn($e) => $e['date'] !== null)
                 ->toArray(),
 
-            // Naissances
-            'naissances' => MiseBas::select('id', 'date_mise_bas')->get()->map(fn($m) => [
-                'date' => $m->date_mise_bas,
-                'label' => 'Naissance #' . $m->id
-            ])->toArray(),
+            // ✅ Naissances (vert) → SEULEMENT si nb_vivant > 0
+            'naissances' => \App\Models\Naissance::select('id', 'date_naissance', 'femelle_id', 'nb_vivant')
+                ->with('femelle')
+                ->whereNotNull('date_naissance')
+                ->where('nb_vivant', '>', 0) // ✅ FILTRE : uniquement les vivants
+                ->get()
+                ->map(fn($n) => [
+                    'date' => \Carbon\Carbon::parse($n->date_naissance)->format('Y-m-d'),
+                    // 'label' => sprintf(
+                    //     '%s (%d nés)',
+                    //     $n->femelle?->nom ?? 'Inconnue',
+                    //     $n->nb_vivant ?? 0
+                    // )
 
+                    'label' => sprintf('Naissance: %s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0)
+                ])
+                ->toArray(),
 
-            'sexuations' => MiseBas::with('saillie.femelle')->get()->map(function ($miseBas) {
-                $nomAffiche = null;
-
-                // La mise bas est liée à une saillie qui a une femelle
-                if ($miseBas->saillie?->femelle) {
-                    $femelle = $miseBas->saillie->femelle;
-                    $nomAffiche = $femelle->nom
-                        ?? $femelle->name
-                        ?? $femelle->tag
-                        ?? $femelle->identifiant
+            //  Sexuations (bleu) → J+10, SEULEMENT si nb_vivant > 0
+            'sexuations' => \App\Models\Naissance::with('femelle')
+                ->whereNotNull('date_naissance')
+                ->where('nb_vivant', '>', 0) // ✅ FILTRE : uniquement les vivants
+                ->where('sex_verified', false) // Optionnel : seulement les non-vérifiées
+                ->get()
+                ->map(function ($n) {
+                    $nomAffiche = $n->femelle?->nom
+                        ?? $n->femelle?->tag
                         ?? null;
-                }
-                // Cas 2 : Fallback - si vous avez un champ femelle_id direct dans mises_bas (optionnel)
-                elseif ($miseBas->femelle_id && $miseBas->femelle) {
-                    $nomAffiche = $miseBas->femelle->nom ?? $miseBas->femelle->name ?? null;
-                }
-    
-                // Label avec fallback intelligent
-                $label = $nomAffiche
-                    ? " Sexage: {$nomAffiche}"
-                    : " Sexage portée #{$miseBas->id}";
 
-                return [
-                    'date' => Carbon::parse($miseBas->date_mise_bas)->addDays(10)->format('Y-m-d'),
-                    'label' => $label,
-                    'type' => 'sexuation'
-                ];
-            })->toArray(),
-
+                    return [
+                        'date' => \Carbon\Carbon::parse($n->date_naissance)->addDays(10)->format('Y-m-d'),
+                        'label' => $nomAffiche
+                            ? "Sexage: {$nomAffiche} (#{$n->id})"
+                            : "Sexage: Portée #{$n->id}",
+                        'type' => 'sexuation'
+                    ];
+                })
+                ->toArray(),
         ];
 
-        // Ajoutez temporairement ceci avant le return pour déboguer
-// Debug : voir la chaîne de données
-        logger('🔍 Vérif finale:', MiseBas::with('saillie.femelle')->get()->map(fn($m) => [
-            'id' => $m->id,
-            'saillie_id' => $m->saillie_id,
-            'femelle' => $m->saillie?->femelle?->nom ?? '❌ NON LIÉ',
-        ])->toArray());
-
-
-        // ✅ Timeline d'activité dynamique
+        // Timeline d'activité dynamique
         $timelineActivities = collect();
 
-        // 1. Récupérer les dernières mises bas (vert)
-        $recentMisesBas = MiseBas::with('saillie.femelle')
-            ->latest('date_mise_bas')
-            ->limit(3)
+        //Récupérer les dernières NAISSANCES (vert) 
+        $recentNaissances = Naissance::with('femelle')
+            ->where('nb_vivant', '>', 0)
+            ->latest('date_naissance')
+            ->limit(2)
             ->get()
-            ->map(fn($m) => [
+            ->map(fn($n) => [
                 'type' => 'green',
-                'title' => ' Mise bas enregistrée',
-                'desc' => $m->saillie?->femelle?->nom
-                    ?? $m->saillie?->femelle?->tag
-                    ?? "Portée #{$m->id}",
-                'time' => Carbon::parse($m->created_at)->diffForHumans(),
-                'date' => $m->created_at,
-                'url' => route('mises-bas.index', $m->id) ?? '#',
+                'title' => 'Naissance enregistrée',
+                'desc' => sprintf(
+                    '%s (%d nés)',
+                    $n->femelle?->nom ?? 'Inconnue',
+                    $n->nb_vivant ?? 0
+                ),
+                'time' => Carbon::parse($n->created_at)->diffForHumans(),
+                'date' => $n->created_at,
+                'url' => route('naissances.show', $n->id) ?? '#', // ✅ Route vers Naissance
             ]);
 
-        // Récupérer les dernières saillies (violet)
+        // 2. Récupérer les dernières saillies (violet) → inchangé
         $recentSaillies = Saillie::with('femelle', 'male')
             ->latest('date_saillie')
             ->limit(2)
             ->get()
             ->map(fn($s) => [
                 'type' => 'purple',
-                'title' => ' Saillie programmée',
+                'title' => 'Saillie programmée',
                 'desc' => ($s->femelle?->nom ?? "F#{$s->femelle_id}") .
                     ' × ' .
                     ($s->male?->nom ?? "M#{$s->male_id}"),
                 'time' => Carbon::parse($s->created_at)->diffForHumans(),
                 'date' => $s->created_at,
-                'url' => route('saillies.index', $s->id) ?? '#',
+                'url' => route('saillies.show', $s->id) ?? '#',
             ]);
 
-        // 3. Alertes : mises bas sans saillie liée (orange) ⚠️
-        $alertesOrphelines = MiseBas::whereNull('saillie_id')
+        // 3. Alertes : naissances sans femelle liée ou données incomplètes (orange) ⚠️
+        $alertesOrphelines = Naissance::whereNull('femelle_id')
+            ->orWhereDoesntHave('femelle')
             ->latest('created_at')
             ->limit(2)
             ->get()
-            ->map(fn($m) => [
+            ->map(fn($n) => [
                 'type' => 'orange',
-                'title' => '⚠️Portée non liée',
-                'desc' => "Mise bas #{$m->id} sans saillie associée",
-                'time' => Carbon::parse($m->created_at)->diffForHumans(),
-                'date' => $m->created_at,
-                'url' => route('mises-bas.index', $m->id) ?? '#',
+                'title' => 'Naissance incomplète',
+                'desc' => "Naissance #{$n->id} sans femelle associée",
+                'time' => Carbon::parse($n->created_at)->diffForHumans(),
+                'date' => $n->created_at,
+                'url' => route('naissances.edit', $n->id) ?? '#',
             ]);
 
-        // 4. Dernières ventes (bleu)
+        // 4. Dernières ventes (bleu) → inchangé
         $recentSales = Sale::latest('created_at')
             ->limit(2)
             ->get()
             ->map(fn($v) => [
                 'type' => 'blue',
-                'title' => ' Vente enregistrée',
+                'title' => 'Vente enregistrée',
                 'desc' => number_format($v->total_amount, 0, ',', ' ') . ' FCFA',
                 'time' => Carbon::parse($v->created_at)->diffForHumans(),
                 'date' => $v->created_at,
-                'url' => route('sales.index', $v->id) ?? '#',
+                'url' => route('sales.show', $v->id) ?? '#',
             ]);
 
         // Fusionner, trier par date décroissante et limiter à 6 items
         $timelineActivities = collect([
-            ...$recentMisesBas->toArray(),
+            ...$recentNaissances->toArray(),  
             ...$recentSaillies->toArray(),
             ...$alertesOrphelines->toArray(),
             ...$recentSales->toArray(),
@@ -216,4 +214,6 @@ class DashboardController extends Controller
             'timelineActivities'
         ));
     }
+
+
 }
