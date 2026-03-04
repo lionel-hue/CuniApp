@@ -177,6 +177,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/lapins/{id}/edit', [LapinController::class, 'edit'])->name('lapins.edit');
         Route::put('/lapins/{id}', [LapinController::class, 'update'])->name('lapins.update');
         Route::delete('/lapins/{id}', [LapinController::class, 'destroy'])->name('lapins.destroy');
+        Route::get('/lapins/check-code', [LapinController::class, 'checkCode'])->name('lapins.check-code');
 
         // Naissances CRUD
         Route::get('/naissances', [NaissanceController::class, 'index'])->name('naissances.index');
@@ -355,5 +356,3 @@ Route::bind('sale', function ($value) {
 // ========================================================================
 // 💡 PRODUCTION: Run `php artisan route:cache` after deployment
 // ⚠️ All routes use Controller@method syntax for cache compatibility
-
-

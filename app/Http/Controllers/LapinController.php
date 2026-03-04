@@ -1,17 +1,21 @@
-<?php namespace App\Http\Controllers;
+<?php
+
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Male;
 use App\Models\Femelle;
 use App\Traits\Notifiable;
 
-class LapinController extends Controller {
+class LapinController extends Controller
+{
     use Notifiable;
 
     /**
      * Display a listing of the resource.
      */
-    public function index() {
+    public function index()
+    {
         $femelles = Femelle::latest()->paginate(10, ['*'], 'femelles_page');
         $males = Male::latest()->paginate(10, ['*'], 'males_page');
         return view('lapins.index', compact('femelles', 'males'));
@@ -20,14 +24,16 @@ class LapinController extends Controller {
     /**
      * Show the form for creating a new resource.
      */
-    public function create() {
+    public function create()
+    {
         return view('lapins.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $request->validate([
             'type' => 'required|in:male,femelle',
             'nom' => 'required|string|max:255',
@@ -102,7 +108,8 @@ class LapinController extends Controller {
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id) {
+    public function edit($id)
+    {
         // Try to find in both tables
         $male = Male::find($id);
         $femelle = Femelle::find($id);
@@ -139,7 +146,8 @@ class LapinController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $request->validate([
             'type' => 'required|in:male,femelle',
             'nom' => 'required|string|max:255',
@@ -216,7 +224,8 @@ class LapinController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $male = Male::find($id);
         $femelle = Femelle::find($id);
 
@@ -265,5 +274,22 @@ class LapinController extends Controller {
         }
 
         abort(404);
+    }
+
+    /**
+     * Check if a lapereau code is available (AJAX)
+     */
+    public function checkCode(Request $request)
+    {
+        $code = $request->query('code');
+
+        if (!$code) {
+            return response()->json(['available' => false], 400);
+        }
+
+        // Use the existing Lapereau::isCodeUnique() static method
+        $isUnique = \App\Models\Lapereau::isCodeUnique($code);
+
+        return response()->json(['available' => $isUnique]);
     }
 }
