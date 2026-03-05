@@ -89,20 +89,35 @@ class SaleController extends Controller
             'notes' => 'nullable|string',
             'payment_status' => 'required|in:paid,pending,partial',
             'amount_paid' => 'nullable|numeric|min:0',
-            // Rabbit selections
+
+            // ✅ Rabbit selections with individual prices
             'selected_males' => 'nullable|array',
+            'selected_males.*' => 'exists:males,id',
+            'male_prices' => 'nullable|array',
+            'male_prices.*' => 'numeric|min:0',
+
             'selected_females' => 'nullable|array',
+            'selected_females.*' => 'exists:femelles,id',
+            'female_prices' => 'nullable|array',
+            'female_prices.*' => 'numeric|min:0',
+
             'selected_lapereaux' => 'nullable|array',
+            'selected_lapereaux.*' => 'exists:lapereaux,id',
+            'lapereau_prices' => 'nullable|array',
+            'lapereau_prices.*' => 'numeric|min:0',
         ], [
             'selected_males.array' => 'Les mâles sélectionnés doivent être un tableau',
             'selected_females.array' => 'Les femelles sélectionnées doivent être un tableau',
             'selected_lapereaux.array' => 'Les lapereaux sélectionnés doivent être un tableau',
         ]);
 
-        // ✅ Calculate total quantity from selected rabbits
+        // ✅ Get selected rabbits
         $selectedMales = $request->input('selected_males', []);
         $selectedFemales = $request->input('selected_females', []);
         $selectedLapereaux = $request->input('selected_lapereaux', []);
+        $malePrices = $request->input('male_prices', []);
+        $femalePrices = $request->input('female_prices', []);
+        $lapereauPrices = $request->input('lapereau_prices', []);
 
         $totalQuantity = count($selectedMales) + count($selectedFemales) + count($selectedLapereaux);
 
@@ -113,9 +128,18 @@ class SaleController extends Controller
             ])->withInput();
         }
 
-        // ✅ Calculate total amount (you can set prices per rabbit or use unit_price)
-        $unitPrice = $request->input('unit_price', 0);
-        $totalAmount = $totalQuantity * $unitPrice;
+        // ✅ Calculate total amount from INDIVIDUAL prices
+        $totalAmount = 0;
+
+        foreach ($selectedMales as $index => $maleId) {
+            $totalAmount += (float) ($malePrices[$index] ?? 0);
+        }
+        foreach ($selectedFemales as $index => $femaleId) {
+            $totalAmount += (float) ($femalePrices[$index] ?? 0);
+        }
+        foreach ($selectedLapereaux as $index => $lapereauId) {
+            $totalAmount += (float) ($lapereauPrices[$index] ?? 0);
+        }
 
         $validated['total_amount'] = $totalAmount;
         $validated['quantity'] = $totalQuantity;
@@ -135,37 +159,37 @@ class SaleController extends Controller
             // Create sale
             $sale = Sale::create($validated);
 
-            // ✅ Link selected males
-            foreach ($selectedMales as $maleId) {
+            // ✅ Link selected males with INDIVIDUAL prices
+            foreach ($selectedMales as $index => $maleId) {
                 SaleRabbit::create([
                     'sale_id' => $sale->id,
                     'rabbit_type' => 'male',
                     'rabbit_id' => $maleId,
-                    'sale_price' => $unitPrice,
+                    'sale_price' => $malePrices[$index] ?? 0,
                 ]);
             }
 
-            // ✅ Link selected females
-            foreach ($selectedFemales as $femaleId) {
+            // ✅ Link selected females with INDIVIDUAL prices
+            foreach ($selectedFemales as $index => $femaleId) {
                 SaleRabbit::create([
                     'sale_id' => $sale->id,
                     'rabbit_type' => 'female',
                     'rabbit_id' => $femaleId,
-                    'sale_price' => $unitPrice,
+                    'sale_price' => $femalePrices[$index] ?? 0,
                 ]);
             }
 
-            // ✅ Link selected lapereaux
-            foreach ($selectedLapereaux as $lapereauId) {
+            // ✅ Link selected lapereaux with INDIVIDUAL prices
+            foreach ($selectedLapereaux as $index => $lapereauId) {
                 SaleRabbit::create([
                     'sale_id' => $sale->id,
                     'rabbit_type' => 'lapereau',
                     'rabbit_id' => $lapereauId,
-                    'sale_price' => $unitPrice,
+                    'sale_price' => $lapereauPrices[$index] ?? 0,
                 ]);
             }
 
-            // ✅ Update rabbit status to 'vendu'
+            // ✅ Update rabbit status to 'vendu' or 'Inactive'
             foreach ($selectedMales as $maleId) {
                 Male::where('id', $maleId)->update(['etat' => 'Inactive']);
             }
@@ -201,6 +225,11 @@ class SaleController extends Controller
      */
     public function show(Sale $sale)
     {
+        // Check ownership in controller, not route
+        if ($sale->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access');
+        }
+
         $sale->load(['rabbits.rabbit', 'user']);
         return view('sales.show', compact('sale'));
     }
@@ -211,6 +240,10 @@ class SaleController extends Controller
      */
     public function edit(Sale $sale)
     {
+        // ✅ Check ownership
+        if ($sale->user_id !== auth()->id()) {
+            abort(403, 'Accès non autorisé à cette vente');
+        }
         return view('sales.edit', compact('sale'));
     }
 
