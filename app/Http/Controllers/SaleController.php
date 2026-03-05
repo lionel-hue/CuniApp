@@ -1,16 +1,14 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Sale;
+use App\Models\SaleRabbit;
+use App\Models\Male;
+use App\Models\Femelle;
+use App\Models\Lapereau;
 use Illuminate\Http\Request;
 use App\Traits\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Male;           // ✅ ADD THIS
-use App\Models\Femelle;       // ✅ ADD THIS  
-use App\Models\Lapereau;      // ✅ ADD THIS
-use App\Models\SaleRabbit;    // ✅ ADD THIS (for pivot table)
 use Carbon\Carbon;
 
 class SaleController extends Controller
@@ -25,7 +23,7 @@ class SaleController extends Controller
         $sales = Sale::with('user')
             ->latest()
             ->paginate(15);
-
+        
         $stats = [
             'total_sales' => Sale::count(),
             'total_revenue' => Sale::sum('total_amount'),
@@ -44,7 +42,6 @@ class SaleController extends Controller
     public function create()
     {
         // Load available rabbits by category
-
         $males = Male::where('etat', 'Active')
             ->whereDoesntHave('sales', function ($q) {
                 $q->whereHas('sale', function ($sq) {
@@ -77,10 +74,11 @@ class SaleController extends Controller
     }
 
     /**
-     * Store a newly created sale
+     * Store a newly created sale with INDIVIDUAL pricing per rabbit
      */
     public function store(Request $request)
     {
+        // ✅ VALIDATION: Accept arrays for individual prices
         $validated = $request->validate([
             'date_sale' => 'required|date',
             'buyer_name' => 'required|string|max:255',
@@ -89,32 +87,36 @@ class SaleController extends Controller
             'notes' => 'nullable|string',
             'payment_status' => 'required|in:paid,pending,partial',
             'amount_paid' => 'nullable|numeric|min:0',
-
+            
             // ✅ Rabbit selections with individual prices
             'selected_males' => 'nullable|array',
             'selected_males.*' => 'exists:males,id',
             'male_prices' => 'nullable|array',
-            'male_prices.*' => 'numeric|min:0',
-
+            'male_prices.*' => 'numeric|min:0.01',
+            
             'selected_females' => 'nullable|array',
             'selected_females.*' => 'exists:femelles,id',
             'female_prices' => 'nullable|array',
-            'female_prices.*' => 'numeric|min:0',
-
+            'female_prices.*' => 'numeric|min:0.01',
+            
             'selected_lapereaux' => 'nullable|array',
             'selected_lapereaux.*' => 'exists:lapereaux,id',
             'lapereau_prices' => 'nullable|array',
-            'lapereau_prices.*' => 'numeric|min:0',
+            'lapereau_prices.*' => 'numeric|min:0.01',
         ], [
             'selected_males.array' => 'Les mâles sélectionnés doivent être un tableau',
             'selected_females.array' => 'Les femelles sélectionnées doivent être un tableau',
             'selected_lapereaux.array' => 'Les lapereaux sélectionnés doivent être un tableau',
+            'male_prices.*.min' => 'Le prix doit être supérieur à 0',
+            'female_prices.*.min' => 'Le prix doit être supérieur à 0',
+            'lapereau_prices.*.min' => 'Le prix doit être supérieur à 0',
         ]);
 
         // ✅ Get selected rabbits
         $selectedMales = $request->input('selected_males', []);
         $selectedFemales = $request->input('selected_females', []);
         $selectedLapereaux = $request->input('selected_lapereaux', []);
+        
         $malePrices = $request->input('male_prices', []);
         $femalePrices = $request->input('female_prices', []);
         $lapereauPrices = $request->input('lapereau_prices', []);
@@ -128,15 +130,45 @@ class SaleController extends Controller
             ])->withInput();
         }
 
+        // ✅ VALIDATION: Ensure all selected rabbits have prices
+        $missingPrices = [];
+        
+        foreach ($selectedMales as $index => $maleId) {
+            if (!isset($malePrices[$index]) || $malePrices[$index] <= 0) {
+                $missingPrices[] = "Mâle #{$maleId}";
+            }
+        }
+        
+        foreach ($selectedFemales as $index => $femaleId) {
+            if (!isset($femalePrices[$index]) || $femalePrices[$index] <= 0) {
+                $missingPrices[] = "Femelle #{$femaleId}";
+            }
+        }
+        
+        foreach ($selectedLapereaux as $index => $lapereauId) {
+            if (!isset($lapereauPrices[$index]) || $lapereauPrices[$index] <= 0) {
+                $missingPrices[] = "Lapereau #{$lapereauId}";
+            }
+        }
+
+        if (!empty($missingPrices)) {
+            return back()->withErrors([
+                'prices' => 'Prix manquants pour: ' . implode(', ', array_slice($missingPrices, 0, 5)) . 
+                           (count($missingPrices) > 5 ? ' et ' . (count($missingPrices) - 5) . ' autres...' : '')
+            ])->withInput();
+        }
+
         // ✅ Calculate total amount from INDIVIDUAL prices
         $totalAmount = 0;
-
+        
         foreach ($selectedMales as $index => $maleId) {
             $totalAmount += (float) ($malePrices[$index] ?? 0);
         }
+        
         foreach ($selectedFemales as $index => $femaleId) {
             $totalAmount += (float) ($femalePrices[$index] ?? 0);
         }
+        
         foreach ($selectedLapereaux as $index => $lapereauId) {
             $totalAmount += (float) ($lapereauPrices[$index] ?? 0);
         }
@@ -193,9 +225,11 @@ class SaleController extends Controller
             foreach ($selectedMales as $maleId) {
                 Male::where('id', $maleId)->update(['etat' => 'Inactive']);
             }
+            
             foreach ($selectedFemales as $femaleId) {
                 Femelle::where('id', $femaleId)->update(['etat' => 'Inactive']);
             }
+            
             foreach ($selectedLapereaux as $lapereauId) {
                 Lapereau::where('id', $lapereauId)->update(['etat' => 'vendu']);
             }
@@ -204,13 +238,15 @@ class SaleController extends Controller
             $this->notifyUser([
                 'type' => $sale->payment_status === 'paid' ? 'success' : 'warning',
                 'title' => '💰 Nouvelle Vente Enregistrée',
-                'message' => "Vente #{$sale->id}: {$totalQuantity} lapin(s) à {$sale->buyer_name} pour " . number_format($sale->total_amount, 2, ',', ' ') . " FCFA",
+                'message' => "Vente #{$sale->id}: {$totalQuantity} lapin(s) à {$sale->buyer_name} pour " . 
+                            number_format($sale->total_amount, 2, ',', ' ') . " FCFA",
                 'action_url' => route('sales.show', $sale)
             ]);
 
             DB::commit();
             return redirect()->route('sales.index')
                 ->with('success', 'Vente enregistrée avec succès !');
+                
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
@@ -218,7 +254,6 @@ class SaleController extends Controller
                 ->withInput();
         }
     }
-
 
     /**
      * Display the specified sale
@@ -229,11 +264,10 @@ class SaleController extends Controller
         if ($sale->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access');
         }
-
+        
         $sale->load(['rabbits.rabbit', 'user']);
         return view('sales.show', compact('sale'));
     }
-
 
     /**
      * Show form for editing sale
@@ -244,6 +278,7 @@ class SaleController extends Controller
         if ($sale->user_id !== auth()->id()) {
             abort(403, 'Accès non autorisé à cette vente');
         }
+        
         return view('sales.edit', compact('sale'));
     }
 
@@ -294,8 +329,8 @@ class SaleController extends Controller
         $this->notifyUser([
             'type' => 'info',
             'title' => '✏️ Vente Modifiée',
-            'message' => "Vente #{$sale->id} mise à jour: {$sale->quantity} {$typeLabel} - " .
-                number_format($sale->total_amount, 2, ',', ' ') . " FCFA",
+            'message' => "Vente #{$sale->id} mise à jour: {$sale->quantity} {$typeLabel} - " . 
+                        number_format($sale->total_amount, 2, ',', ' ') . " FCFA",
             'action_url' => route('sales.show', $sale)
         ]);
 
@@ -306,7 +341,6 @@ class SaleController extends Controller
                 'pending' => '⏳ En attente',
                 'partial' => '💵 Paiement partiel'
             ];
-
             $this->notifyUser([
                 'type' => $newStatus === 'paid' ? 'success' : ($newStatus === 'partial' ? 'info' : 'warning'),
                 'title' => '💳 Statut de Paiement Mis à Jour',
@@ -325,9 +359,9 @@ class SaleController extends Controller
     public function destroy(Sale $sale)
     {
         $typeLabel = $this->getTypeLabel($sale->type);
-        $saleInfo = "{$sale->quantity} {$typeLabel} à {$sale->buyer_name} pour " .
-            number_format($sale->total_amount, 2, ',', ' ') . " FCFA";
-
+        $saleInfo = "{$sale->quantity} {$typeLabel} à {$sale->buyer_name} pour " . 
+                   number_format($sale->total_amount, 2, ',', ' ') . " FCFA";
+        
         $sale->delete();
 
         // ✅ NOTIFICATION 5: Sale Deleted
@@ -345,7 +379,6 @@ class SaleController extends Controller
     /**
      * Mark sale as paid
      */
-    // ✅ Fix markAsPaid method
     public function markAsPaid(Sale $sale)
     {
         if ($sale->payment_status === 'paid') {
@@ -360,7 +393,8 @@ class SaleController extends Controller
         $this->notifyUser([
             'type' => 'success',
             'title' => '✅ Paiement Reçu',
-            'message' => "Paiement complet reçu pour la vente #{$sale->id} (" . number_format($sale->total_amount, 2, ',', ' ') . " FCFA)",
+            'message' => "Paiement complet reçu pour la vente #{$sale->id} (" . 
+                        number_format($sale->total_amount, 2, ',', ' ') . " FCFA)",
             'action_url' => route('sales.show', $sale)
         ]);
 
@@ -368,7 +402,7 @@ class SaleController extends Controller
     }
 
     /**
-     * ✅ NEW: Record Partial Payment
+     * Record Partial Payment
      */
     public function recordPartialPayment(Request $request, Sale $sale)
     {
@@ -389,9 +423,9 @@ class SaleController extends Controller
         $this->notifyUser([
             'type' => $remaining > 0 ? 'info' : 'success',
             'title' => $remaining > 0 ? '💵 Paiement Partiel Reçu' : '✅ Paiement Final Reçu',
-            'message' => "Vente #{$sale->id}: +" .
-                number_format($newAmount - $oldAmount, 2, ',', ' ') . " FCFA reçus. " .
-                ($remaining > 0 ? "Solde restant: " . number_format($remaining, 2, ',', ' ') . " FCFA" : "Solde soldé !"),
+            'message' => "Vente #{$sale->id}: +" . number_format($newAmount - $oldAmount, 2, ',', ' ') . 
+                        " FCFA reçus. " . 
+                        ($remaining > 0 ? "Solde restant: " . number_format($remaining, 2, ',', ' ') . " FCFA" : "Solde soldé !"),
             'action_url' => route('sales.show', $sale)
         ]);
 
@@ -399,7 +433,7 @@ class SaleController extends Controller
     }
 
     /**
-     * ✅ NEW: Change Payment Status
+     * Change Payment Status
      */
     public function changePaymentStatus(Request $request, Sale $sale)
     {
@@ -412,7 +446,8 @@ class SaleController extends Controller
 
         $sale->update([
             'payment_status' => $newStatus,
-            'amount_paid' => $newStatus === 'paid' ? $sale->total_amount : ($newStatus === 'pending' ? 0 : $sale->amount_paid)
+            'amount_paid' => $newStatus === 'paid' ? $sale->total_amount : 
+                           ($newStatus === 'pending' ? 0 : $sale->amount_paid)
         ]);
 
         $statusLabels = [
@@ -433,7 +468,7 @@ class SaleController extends Controller
     }
 
     /**
-     * ✅ NEW: Export Sales Data
+     * Export Sales Data
      */
     public function export()
     {
@@ -456,7 +491,7 @@ class SaleController extends Controller
     }
 
     /**
-     * ✅ NEW: Bulk Delete Sales
+     * Bulk Delete Sales
      */
     public function bulkDelete(Request $request)
     {
