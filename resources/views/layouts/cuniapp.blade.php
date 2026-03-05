@@ -1919,17 +1919,15 @@
                       <div class="footer-contact">
                           <div class="footer-contact-item">
                               <i class="bi bi-geo-alt"></i>
-                              <span>{{ \App\Models\Setting::get('farm_address', 'Adresse non renseignée') }}</span>
+                              <span>Houéyiho après le pont devant Volta United, Cotonou, Littoral, Bénin</span>
                           </div>
                           <div class="footer-contact-item">
                               <i class="bi bi-telephone"></i>
-                              <a
-                                  href="tel:{{ \App\Models\Setting::get('farm_phone', '') }}">{{ \App\Models\Setting::get('farm_phone', 'Non renseigné') }}</a>
+                              <a href="tel:+2290152415241">+229 01 52 41 52 41</a>
                           </div>
                           <div class="footer-contact-item">
                               <i class="bi bi-envelope"></i>
-                              <a
-                                  href="mailto:{{ \App\Models\Setting::get('farm_email', config('mail.from.address')) }}">{{ \App\Models\Setting::get('farm_email', config('mail.from.address')) }}</a>
+                              <a href="mailto:contact@anyxtech.com">contact@anyxtech.com</a>
                           </div>
                       </div>
                   </div>
