@@ -46,12 +46,10 @@ class SaleController extends Controller
      */
     public function create()
     {
-        // ✅ SIMPLIFIED: Load available rabbits by category
-        $males = Male::where('etat', 'Active')
-            ->orderBy('nom')
-            ->get();
+        $males = Male::where('etat', 'Active')->orderBy('nom')->get();
 
-        $femelles = Femelle::where('etat', 'Active')
+        // ✅ FIXED: Include all available female states
+        $femelles = Femelle::whereIn('etat', ['Active', 'Vide', 'Allaitante'])
             ->orderBy('nom')
             ->get();
 
