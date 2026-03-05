@@ -275,6 +275,8 @@ class SaleController extends Controller
     /**
      * Show form for editing sale
      */
+    // app/Http/Controllers/SaleController.php
+
     public function edit(Sale $sale)
     {
         // ✅ Check ownership
@@ -282,7 +284,42 @@ class SaleController extends Controller
             abort(403, 'Accès non autorisé à cette vente');
         }
 
-        return view('sales.edit', compact('sale'));
+        // ✅ LOAD RABBITS WITH THE SALE
+        $sale->load(['rabbits.rabbit']);
+
+        // ✅ Load available rabbits by category
+        $males = Male::where('etat', 'Active')
+            ->whereDoesntHave('sales', function ($q) use ($sale) {
+                $q->whereHas('sale', function ($sq) use ($sale) {
+                    $sq->where('payment_status', '!=', 'cancelled')
+                        ->where('id', '!=', $sale->id); // Exclude current sale
+                });
+            })
+            ->orderBy('nom')
+            ->get();
+
+        $femelles = Femelle::where('etat', 'Active')
+            ->whereDoesntHave('sales', function ($q) use ($sale) {
+                $q->whereHas('sale', function ($sq) use ($sale) {
+                    $sq->where('payment_status', '!=', 'cancelled')
+                        ->where('id', '!=', $sale->id);
+                });
+            })
+            ->orderBy('nom')
+            ->get();
+
+        $lapereaux = Lapereau::where('etat', 'vivant')
+            ->whereDoesntHave('sales', function ($q) use ($sale) {
+                $q->whereHas('sale', function ($sq) use ($sale) {
+                    $sq->where('payment_status', '!=', 'cancelled')
+                        ->where('id', '!=', $sale->id);
+                });
+            })
+            ->with('naissance.miseBas.femelle')
+            ->orderBy('code')
+            ->get();
+
+        return view('sales.edit', compact('sale', 'males', 'femelles', 'lapereaux'));
     }
 
     /**
