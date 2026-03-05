@@ -46,19 +46,15 @@ class SaleController extends Controller
      */
     public function create()
     {
-        // ✅ FIXED: Include ALL male states (like FemelleController does)
-        $males = Male::orderBy('nom')->get();
-
-        // ✅ Females - Keep as is (good)
+        // ✅ PAGINATED: Load rabbits with pagination (20 per page)
+        $males = Male::orderBy('nom')->paginate(20, ['*'], 'males_page');
         $femelles = Femelle::whereIn('etat', ['Active', 'Vide', 'Allaitante'])
             ->orderBy('nom')
-            ->get();
-
-        // ✅ Lapereaux - Keep as is (good)
+            ->paginate(20, ['*'], 'females_page');
         $lapereaux = Lapereau::whereIn('etat', ['vivant', 'vendu'])
             ->with('naissance.miseBas.femelle')
             ->orderBy('code')
-            ->get();
+            ->paginate(20, ['*'], 'lapereaux_page');
 
         return view('sales.create', compact('males', 'femelles', 'lapereaux'));
     }
@@ -289,15 +285,17 @@ class SaleController extends Controller
 
     public function edit(Sale $sale)
     {
-        // ✅ Check ownership
         if ($sale->user_id !== auth()->id()) {
             abort(403, 'Accès non autorisé à cette vente');
         }
 
-        // ✅ LOAD RABBITS WITH THE SALE
         $sale->load(['rabbits.rabbit']);
 
-        // ✅ FIXED: Load ALL available males (no etat filter)
+        // ✅ PAGINATED: Load available rabbits
+        $soldMaleIds = $sale->rabbits()->where('rabbit_type', 'male')->pluck('rabbit_id')->toArray();
+        $soldFemaleIds = $sale->rabbits()->where('rabbit_type', 'female')->pluck('rabbit_id')->toArray();
+        $soldLapereauIds = $sale->rabbits()->where('rabbit_type', 'lapereau')->pluck('rabbit_id')->toArray();
+
         $males = Male::whereDoesntHave('sales', function ($q) use ($sale) {
             $q->whereHas('sale', function ($sq) use ($sale) {
                 $sq->where('payment_status', '!=', 'cancelled')
@@ -305,9 +303,8 @@ class SaleController extends Controller
             });
         })
             ->orderBy('nom')
-            ->get();
+            ->paginate(20, ['*'], 'males_page');
 
-        // ✅ Females - Keep as is
         $femelles = Femelle::where('etat', 'Active')
             ->whereDoesntHave('sales', function ($q) use ($sale) {
                 $q->whereHas('sale', function ($sq) use ($sale) {
@@ -316,9 +313,8 @@ class SaleController extends Controller
                 });
             })
             ->orderBy('nom')
-            ->get();
+            ->paginate(20, ['*'], 'females_page');
 
-        // ✅ Lapereaux - Keep as is
         $lapereaux = Lapereau::where('etat', 'vivant')
             ->whereDoesntHave('sales', function ($q) use ($sale) {
                 $q->whereHas('sale', function ($sq) use ($sale) {
@@ -328,9 +324,17 @@ class SaleController extends Controller
             })
             ->with('naissance.miseBas.femelle')
             ->orderBy('code')
-            ->get();
+            ->paginate(20, ['*'], 'lapereaux_page');
 
-        return view('sales.edit', compact('sale', 'males', 'femelles', 'lapereaux'));
+        return view('sales.edit', compact(
+            'sale',
+            'males',
+            'femelles',
+            'lapereaux',
+            'soldMaleIds',
+            'soldFemaleIds',
+            'soldLapereauIds'
+        ));
     }
 
     /**
@@ -718,5 +722,76 @@ class SaleController extends Controller
             'groupe' => 'groupe(s)',
             default => 'article(s)'
         };
+    }
+
+    // ✅ NEW: AJAX endpoint for loading more rabbits
+    public function loadRabbits(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:males,females,lapereaux',
+            'page' => 'nullable|integer|min:1',
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $page = $request->get('page', 1);
+        $search = $request->get('search', '');
+        $perPage = 20;
+
+        switch ($request->type) {
+            case 'males':
+                $query = Male::orderBy('nom');
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('nom', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+                    });
+                }
+                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
+                break;
+
+            case 'females':
+                $query = Femelle::whereIn('etat', ['Active', 'Vide', 'Allaitante'])
+                    ->orderBy('nom');
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('nom', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+                    });
+                }
+                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
+                break;
+
+            case 'lapereaux':
+                $query = Lapereau::whereIn('etat', ['vivant', 'vendu'])
+                    ->with('naissance.miseBas.femelle')
+                    ->orderBy('code');
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('nom', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+                    });
+                }
+                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
+                break;
+
+            default:
+                return response()->json(['error' => 'Invalid type'], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'html' => view('sales.partials.rabbit-grid', [
+                'rabbits' => $rabbits,
+                'type' => $request->type,
+                'soldIds' => $request->get('sold_ids', [])
+            ])->render(),
+            'pagination' => [
+                'current_page' => $rabbits->currentPage(),
+                'last_page' => $rabbits->lastPage(),
+                'has_more' => $rabbits->hasMorePages(),
+                'next_page' => $rabbits->currentPage() + 1,
+                'total' => $rabbits->total(),
+            ]
+        ]);
     }
 }

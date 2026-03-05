@@ -207,6 +207,8 @@ Route::middleware('auth')->group(function () {
         // Bulk Operations
         Route::delete('/sales/bulk-delete', [SaleController::class, 'bulkDelete'])->name('sales.bulk-delete');
         Route::get('/sales/export', [SaleController::class, 'export'])->name('sales.export');
+        Route::post('/sales/load-rabbits', [SaleController::class, 'loadRabbits'])
+            ->name('sales.load-rabbits');
 
         // Settings Management
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');

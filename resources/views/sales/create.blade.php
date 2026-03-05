@@ -902,6 +902,169 @@
                 });
             })();
         </script>
+
+        {{-- Add this to the @push('scripts') section in sales/create.blade.php --}}
+
+        <script>
+            // Debounced search to avoid too many requests
+            let searchTimeouts = {};
+
+            function debouncedSearch(type, searchTerm) {
+                clearTimeout(searchTimeouts[type]);
+                searchTimeouts[type] = setTimeout(() => {
+                    loadRabbits(type, 1, searchTerm);
+                }, 300);
+            }
+
+            // Load rabbits via AJAX
+            function loadRabbits(type, page = 1, search = '') {
+                const gridId = type + 'Grid';
+                const grid = document.getElementById(gridId);
+                const paginationInfo = document.getElementById(type + 'PaginationInfo');
+
+                // Show loading state
+                grid.style.opacity = '0.5';
+                grid.style.pointerEvents = 'none';
+
+                fetch('{{ route('sales.load-rabbits') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: type,
+                            page: page,
+                            search: search,
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Replace grid content
+                            grid.innerHTML = data.html;
+
+                            // Update pagination info
+                            if (paginationInfo) {
+                                paginationInfo.innerHTML = `Page ${data.pagination.current_page} sur ${data.pagination.last_page} 
+                    (${data.pagination.total} ${type} au total)`;
+                            }
+
+                            // Re-initialize price inputs for newly loaded rabbits
+                            initializePriceInputs(type);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading rabbits:', error);
+                        showToast('Erreur lors du chargement des lapins', 'error');
+                    })
+                    .finally(() => {
+                        grid.style.opacity = '1';
+                        grid.style.pointerEvents = 'auto';
+                    });
+            }
+
+            // Load more rabbits (infinite scroll style)
+            function loadMoreRabbits(button) {
+                const type = button.dataset.type;
+                const page = button.dataset.page;
+                const gridId = type + 'Grid';
+                const grid = document.getElementById(gridId);
+
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i> Chargement...';
+
+                fetch('{{ route('sales.load-rabbits') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: type,
+                            page: page,
+                            search: document.getElementById('search' + type.charAt(0).toUpperCase() + type.slice(1))
+                                .value,
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove load more button
+                            button.remove();
+
+                            // Append new rabbits to grid
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = data.html;
+                            const newCards = tempDiv.querySelectorAll('.rabbit-card');
+
+                            newCards.forEach(card => {
+                                grid.appendChild(card);
+                            });
+
+                            // Add new load more button if there are more pages
+                            if (data.pagination.has_more) {
+                                const newLoadMoreBtn = tempDiv.querySelector('.load-more-btn');
+                                if (newLoadMoreBtn) {
+                                    grid.appendChild(newLoadMoreBtn);
+                                }
+                            }
+
+                            // Update pagination info
+                            const paginationInfo = document.getElementById(type + 'PaginationInfo');
+                            if (paginationInfo) {
+                                paginationInfo.innerHTML = `Page ${data.pagination.current_page} sur ${data.pagination.last_page} 
+                    (${data.pagination.total} ${type} au total)`;
+                            }
+
+                            // Re-initialize price inputs
+                            initializePriceInputs(type);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading more rabbits:', error);
+                        showToast('Erreur lors du chargement', 'error');
+                    })
+                    .finally(() => {
+                        button.disabled = false;
+                    });
+            }
+
+            // Initialize price inputs for newly loaded rabbits
+            function initializePriceInputs(type) {
+                const category = type.replace('s', '');
+                const checkboxes = document.querySelectorAll(`input[name="selected_${type}[]"]`);
+
+                checkboxes.forEach(checkbox => {
+                    const rabbitId = checkbox.value;
+                    const priceContainer = document.getElementById(`price-${category}-${rabbitId}`);
+                    const priceInput = priceContainer?.querySelector('.rabbit-price');
+
+                    if (checkbox.checked && priceInput) {
+                        priceInput.value = globalPrices[category] || 0;
+                        priceContainer.style.display = 'block';
+                    }
+                });
+            }
+
+            // Update toggleSelectAll to work with paginated data
+            function toggleSelectAll(type, select = true) {
+                const grid = document.getElementById(type + 'Grid');
+                const checkboxes = grid.querySelectorAll('.rabbit-checkbox');
+
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.closest('.rabbit-card').style.display !== 'none') {
+                        checkbox.checked = select;
+                        const rabbitId = checkbox.value;
+                        handleRabbitSelection(type.replace('s', ''), rabbitId);
+                    }
+                });
+
+                calculateTotalAmount();
+            }
+        </script>
     @endpush
 
     <style>
