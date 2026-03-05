@@ -6,6 +6,11 @@ use App\Models\Sale;
 use Illuminate\Http\Request;
 use App\Traits\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Male;           // ✅ ADD THIS
+use App\Models\Femelle;       // ✅ ADD THIS  
+use App\Models\Lapereau;      // ✅ ADD THIS
+use App\Models\SaleRabbit;    // ✅ ADD THIS (for pivot table)
 use Carbon\Carbon;
 
 class SaleController extends Controller
@@ -39,23 +44,30 @@ class SaleController extends Controller
     public function create()
     {
         // Load available rabbits by category
+
         $males = Male::where('etat', 'Active')
             ->whereDoesntHave('sales', function ($q) {
-                $q->where('payment_status', '!=', 'cancelled');
+                $q->whereHas('sale', function ($sq) {
+                    $sq->where('payment_status', '!=', 'cancelled');
+                });
             })
             ->orderBy('nom')
             ->get();
 
         $femelles = Femelle::where('etat', 'Active')
             ->whereDoesntHave('sales', function ($q) {
-                $q->where('payment_status', '!=', 'cancelled');
+                $q->whereHas('sale', function ($sq) {
+                    $sq->where('payment_status', '!=', 'cancelled');
+                });
             })
             ->orderBy('nom')
             ->get();
 
         $lapereaux = Lapereau::where('etat', 'vivant')
             ->whereDoesntHave('sales', function ($q) {
-                $q->where('payment_status', '!=', 'cancelled');
+                $q->whereHas('sale', function ($sq) {
+                    $sq->where('payment_status', '!=', 'cancelled');
+                });
             })
             ->with('naissance.miseBas.femelle')
             ->orderBy('code')
