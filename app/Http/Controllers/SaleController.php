@@ -264,15 +264,37 @@ class SaleController extends Controller
     /**
      * Display the specified sale
      */
-    public function show(Sale $sale)
+    // app/Http/Controllers/SaleController.php
+
+    public function show(Sale $sale, Request $request)
     {
         // Check ownership in controller, not route
         if ($sale->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access');
         }
 
-        $sale->load(['rabbits.rabbit', 'user']);
-        return view('sales.show', compact('sale'));
+        $sale->load(['user']);
+
+        // ✅ Paginate rabbits (10 per page)
+        $rabbitsQuery = $sale->rabbits()->with('rabbit');
+
+        // Search filter
+        if ($request->has('search_rabbit')) {
+            $search = $request->search_rabbit;
+            $rabbitsQuery->whereHas('rabbit', function ($q) use ($search) {
+                $q->where('nom', 'LIKE', "%{$search}%")
+                    ->orWhere('code', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Category filter
+        if ($request->has('filter_category')) {
+            $rabbitsQuery->where('rabbit_type', $request->filter_category);
+        }
+
+        $rabbits = $rabbitsQuery->paginate(10)->withQueryString();
+
+        return view('sales.show', compact('sale', 'rabbits'));
     }
 
     /**
