@@ -46,31 +46,16 @@ class SaleController extends Controller
      */
     public function create()
     {
-        // Load available rabbits by category
+        // ✅ SIMPLIFIED: Load available rabbits by category
         $males = Male::where('etat', 'Active')
-            ->whereDoesntHave('sales', function ($q) {
-                $q->whereHas('sale', function ($sq) {
-                    $sq->where('payment_status', '!=', 'cancelled');
-                });
-            })
             ->orderBy('nom')
             ->get();
 
         $femelles = Femelle::where('etat', 'Active')
-            ->whereDoesntHave('sales', function ($q) {
-                $q->whereHas('sale', function ($sq) {
-                    $sq->where('payment_status', '!=', 'cancelled');
-                });
-            })
             ->orderBy('nom')
             ->get();
 
         $lapereaux = Lapereau::where('etat', 'vivant')
-            ->whereDoesntHave('sales', function ($q) {
-                $q->whereHas('sale', function ($sq) {
-                    $sq->where('payment_status', '!=', 'cancelled');
-                });
-            })
             ->with('naissance.miseBas.femelle')
             ->orderBy('code')
             ->get();
