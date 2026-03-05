@@ -28,9 +28,12 @@ class SaleController extends Controller
 
         $stats = [
             'total_sales' => Sale::count(),
-            'total_revenue' => Sale::sum('total_amount'),
+            // ✅ FIX: Only count PAID sales for revenue
+            'total_revenue' => Sale::where('payment_status', 'paid')->sum('total_amount'),
             'pending_payments' => Sale::where('payment_status', 'pending')->sum('total_amount'),
-            'this_month' => Sale::whereMonth('date_sale', now()->month)
+            // ✅ FIX: Only count PAID sales for this month's revenue
+            'this_month' => Sale::where('payment_status', 'paid')
+                ->whereMonth('date_sale', now()->month)
                 ->whereYear('date_sale', now()->year)
                 ->sum('total_amount')
         ];

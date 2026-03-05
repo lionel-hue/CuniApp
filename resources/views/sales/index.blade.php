@@ -159,15 +159,16 @@
                                         </a>
                                         @if ($sale->payment_status !== 'paid')
                                             <form action="{{ route('sales.mark-paid', $sale) }}" method="POST"
-                                                style="display:inline;">
+                                                id="mark-paid-form-{{ $sale->id }}" style="display:inline;">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn-cuni sm primary"
-                                                    title="Marquer comme payé"
-                                                    onclick="return confirm('Marquer cette vente comme payée ?')">
-                                                    <i class="bi bi-cash-coin"></i>
-                                                </button>
                                             </form>
+                                            <button type="button" class="btn-cuni sm primary" title="Marquer comme payé"
+                                                onclick="showModal('confirm', 'Confirmer le paiement', 'Voulez-vous vraiment marquer cette vente comme payée ?', function() {
+        document.getElementById('mark-paid-form-{{ $sale->id }}').submit();
+    })">
+                                                <i class="bi bi-cash-coin"></i>
+                                            </button>
                                         @endif
                                         <form action="{{ route('sales.destroy', $sale) }}" method="POST"
                                             style="display:inline;">
