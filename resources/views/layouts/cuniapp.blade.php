@@ -1645,28 +1645,28 @@
 
           .footer-grid {
               display: grid;
-              grid-template-columns: 2fr 1fr 1fr 1.5fr;
-              gap: 60px;
-              margin-bottom: 60px;
+              grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+              gap: 50px;
+              margin-bottom: 50px;
           }
 
           /* Brand Section */
           .footer-brand {
               display: flex;
               flex-direction: column;
-              gap: 20px;
+              gap: 18px;
           }
 
           .footer-logo {
               display: flex;
               align-items: center;
-              gap: 16px;
-              margin-bottom: 8px;
+              gap: 14px;
+              margin-bottom: 6px;
           }
 
           .footer-logo-icon {
-              width: 56px;
-              height: 56px;
+              width: 50px;
+              height: 50px;
               background: linear-gradient(135deg, var(--primary) 0%, var(--accent-cyan) 100%);
               border-radius: var(--radius-lg);
               display: flex;
@@ -1674,6 +1674,7 @@
               justify-content: center;
               box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
               transition: transform 0.3s ease;
+              flex-shrink: 0;
           }
 
           .footer-logo-icon:hover {
@@ -1681,14 +1682,15 @@
           }
 
           .footer-logo-icon svg {
-              width: 32px;
-              height: 32px;
+              width: 28px;
+              height: 28px;
           }
 
           .footer-logo-text {
-              font-size: 1.5rem;
+              font-size: 1.4rem;
               font-weight: 700;
               color: var(--text-primary);
+              line-height: 1.2;
           }
 
           .footer-logo-text span {
@@ -1696,22 +1698,23 @@
           }
 
           .footer-tagline {
-              font-size: 0.95rem;
+              font-size: 0.92rem;
               color: var(--text-secondary);
               line-height: 1.7;
-              max-width: 350px;
+              max-width: 320px;
           }
 
           /* Social Media Links */
           .footer-social {
               display: flex;
-              gap: 12px;
-              margin-top: 8px;
+              gap: 10px;
+              margin-top: 6px;
+              flex-wrap: wrap;
           }
 
           .social-link {
-              width: 42px;
-              height: 42px;
+              width: 40px;
+              height: 40px;
               border-radius: var(--radius-md);
               background: var(--surface-alt);
               border: 1px solid var(--surface-border);
@@ -1719,9 +1722,10 @@
               align-items: center;
               justify-content: center;
               color: var(--text-secondary);
-              font-size: 18px;
+              font-size: 17px;
               transition: all 0.3s ease;
               text-decoration: none;
+              flex-shrink: 0;
           }
 
           .social-link:hover {
@@ -1732,62 +1736,44 @@
               box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
           }
 
-          /* App Store Buttons */
+          /* Simplified App Store Buttons (ICON ONLY) */
           .footer-app-buttons {
               display: flex;
-              gap: 12px;
-              margin-top: 16px;
+              gap: 10px;
+              margin-top: 12px;
               flex-wrap: wrap;
           }
 
           .app-store-btn {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              padding: 10px 16px;
+              width: 48px;
+              height: 48px;
+              border-radius: var(--radius-md);
               background: var(--surface-alt);
               border: 1px solid var(--surface-border);
-              border-radius: var(--radius-md);
+              display: flex;
+              align-items: center;
+              justify-content: center;
               color: var(--text-primary);
               text-decoration: none;
               transition: all 0.3s ease;
-              min-width: 140px;
+              flex-shrink: 0;
+              font-size: 24px;
           }
 
           .app-store-btn:hover {
               background: var(--primary);
               border-color: var(--primary);
               color: var(--white);
-              transform: translateY(-2px);
-              box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
-          }
-
-          .app-store-btn i {
-              font-size: 24px;
-          }
-
-          .app-store-btn div {
-              display: flex;
-              flex-direction: column;
-          }
-
-          .app-store-btn small {
-              font-size: 9px;
-              text-transform: uppercase;
-              opacity: 0.7;
-          }
-
-          .app-store-btn strong {
-              font-size: 13px;
-              font-weight: 600;
+              transform: translateY(-3px);
+              box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
           }
 
           /* Footer Sections */
           .footer-section h4 {
-              font-size: 1.1rem;
+              font-size: 1.05rem;
               font-weight: 700;
               color: var(--text-primary);
-              margin-bottom: 24px;
+              margin-bottom: 22px;
               display: flex;
               align-items: center;
               gap: 10px;
@@ -1813,13 +1799,13 @@
               list-style: none;
               display: flex;
               flex-direction: column;
-              gap: 14px;
+              gap: 12px;
           }
 
           .footer-links li a {
               color: var(--text-secondary);
               text-decoration: none;
-              font-size: 0.95rem;
+              font-size: 0.93rem;
               transition: all 0.3s ease;
               display: flex;
               align-items: center;
@@ -1869,7 +1855,7 @@
           .footer-contact {
               display: flex;
               flex-direction: column;
-              gap: 16px;
+              gap: 14px;
           }
 
           .footer-contact-item {
@@ -1879,7 +1865,7 @@
           }
 
           .footer-contact-item i {
-              font-size: 18px;
+              font-size: 17px;
               color: var(--primary);
               width: 24px;
               flex-shrink: 0;
@@ -1893,9 +1879,11 @@
           }
 
           .footer-contact-item strong {
-              font-size: 12px;
+              font-size: 11px;
               color: var(--text-primary);
               font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
           }
 
           .footer-contact-item span,
@@ -1904,6 +1892,7 @@
               color: var(--text-secondary);
               text-decoration: none;
               transition: color 0.3s ease;
+              line-height: 1.5;
           }
 
           .footer-contact-item a:hover {
@@ -1912,18 +1901,18 @@
 
           /* Quick Stats Widget */
           .footer-quick-stats {
-              margin-top: 24px;
-              padding: 20px;
+              margin-top: 22px;
+              padding: 18px;
               background: var(--surface-alt);
               border-radius: var(--radius-lg);
               border: 1px solid var(--surface-border);
           }
 
           .footer-quick-stats h5 {
-              font-size: 13px;
+              font-size: 12px;
               font-weight: 600;
               color: var(--text-primary);
-              margin-bottom: 16px;
+              margin-bottom: 14px;
               display: flex;
               align-items: center;
               gap: 8px;
@@ -1936,14 +1925,14 @@
           .stats-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
-              gap: 12px;
+              gap: 10px;
           }
 
           .stat-item {
               display: flex;
               flex-direction: column;
               align-items: center;
-              padding: 12px;
+              padding: 10px;
               background: var(--surface);
               border-radius: var(--radius-md);
               border: 1px solid var(--surface-border);
@@ -1957,96 +1946,16 @@
           }
 
           .stat-value {
-              font-size: 20px;
+              font-size: 18px;
               font-weight: 700;
               color: var(--primary);
           }
 
           .stat-label {
-              font-size: 11px;
+              font-size: 10px;
               color: var(--text-tertiary);
-              margin-top: 4px;
-          }
-
-          /* Newsletter Section */
-          .footer-newsletter {
-              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-              border-radius: var(--radius-xl);
-              padding: 32px 40px;
-              margin-bottom: 40px;
-              box-shadow: 0 10px 40px rgba(37, 99, 235, 0.3);
-          }
-
-          .newsletter-content {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              gap: 40px;
-          }
-
-          .newsletter-info {
-              display: flex;
-              align-items: center;
-              gap: 16px;
-          }
-
-          .newsletter-info i {
-              font-size: 32px;
-              color: var(--white);
-              opacity: 0.9;
-          }
-
-          .newsletter-info h5 {
-              font-size: 18px;
-              font-weight: 700;
-              color: var(--white);
-              margin-bottom: 4px;
-          }
-
-          .newsletter-info p {
-              font-size: 13px;
-              color: rgba(255, 255, 255, 0.8);
-          }
-
-          .newsletter-form {
-              flex: 1;
-              max-width: 450px;
-          }
-
-          .newsletter-input-group {
-              display: flex;
-              gap: 0;
-              background: var(--white);
-              border-radius: var(--radius-md);
-              overflow: hidden;
-              box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-          }
-
-          .newsletter-input-group input {
-              flex: 1;
-              padding: 14px 20px;
-              border: none;
-              font-size: 14px;
-              outline: none;
-          }
-
-          .btn-newsletter {
-              padding: 14px 28px;
-              background: var(--accent-green);
-              border: none;
-              color: var(--white);
-              font-weight: 600;
-              font-size: 14px;
-              cursor: pointer;
-              transition: all 0.3s ease;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-          }
-
-          .btn-newsletter:hover {
-              background: var(--accent-green);
-              filter: brightness(1.1);
+              margin-top: 3px;
+              text-align: center;
           }
 
           /* Footer Bottom */
@@ -2054,21 +1963,21 @@
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding-top: 30px;
+              padding-top: 28px;
               border-top: 1px solid var(--surface-border);
               flex-wrap: wrap;
-              gap: 24px;
+              gap: 20px;
           }
 
           .footer-copyright {
               flex: 1;
-              min-width: 280px;
+              min-width: 250px;
           }
 
           .footer-copyright p {
-              font-size: 0.9rem;
+              font-size: 0.88rem;
               color: var(--text-tertiary);
-              margin-bottom: 6px;
+              margin-bottom: 5px;
           }
 
           .footer-copyright a {
@@ -2078,22 +1987,22 @@
           }
 
           .footer-version {
-              font-size: 12px !important;
+              font-size: 11px !important;
               opacity: 0.7;
           }
 
           .footer-version .separator {
-              margin: 0 8px;
+              margin: 0 6px;
           }
 
           .footer-legal {
               display: flex;
-              gap: 28px;
+              gap: 24px;
               flex-wrap: wrap;
           }
 
           .footer-legal a {
-              font-size: 0.9rem;
+              font-size: 0.88rem;
               color: var(--text-tertiary);
               text-decoration: none;
               transition: all 0.3s ease;
@@ -2110,43 +2019,13 @@
               font-size: 14px;
           }
 
-          /* Payment Methods */
-          .footer-payment {
-              display: flex;
-              align-items: center;
-              gap: 16px;
-          }
-
-          .payment-label {
-              font-size: 12px;
-              color: var(--text-tertiary);
-          }
-
-          .payment-icons {
-              display: flex;
-              gap: 12px;
-          }
-
-          .payment-icons i {
-              font-size: 24px;
-              color: var(--text-secondary);
-              opacity: 0.6;
-              transition: all 0.3s ease;
-          }
-
-          .payment-icons i:hover {
-              opacity: 1;
-              color: var(--primary);
-              transform: scale(1.1);
-          }
-
           /* Back to Top Button */
           .back-to-top {
               position: fixed;
               bottom: 30px;
               right: 30px;
-              width: 50px;
-              height: 50px;
+              width: 48px;
+              height: 48px;
               border-radius: 50%;
               background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
               color: var(--white);
@@ -2158,7 +2037,7 @@
               justify-content: center;
               z-index: 1000;
               transition: all 0.3s ease;
-              font-size: 24px;
+              font-size: 22px;
           }
 
           .back-to-top:hover {
@@ -2171,8 +2050,14 @@
               animation: fadeIn 0.3s ease;
           }
 
-          /* ===== RESPONSIVE FOOTER ===== */
-          @media (max-width: 1200px) {
+          /* ===== MOBILE RESPONSIVE FOOTER ===== */
+
+          /* Tablet (1024px and below) */
+          @media (max-width: 1024px) {
+              .footer-container {
+                  padding: 0 2rem;
+              }
+
               .footer-grid {
                   grid-template-columns: repeat(2, 1fr);
                   gap: 40px;
@@ -2184,8 +2069,13 @@
                   align-items: center;
               }
 
+              .footer-logo {
+                  justify-content: center;
+              }
+
               .footer-tagline {
-                  max-width: 500px;
+                  max-width: 450px;
+                  margin: 0 auto;
               }
 
               .footer-social {
@@ -2194,27 +2084,6 @@
 
               .footer-app-buttons {
                   justify-content: center;
-              }
-          }
-
-          @media (max-width: 768px) {
-              .cuni-footer {
-                  padding: 60px 0 20px 0;
-              }
-
-              .footer-container {
-                  padding: 0 1.5rem;
-              }
-
-              .footer-grid {
-                  grid-template-columns: 1fr;
-                  gap: 32px;
-                  margin-bottom: 40px;
-              }
-
-              .footer-brand {
-                  text-align: center;
-                  align-items: center;
               }
 
               .footer-section h4 {
@@ -2234,97 +2103,300 @@
                   align-items: center;
               }
 
-              .newsletter-content {
-                  flex-direction: column;
+              .footer-contact-item {
+                  justify-content: center;
+              }
+          }
+
+          /* Mobile (768px and below) */
+          @media (max-width: 768px) {
+              .cuni-footer {
+                  padding: 50px 0 20px 0;
+              }
+
+              .footer-container {
+                  padding: 0 1.5rem;
+              }
+
+              .footer-grid {
+                  grid-template-columns: 1fr;
+                  gap: 35px;
+                  margin-bottom: 35px;
+              }
+
+              .footer-brand {
                   text-align: center;
-                  gap: 24px;
+                  align-items: center;
+                  padding-bottom: 25px;
+                  border-bottom: 1px solid var(--surface-border);
               }
 
-              .newsletter-info {
-                  flex-direction: column;
+              .footer-logo {
+                  justify-content: center;
               }
 
-              .newsletter-form {
+              .footer-logo-icon {
+                  width: 45px;
+                  height: 45px;
+              }
+
+              .footer-logo-icon svg {
+                  width: 26px;
+                  height: 26px;
+              }
+
+              .footer-logo-text {
+                  font-size: 1.25rem;
+              }
+
+              .footer-tagline {
                   max-width: 100%;
-                  width: 100%;
+                  font-size: 0.9rem;
+              }
+
+              .footer-social {
+                  justify-content: center;
+                  gap: 8px;
+              }
+
+              .social-link {
+                  width: 38px;
+                  height: 38px;
+                  font-size: 16px;
+              }
+
+              .footer-app-buttons {
+                  justify-content: center;
+                  gap: 8px;
+              }
+
+              .app-store-btn {
+                  width: 44px;
+                  height: 44px;
+                  font-size: 22px;
+              }
+
+              .footer-section h4 {
+                  font-size: 1rem;
+                  justify-content: flex-start;
+              }
+
+              .section-divider {
+                  left: 0;
+                  transform: none;
+              }
+
+              .footer-links li a {
+                  justify-content: flex-start;
+                  font-size: 0.9rem;
+              }
+
+              .footer-contact {
+                  align-items: flex-start;
+              }
+
+              .footer-contact-item {
+                  justify-content: flex-start;
+              }
+
+              .footer-quick-stats {
+                  padding: 15px;
+              }
+
+              .stats-grid {
+                  gap: 8px;
+              }
+
+              .stat-item {
+                  padding: 8px;
+              }
+
+              .stat-value {
+                  font-size: 16px;
+              }
+
+              .stat-label {
+                  font-size: 9px;
               }
 
               .footer-bottom {
                   flex-direction: column;
                   text-align: center;
-                  gap: 20px;
+                  gap: 18px;
+                  padding-top: 24px;
+              }
+
+              .footer-copyright {
+                  min-width: 100%;
               }
 
               .footer-legal {
                   justify-content: center;
-                  gap: 16px;
+                  gap: 18px;
+                  width: 100%;
               }
 
-              .footer-payment {
-                  flex-direction: column;
-                  gap: 12px;
+              .footer-legal a {
+                  font-size: 0.85rem;
               }
 
               .back-to-top {
-                  width: 45px;
-                  height: 45px;
+                  width: 44px;
+                  height: 44px;
                   bottom: 20px;
                   right: 20px;
+                  font-size: 20px;
               }
           }
 
+          /* Small Mobile (480px and below) */
           @media (max-width: 480px) {
+              .footer-container {
+                  padding: 0 1rem;
+              }
+
               .footer-logo-text {
-                  font-size: 1.3rem;
+                  font-size: 1.15rem;
               }
 
               .footer-logo-icon {
-                  width: 48px;
-                  height: 48px;
+                  width: 42px;
+                  height: 42px;
               }
 
               .footer-logo-icon svg {
-                  width: 28px;
-                  height: 28px;
+                  width: 24px;
+                  height: 24px;
+              }
+
+              .footer-tagline {
+                  font-size: 0.88rem;
+                  line-height: 1.6;
+              }
+
+              .footer-social {
+                  gap: 6px;
+              }
+
+              .social-link {
+                  width: 36px;
+                  height: 36px;
+                  font-size: 15px;
+              }
+
+              .footer-app-buttons {
+                  gap: 6px;
               }
 
               .app-store-btn {
-                  min-width: 120px;
-                  padding: 8px 12px;
-              }
-
-              .app-store-btn i {
+                  width: 42px;
+                  height: 42px;
                   font-size: 20px;
               }
 
-              .app-store-btn small {
-                  font-size: 8px;
+              .footer-section h4 {
+                  font-size: 0.95rem;
+                  margin-bottom: 18px;
               }
 
-              .app-store-btn strong {
+              .footer-links {
+                  gap: 10px;
+              }
+
+              .footer-links li a {
+                  font-size: 0.88rem;
+              }
+
+              .footer-contact-item strong {
+                  font-size: 10px;
+              }
+
+              .footer-contact-item span,
+              .footer-contact-item a {
                   font-size: 12px;
+              }
+
+              .footer-quick-stats {
+                  padding: 12px;
               }
 
               .stats-grid {
                   grid-template-columns: repeat(2, 1fr);
-                  gap: 8px;
+                  gap: 6px;
               }
 
               .stat-item {
-                  padding: 10px;
+                  padding: 8px 6px;
               }
 
               .stat-value {
-                  font-size: 18px;
+                  font-size: 15px;
               }
 
-              .newsletter-input-group {
-                  flex-direction: column;
-                  border-radius: var(--radius-md);
+              .stat-label {
+                  font-size: 8px;
               }
 
-              .btn-newsletter {
+              .footer-bottom {
+                  padding-top: 20px;
+              }
+
+              .footer-copyright p {
+                  font-size: 0.82rem;
+              }
+
+              .footer-version {
+                  font-size: 10px !important;
+              }
+
+              .footer-legal {
+                  flex-wrap: wrap;
+                  gap: 14px;
+              }
+
+              .footer-legal a {
+                  font-size: 0.82rem;
                   justify-content: center;
+              }
+
+              .back-to-top {
+                  width: 42px;
+                  height: 42px;
+                  bottom: 15px;
+                  right: 15px;
+              }
+          }
+
+          /* Extra Small Mobile (360px and below) */
+          @media (max-width: 360px) {
+              .footer-logo-text {
+                  font-size: 1.1rem;
+              }
+
+              .footer-tagline {
+                  font-size: 0.85rem;
+              }
+
+              .social-link {
+                  width: 34px;
+                  height: 34px;
+              }
+
+              .app-store-btn {
+                  width: 40px;
+                  height: 40px;
+              }
+
+              .footer-links li a {
+                  font-size: 0.85rem;
+              }
+
+              .footer-legal {
+                  gap: 10px;
+              }
+
+              .footer-legal a {
+                  font-size: 0.78rem;
               }
           }
 
@@ -2355,10 +2427,6 @@
           .theme-dark .stat-item {
               background: var(--surface-overlay);
               border-color: var(--surface-border);
-          }
-
-          .theme-dark .newsletter-info p {
-              color: rgba(255, 255, 255, 0.7);
           }
       </style>
   </head>
@@ -2645,21 +2713,13 @@
                           </a>
                       </div>
 
-                      <!-- App Download Buttons -->
+                      <!-- Simplified App Download Buttons (NO TEXT) -->
                       <div class="footer-app-buttons">
-                          <a href="#" class="app-store-btn">
+                          <a href="#" class="app-store-btn" title="App Store">
                               <i class="bi bi-apple"></i>
-                              <div>
-                                  <small>Télécharger sur</small>
-                                  <strong>App Store</strong>
-                              </div>
                           </a>
-                          <a href="#" class="app-store-btn">
+                          <a href="#" class="app-store-btn" title="Google Play">
                               <i class="bi bi-google-play"></i>
-                              <div>
-                                  <small>DISPONIBLE SUR</small>
-                                  <strong>Google Play</strong>
-                              </div>
                           </a>
                       </div>
                   </div>
@@ -2766,7 +2826,7 @@
                       </ul>
                   </div>
 
-                  <!-- Contact & Quick Stats -->
+                  <!-- Contact Section -->
                   <div class="footer-section">
                       <h4>
                           <i class="bi bi-envelope"></i>
@@ -2778,7 +2838,7 @@
                               <i class="bi bi-geo-alt-fill"></i>
                               <div>
                                   <strong>Adresse</strong>
-                                  <span>Houéyiho après le pont devant Volta United, Cotonou, Littoral, Bénin</span>
+                                  <span>Houéyiho après le pont devant Volta United, Cotonou, Bénin</span>
                               </div>
                           </div>
                           <div class="footer-contact-item">
@@ -2804,7 +2864,7 @@
                           </div>
                       </div>
 
-                      <!-- Quick Stats Widget -->
+                      <!-- Quick Stats Widget (Authenticated Only) -->
                       @auth
                           <div class="footer-quick-stats">
                               <h5>
@@ -2831,29 +2891,6 @@
                               </div>
                           </div>
                       @endauth
-                  </div>
-              </div>
-
-              <!-- Newsletter Section -->
-              <div class="footer-newsletter">
-                  <div class="newsletter-content">
-                      <div class="newsletter-info">
-                          <i class="bi bi-envelope-paper"></i>
-                          <div>
-                              <h5>Restez Informé</h5>
-                              <p>Recevez nos conseils d'élevage et mises à jour</p>
-                          </div>
-                      </div>
-                      <form class="newsletter-form" action="#" method="POST">
-                          @csrf
-                          <div class="newsletter-input-group">
-                              <input type="email" name="email" placeholder="Votre adresse email" required>
-                              <button type="submit" class="btn-newsletter">
-                                  <span>S'abonner</span>
-                                  <i class="bi bi-arrow-right"></i>
-                              </button>
-                          </div>
-                      </form>
                   </div>
               </div>
 
@@ -2889,17 +2926,6 @@
                           <i class="bi bi-activity"></i>
                           État du système
                       </a>
-                  </div>
-
-                  <!-- Payment Methods -->
-                  <div class="footer-payment">
-                      <span class="payment-label">Paiements acceptés:</span>
-                      <div class="payment-icons">
-                          <i class="bi bi-credit-card-2-front" title="Carte Bancaire"></i>
-                          <i class="bi bi-cash-coin" title="Espèces"></i>
-                          <i class="bi bi-phone" title="Mobile Money"></i>
-                          <i class="bi bi-bank" title="Virement"></i>
-                      </div>
                   </div>
               </div>
 
