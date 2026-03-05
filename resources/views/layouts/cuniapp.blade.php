@@ -1620,6 +1620,746 @@
               border-color: var(--surface-border);
               color: var(--text-tertiary);
           }
+
+
+          /* ===== ENHANCED FOOTER STYLES ===== */
+          .cuni-footer {
+              background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%);
+              border-top: 1px solid var(--surface-border);
+              padding: 80px 0 30px 0;
+              margin-top: auto;
+              position: relative;
+              overflow: hidden;
+          }
+
+          .theme-dark .cuni-footer {
+              background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+              border-top-color: var(--surface-border);
+          }
+
+          .footer-container {
+              max-width: 1600px;
+              margin: 0 auto;
+              padding: 0 2.5rem;
+          }
+
+          .footer-grid {
+              display: grid;
+              grid-template-columns: 2fr 1fr 1fr 1.5fr;
+              gap: 60px;
+              margin-bottom: 60px;
+          }
+
+          /* Brand Section */
+          .footer-brand {
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+          }
+
+          .footer-logo {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 8px;
+          }
+
+          .footer-logo-icon {
+              width: 56px;
+              height: 56px;
+              background: linear-gradient(135deg, var(--primary) 0%, var(--accent-cyan) 100%);
+              border-radius: var(--radius-lg);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+              transition: transform 0.3s ease;
+          }
+
+          .footer-logo-icon:hover {
+              transform: scale(1.05) rotate(5deg);
+          }
+
+          .footer-logo-icon svg {
+              width: 32px;
+              height: 32px;
+          }
+
+          .footer-logo-text {
+              font-size: 1.5rem;
+              font-weight: 700;
+              color: var(--text-primary);
+          }
+
+          .footer-logo-text span {
+              color: var(--primary);
+          }
+
+          .footer-tagline {
+              font-size: 0.95rem;
+              color: var(--text-secondary);
+              line-height: 1.7;
+              max-width: 350px;
+          }
+
+          /* Social Media Links */
+          .footer-social {
+              display: flex;
+              gap: 12px;
+              margin-top: 8px;
+          }
+
+          .social-link {
+              width: 42px;
+              height: 42px;
+              border-radius: var(--radius-md);
+              background: var(--surface-alt);
+              border: 1px solid var(--surface-border);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: var(--text-secondary);
+              font-size: 18px;
+              transition: all 0.3s ease;
+              text-decoration: none;
+          }
+
+          .social-link:hover {
+              background: var(--primary);
+              border-color: var(--primary);
+              color: var(--white);
+              transform: translateY(-3px);
+              box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+          }
+
+          /* App Store Buttons */
+          .footer-app-buttons {
+              display: flex;
+              gap: 12px;
+              margin-top: 16px;
+              flex-wrap: wrap;
+          }
+
+          .app-store-btn {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 16px;
+              background: var(--surface-alt);
+              border: 1px solid var(--surface-border);
+              border-radius: var(--radius-md);
+              color: var(--text-primary);
+              text-decoration: none;
+              transition: all 0.3s ease;
+              min-width: 140px;
+          }
+
+          .app-store-btn:hover {
+              background: var(--primary);
+              border-color: var(--primary);
+              color: var(--white);
+              transform: translateY(-2px);
+              box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+          }
+
+          .app-store-btn i {
+              font-size: 24px;
+          }
+
+          .app-store-btn div {
+              display: flex;
+              flex-direction: column;
+          }
+
+          .app-store-btn small {
+              font-size: 9px;
+              text-transform: uppercase;
+              opacity: 0.7;
+          }
+
+          .app-store-btn strong {
+              font-size: 13px;
+              font-weight: 600;
+          }
+
+          /* Footer Sections */
+          .footer-section h4 {
+              font-size: 1.1rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin-bottom: 24px;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              position: relative;
+          }
+
+          .footer-section h4 i {
+              color: var(--primary);
+              font-size: 18px;
+          }
+
+          .section-divider {
+              position: absolute;
+              bottom: -8px;
+              left: 0;
+              width: 40px;
+              height: 3px;
+              background: linear-gradient(90deg, var(--primary), var(--accent-cyan));
+              border-radius: 2px;
+          }
+
+          .footer-links {
+              list-style: none;
+              display: flex;
+              flex-direction: column;
+              gap: 14px;
+          }
+
+          .footer-links li a {
+              color: var(--text-secondary);
+              text-decoration: none;
+              font-size: 0.95rem;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              position: relative;
+          }
+
+          .footer-links li a:hover {
+              color: var(--primary);
+              transform: translateX(6px);
+          }
+
+          .footer-links li a i {
+              font-size: 10px;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+          }
+
+          .footer-links li a:hover i {
+              opacity: 1;
+          }
+
+          .badge-notification {
+              background: var(--accent-red);
+              color: var(--white);
+              font-size: 10px;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 10px;
+              margin-left: 6px;
+              animation: pulse 2s infinite;
+          }
+
+          @keyframes pulse {
+
+              0%,
+              100% {
+                  transform: scale(1);
+              }
+
+              50% {
+                  transform: scale(1.1);
+              }
+          }
+
+          /* Contact Section */
+          .footer-contact {
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+          }
+
+          .footer-contact-item {
+              display: flex;
+              gap: 12px;
+              align-items: flex-start;
+          }
+
+          .footer-contact-item i {
+              font-size: 18px;
+              color: var(--primary);
+              width: 24px;
+              flex-shrink: 0;
+              margin-top: 2px;
+          }
+
+          .footer-contact-item div {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+          }
+
+          .footer-contact-item strong {
+              font-size: 12px;
+              color: var(--text-primary);
+              font-weight: 600;
+          }
+
+          .footer-contact-item span,
+          .footer-contact-item a {
+              font-size: 13px;
+              color: var(--text-secondary);
+              text-decoration: none;
+              transition: color 0.3s ease;
+          }
+
+          .footer-contact-item a:hover {
+              color: var(--primary);
+          }
+
+          /* Quick Stats Widget */
+          .footer-quick-stats {
+              margin-top: 24px;
+              padding: 20px;
+              background: var(--surface-alt);
+              border-radius: var(--radius-lg);
+              border: 1px solid var(--surface-border);
+          }
+
+          .footer-quick-stats h5 {
+              font-size: 13px;
+              font-weight: 600;
+              color: var(--text-primary);
+              margin-bottom: 16px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+          }
+
+          .footer-quick-stats h5 i {
+              color: var(--accent-green);
+          }
+
+          .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
+          }
+
+          .stat-item {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              padding: 12px;
+              background: var(--surface);
+              border-radius: var(--radius-md);
+              border: 1px solid var(--surface-border);
+              transition: all 0.3s ease;
+          }
+
+          .stat-item:hover {
+              border-color: var(--primary);
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+          }
+
+          .stat-value {
+              font-size: 20px;
+              font-weight: 700;
+              color: var(--primary);
+          }
+
+          .stat-label {
+              font-size: 11px;
+              color: var(--text-tertiary);
+              margin-top: 4px;
+          }
+
+          /* Newsletter Section */
+          .footer-newsletter {
+              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+              border-radius: var(--radius-xl);
+              padding: 32px 40px;
+              margin-bottom: 40px;
+              box-shadow: 0 10px 40px rgba(37, 99, 235, 0.3);
+          }
+
+          .newsletter-content {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 40px;
+          }
+
+          .newsletter-info {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+          }
+
+          .newsletter-info i {
+              font-size: 32px;
+              color: var(--white);
+              opacity: 0.9;
+          }
+
+          .newsletter-info h5 {
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--white);
+              margin-bottom: 4px;
+          }
+
+          .newsletter-info p {
+              font-size: 13px;
+              color: rgba(255, 255, 255, 0.8);
+          }
+
+          .newsletter-form {
+              flex: 1;
+              max-width: 450px;
+          }
+
+          .newsletter-input-group {
+              display: flex;
+              gap: 0;
+              background: var(--white);
+              border-radius: var(--radius-md);
+              overflow: hidden;
+              box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          }
+
+          .newsletter-input-group input {
+              flex: 1;
+              padding: 14px 20px;
+              border: none;
+              font-size: 14px;
+              outline: none;
+          }
+
+          .btn-newsletter {
+              padding: 14px 28px;
+              background: var(--accent-green);
+              border: none;
+              color: var(--white);
+              font-weight: 600;
+              font-size: 14px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+          }
+
+          .btn-newsletter:hover {
+              background: var(--accent-green);
+              filter: brightness(1.1);
+          }
+
+          /* Footer Bottom */
+          .footer-bottom {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding-top: 30px;
+              border-top: 1px solid var(--surface-border);
+              flex-wrap: wrap;
+              gap: 24px;
+          }
+
+          .footer-copyright {
+              flex: 1;
+              min-width: 280px;
+          }
+
+          .footer-copyright p {
+              font-size: 0.9rem;
+              color: var(--text-tertiary);
+              margin-bottom: 6px;
+          }
+
+          .footer-copyright a {
+              color: var(--primary);
+              text-decoration: none;
+              font-weight: 500;
+          }
+
+          .footer-version {
+              font-size: 12px !important;
+              opacity: 0.7;
+          }
+
+          .footer-version .separator {
+              margin: 0 8px;
+          }
+
+          .footer-legal {
+              display: flex;
+              gap: 28px;
+              flex-wrap: wrap;
+          }
+
+          .footer-legal a {
+              font-size: 0.9rem;
+              color: var(--text-tertiary);
+              text-decoration: none;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+          }
+
+          .footer-legal a:hover {
+              color: var(--primary);
+          }
+
+          .footer-legal a i {
+              font-size: 14px;
+          }
+
+          /* Payment Methods */
+          .footer-payment {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+          }
+
+          .payment-label {
+              font-size: 12px;
+              color: var(--text-tertiary);
+          }
+
+          .payment-icons {
+              display: flex;
+              gap: 12px;
+          }
+
+          .payment-icons i {
+              font-size: 24px;
+              color: var(--text-secondary);
+              opacity: 0.6;
+              transition: all 0.3s ease;
+          }
+
+          .payment-icons i:hover {
+              opacity: 1;
+              color: var(--primary);
+              transform: scale(1.1);
+          }
+
+          /* Back to Top Button */
+          .back-to-top {
+              position: fixed;
+              bottom: 30px;
+              right: 30px;
+              width: 50px;
+              height: 50px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+              color: var(--white);
+              border: none;
+              box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+              cursor: pointer;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              z-index: 1000;
+              transition: all 0.3s ease;
+              font-size: 24px;
+          }
+
+          .back-to-top:hover {
+              transform: translateY(-5px);
+              box-shadow: 0 12px 32px rgba(37, 99, 235, 0.5);
+          }
+
+          .back-to-top.show {
+              display: flex;
+              animation: fadeIn 0.3s ease;
+          }
+
+          /* ===== RESPONSIVE FOOTER ===== */
+          @media (max-width: 1200px) {
+              .footer-grid {
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 40px;
+              }
+
+              .footer-brand {
+                  grid-column: 1 / -1;
+                  text-align: center;
+                  align-items: center;
+              }
+
+              .footer-tagline {
+                  max-width: 500px;
+              }
+
+              .footer-social {
+                  justify-content: center;
+              }
+
+              .footer-app-buttons {
+                  justify-content: center;
+              }
+          }
+
+          @media (max-width: 768px) {
+              .cuni-footer {
+                  padding: 60px 0 20px 0;
+              }
+
+              .footer-container {
+                  padding: 0 1.5rem;
+              }
+
+              .footer-grid {
+                  grid-template-columns: 1fr;
+                  gap: 32px;
+                  margin-bottom: 40px;
+              }
+
+              .footer-brand {
+                  text-align: center;
+                  align-items: center;
+              }
+
+              .footer-section h4 {
+                  justify-content: center;
+              }
+
+              .section-divider {
+                  left: 50%;
+                  transform: translateX(-50%);
+              }
+
+              .footer-links li a {
+                  justify-content: center;
+              }
+
+              .footer-contact {
+                  align-items: center;
+              }
+
+              .newsletter-content {
+                  flex-direction: column;
+                  text-align: center;
+                  gap: 24px;
+              }
+
+              .newsletter-info {
+                  flex-direction: column;
+              }
+
+              .newsletter-form {
+                  max-width: 100%;
+                  width: 100%;
+              }
+
+              .footer-bottom {
+                  flex-direction: column;
+                  text-align: center;
+                  gap: 20px;
+              }
+
+              .footer-legal {
+                  justify-content: center;
+                  gap: 16px;
+              }
+
+              .footer-payment {
+                  flex-direction: column;
+                  gap: 12px;
+              }
+
+              .back-to-top {
+                  width: 45px;
+                  height: 45px;
+                  bottom: 20px;
+                  right: 20px;
+              }
+          }
+
+          @media (max-width: 480px) {
+              .footer-logo-text {
+                  font-size: 1.3rem;
+              }
+
+              .footer-logo-icon {
+                  width: 48px;
+                  height: 48px;
+              }
+
+              .footer-logo-icon svg {
+                  width: 28px;
+                  height: 28px;
+              }
+
+              .app-store-btn {
+                  min-width: 120px;
+                  padding: 8px 12px;
+              }
+
+              .app-store-btn i {
+                  font-size: 20px;
+              }
+
+              .app-store-btn small {
+                  font-size: 8px;
+              }
+
+              .app-store-btn strong {
+                  font-size: 12px;
+              }
+
+              .stats-grid {
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 8px;
+              }
+
+              .stat-item {
+                  padding: 10px;
+              }
+
+              .stat-value {
+                  font-size: 18px;
+              }
+
+              .newsletter-input-group {
+                  flex-direction: column;
+                  border-radius: var(--radius-md);
+              }
+
+              .btn-newsletter {
+                  justify-content: center;
+              }
+          }
+
+          /* Dark Mode Footer */
+          .theme-dark .cuni-footer {
+              background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+          }
+
+          .theme-dark .footer-logo-text {
+              color: var(--white);
+          }
+
+          .theme-dark .social-link {
+              background: var(--surface-elevated);
+              border-color: var(--surface-border);
+          }
+
+          .theme-dark .app-store-btn {
+              background: var(--surface-elevated);
+              border-color: var(--surface-border);
+          }
+
+          .theme-dark .footer-quick-stats {
+              background: var(--surface-elevated);
+              border-color: var(--surface-border);
+          }
+
+          .theme-dark .stat-item {
+              background: var(--surface-overlay);
+              border-color: var(--surface-border);
+          }
+
+          .theme-dark .newsletter-info p {
+              color: rgba(255, 255, 255, 0.7);
+          }
       </style>
   </head>
 
@@ -1868,7 +2608,9 @@
 
       <footer class="cuni-footer">
           <div class="footer-container">
+              <!-- Main Footer Grid -->
               <div class="footer-grid">
+                  <!-- Brand Section -->
                   <div class="footer-brand">
                       <div class="footer-logo">
                           <div class="footer-logo-icon">
@@ -1879,70 +2621,292 @@
                           </div>
                           <div class="footer-logo-text">CuniApp <span>Élevage</span></div>
                       </div>
-                      <p class="footer-tagline"> La solution complète pour la gestion intelligente de votre élevage de
-                          lapins. Suivez vos reproductions, naissances et performances en toute simplicité. </p>
+                      <p class="footer-tagline">
+                          La solution complète pour la gestion intelligente de votre élevage de lapins.
+                          Suivez vos reproductions, naissances et performances en toute simplicité.
+                      </p>
+
+                      <!-- Social Media Links -->
+                      <div class="footer-social">
+                          <a href="#" class="social-link" title="Facebook">
+                              <i class="bi bi-facebook"></i>
+                          </a>
+                          <a href="#" class="social-link" title="Twitter">
+                              <i class="bi bi-twitter-x"></i>
+                          </a>
+                          <a href="#" class="social-link" title="Instagram">
+                              <i class="bi bi-instagram"></i>
+                          </a>
+                          <a href="#" class="social-link" title="LinkedIn">
+                              <i class="bi bi-linkedin"></i>
+                          </a>
+                          <a href="#" class="social-link" title="WhatsApp">
+                              <i class="bi bi-whatsapp"></i>
+                          </a>
+                      </div>
+
+                      <!-- App Download Buttons -->
+                      <div class="footer-app-buttons">
+                          <a href="#" class="app-store-btn">
+                              <i class="bi bi-apple"></i>
+                              <div>
+                                  <small>Télécharger sur</small>
+                                  <strong>App Store</strong>
+                              </div>
+                          </a>
+                          <a href="#" class="app-store-btn">
+                              <i class="bi bi-google-play"></i>
+                              <div>
+                                  <small>DISPONIBLE SUR</small>
+                                  <strong>Google Play</strong>
+                              </div>
+                          </a>
+                      </div>
                   </div>
+
+                  <!-- Navigation Section -->
                   <div class="footer-section">
-                      <h4><i class="bi bi-compass"></i> Navigation</h4>
+                      <h4>
+                          <i class="bi bi-compass"></i>
+                          Navigation
+                          <span class="section-divider"></span>
+                      </h4>
                       <ul class="footer-links">
-                          <li><a href="{{ route('dashboard') }}"><i class="bi bi-chevron-right"></i> Tableau de
-                                  bord</a></li>
-                          <li><a href="{{ route('males.index') }}"><i class="bi bi-chevron-right"></i> Mâles</a></li>
-                          <li><a href="{{ route('femelles.index') }}"><i class="bi bi-chevron-right"></i>
-                                  Femelles</a>
+                          <li>
+                              <a href="{{ route('dashboard') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Tableau de bord
+                              </a>
                           </li>
-                          <li><a href="{{ route('lapins.index') }}"><i class="bi bi-chevron-right"></i> Tous les
-                                  Lapins</a></li>
-                          <li><a href="{{ route('mises-bas.index') }}"><i class="bi bi-chevron-right"></i> Mises
-                                  Bas</a></li>
+                          <li>
+                              <a href="{{ route('activites.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Historique des activités
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('notifications.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Notifications
+                                  @php
+                                      $unread = \App\Models\Notification::where('user_id', auth()->id() ?? 0)
+                                          ->where('is_read', false)
+                                          ->count();
+                                  @endphp
+                                  @if ($unread > 0)
+                                      <span class="badge-notification">{{ $unread > 99 ? '99+' : $unread }}</span>
+                                  @endif
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('settings.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Paramètres
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('profile.edit') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Mon Profil
+                              </a>
+                          </li>
                       </ul>
                   </div>
+
+                  <!-- Gestion Section -->
                   <div class="footer-section">
-                      <h4><i class="bi bi-briefcase"></i> Gestion</h4>
+                      <h4>
+                          <i class="bi bi-briefcase"></i>
+                          Gestion d'Élevage
+                          <span class="section-divider"></span>
+                      </h4>
                       <ul class="footer-links">
-                          <li><a href="{{ route('saillies.index') }}"><i class="bi bi-chevron-right"></i>
-                                  Saillies</a>
+                          <li>
+                              <a href="{{ route('males.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Mâles
+                              </a>
                           </li>
-                          <li><a href="{{ route('sales.index') }}"><i class="bi bi-chevron-right"></i> Ventes</a>
+                          <li>
+                              <a href="{{ route('femelles.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Femelles
+                              </a>
                           </li>
-                          <li><a href="{{ route('notifications.index') }}"><i class="bi bi-chevron-right"></i>
-                                  Notifications</a></li>
-                          <li><a href="{{ route('settings.index') }}"><i class="bi bi-chevron-right"></i>
-                                  Paramètres</a></li>
-                          <li><a href="{{ route('profile.edit') }}"><i class="bi bi-chevron-right"></i> Mon
-                                  Profil</a>
+                          <li>
+                              <a href="{{ route('lapins.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Tous les Lapins
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('saillies.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Saillies
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('mises-bas.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Mises Bas
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('naissances.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Naissances
+                              </a>
+                          </li>
+                          <li>
+                              <a href="{{ route('sales.index') }}">
+                                  <i class="bi bi-chevron-right"></i>
+                                  Ventes
+                              </a>
                           </li>
                       </ul>
                   </div>
+
+                  <!-- Contact & Quick Stats -->
                   <div class="footer-section">
-                      <h4><i class="bi bi-envelope"></i> Contact</h4>
+                      <h4>
+                          <i class="bi bi-envelope"></i>
+                          Contact & Infos
+                          <span class="section-divider"></span>
+                      </h4>
                       <div class="footer-contact">
                           <div class="footer-contact-item">
-                              <i class="bi bi-geo-alt"></i>
-                              <span>Houéyiho après le pont devant Volta United, Cotonou, Littoral, Bénin</span>
+                              <i class="bi bi-geo-alt-fill"></i>
+                              <div>
+                                  <strong>Adresse</strong>
+                                  <span>Houéyiho après le pont devant Volta United, Cotonou, Littoral, Bénin</span>
+                              </div>
                           </div>
                           <div class="footer-contact-item">
-                              <i class="bi bi-telephone"></i>
-                              <a href="tel:+2290152415241">+229 01 52 41 52 41</a>
+                              <i class="bi bi-telephone-fill"></i>
+                              <div>
+                                  <strong>Téléphone</strong>
+                                  <a href="tel:+2290152415241">+229 01 52 41 52 41</a>
+                              </div>
                           </div>
                           <div class="footer-contact-item">
-                              <i class="bi bi-envelope"></i>
-                              <a href="mailto:contact@anyxtech.com">contact@anyxtech.com</a>
+                              <i class="bi bi-envelope-fill"></i>
+                              <div>
+                                  <strong>Email</strong>
+                                  <a href="mailto:contact@anyxtech.com">contact@anyxtech.com</a>
+                              </div>
                           </div>
+                          <div class="footer-contact-item">
+                              <i class="bi bi-clock-fill"></i>
+                              <div>
+                                  <strong>Support</strong>
+                                  <span>Lun - Ven: 8h00 - 18h00</span>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Quick Stats Widget -->
+                      @auth
+                          <div class="footer-quick-stats">
+                              <h5>
+                                  <i class="bi bi-graph-up"></i>
+                                  Aperçu Rapide
+                              </h5>
+                              <div class="stats-grid">
+                                  <div class="stat-item">
+                                      <span class="stat-value">{{ \App\Models\Femelle::count() }}</span>
+                                      <span class="stat-label">Femelles</span>
+                                  </div>
+                                  <div class="stat-item">
+                                      <span class="stat-value">{{ \App\Models\Male::count() }}</span>
+                                      <span class="stat-label">Mâles</span>
+                                  </div>
+                                  <div class="stat-item">
+                                      <span class="stat-value">{{ \App\Models\Saillie::count() }}</span>
+                                      <span class="stat-label">Saillies</span>
+                                  </div>
+                                  <div class="stat-item">
+                                      <span class="stat-value">{{ \App\Models\Naissance::active()->count() }}</span>
+                                      <span class="stat-label">Naissances</span>
+                                  </div>
+                              </div>
+                          </div>
+                      @endauth
+                  </div>
+              </div>
+
+              <!-- Newsletter Section -->
+              <div class="footer-newsletter">
+                  <div class="newsletter-content">
+                      <div class="newsletter-info">
+                          <i class="bi bi-envelope-paper"></i>
+                          <div>
+                              <h5>Restez Informé</h5>
+                              <p>Recevez nos conseils d'élevage et mises à jour</p>
+                          </div>
+                      </div>
+                      <form class="newsletter-form" action="#" method="POST">
+                          @csrf
+                          <div class="newsletter-input-group">
+                              <input type="email" name="email" placeholder="Votre adresse email" required>
+                              <button type="submit" class="btn-newsletter">
+                                  <span>S'abonner</span>
+                                  <i class="bi bi-arrow-right"></i>
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+
+              <!-- Footer Bottom -->
+              <div class="footer-bottom">
+                  <div class="footer-copyright">
+                      <p>
+                          &copy; {{ date('Y') }}
+                          <a href="{{ route('dashboard') }}">CuniApp Élevage</a>.
+                          Tous droits réservés.
+                      </p>
+                      <p class="footer-version">
+                          Version {{ config('app.version', '1.0.0') }}
+                          <span class="separator">•</span>
+                          <span class="build-info">Build {{ date('Y.m.d') }}</span>
+                      </p>
+                  </div>
+
+                  <div class="footer-legal">
+                      <a href="{{ route('privacy') }}">
+                          <i class="bi bi-shield-check"></i>
+                          Confidentialité
+                      </a>
+                      <a href="{{ route('terms') }}">
+                          <i class="bi bi-file-text"></i>
+                          Conditions
+                      </a>
+                      <a href="{{ route('contact') }}">
+                          <i class="bi bi-headset"></i>
+                          Support
+                      </a>
+                      <a href="{{ route('health.check') }}" target="_blank">
+                          <i class="bi bi-activity"></i>
+                          État du système
+                      </a>
+                  </div>
+
+                  <!-- Payment Methods -->
+                  <div class="footer-payment">
+                      <span class="payment-label">Paiements acceptés:</span>
+                      <div class="payment-icons">
+                          <i class="bi bi-credit-card-2-front" title="Carte Bancaire"></i>
+                          <i class="bi bi-cash-coin" title="Espèces"></i>
+                          <i class="bi bi-phone" title="Mobile Money"></i>
+                          <i class="bi bi-bank" title="Virement"></i>
                       </div>
                   </div>
               </div>
-              <div class="footer-bottom">
-                  <div class="footer-copyright">
-                      &copy; {{ date('Y') }} <a href="{{ route('dashboard') }}">CuniApp Élevage</a>. Tous droits
-                      réservés.
-                  </div>
-                  <div class="footer-legal">
-                      <a href="{{ route('privacy') }}">Confidentialité</a>
-                      <a href="{{ route('terms') }}">Conditions</a>
-                      <a href="{{ route('contact') }}">Support</a>
-                  </div>
-              </div>
+
+              <!-- Back to Top Button -->
+              <button id="backToTop" class="back-to-top" title="Retour en haut">
+                  <i class="bi bi-arrow-up-short"></i>
+              </button>
           </div>
       </footer>
 
