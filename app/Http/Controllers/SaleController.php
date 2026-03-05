@@ -235,7 +235,7 @@ class SaleController extends Controller
                 Male::where('id', $maleId)->update(['etat' => 'Inactive']);
             }
             foreach ($selectedFemales as $femaleId) {
-                Femelle::where('id', $femaleId)->update(['etat' => 'Inactive']);
+                Femelle::where('id', $femaleId)->update(['etat' => 'Vide']);
             }
             foreach ($selectedLapereaux as $lapereauId) {
                 Lapereau::where('id', $lapereauId)->update(['etat' => 'vendu']);
@@ -469,7 +469,7 @@ class SaleController extends Controller
                     'rabbit_id' => $femaleId,
                     'sale_price' => $femalePrices[$index] ?? 0,
                 ]);
-                Femelle::where('id', $femaleId)->update(['etat' => 'Inactive']);
+                Femelle::where('id', $femaleId)->update(['etat' => 'Vide']);
             }
 
             // ✅ Link selected lapereaux with INDIVIDUAL prices
@@ -567,7 +567,7 @@ class SaleController extends Controller
                     ->update(['etat' => 'Inactive']);
             } elseif ($saleRabbit->rabbit_type === 'female') {
                 \App\Models\Femelle::where('id', $saleRabbit->rabbit_id)
-                    ->update(['etat' => 'Inactive']);
+                    ->update(['etat' => 'Vide']);
             } elseif ($saleRabbit->rabbit_type === 'lapereau') {
                 \App\Models\Lapereau::where('id', $saleRabbit->rabbit_id)
                     ->update(['etat' => 'vendu']);
