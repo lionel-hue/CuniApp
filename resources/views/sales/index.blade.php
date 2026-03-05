@@ -185,7 +185,12 @@
                         <strong class="text-dark dark:text-gray-100">{{ $sales->lastItem() }}</strong> sur <strong
                             class="text-dark dark:text-gray-100">{{ $sales->total() }}</strong> ventes
                     </div>
-                    <nav>{{ $sales->links('pagination.bootstrap-5-sm') }}</nav>
+                    @if ($sales->hasPages())
+                        <div class="cuni-card"
+                            style="margin-top: 0; border-top: none; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                            {{ $sales->links('pagination.bootstrap-5-sm') }}
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
