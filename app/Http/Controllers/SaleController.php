@@ -56,7 +56,14 @@ class SaleController extends Controller
             ->orderBy('code')
             ->paginate(20, ['*'], 'lapereaux_page');
 
-        return view('sales.create', compact('males', 'femelles', 'lapereaux'));
+        // ✅ ADD THIS: Total counts across ALL pages
+        $totalCounts = [
+            'males' => Male::count(),
+            'females' => Femelle::whereIn('etat', ['Active', 'Vide', 'Allaitante'])->count(),
+            'lapereaux' => Lapereau::whereIn('etat', ['vivant', 'vendu'])->count(),
+        ];
+
+        return view('sales.create', compact('males', 'femelles', 'lapereaux', 'totalCounts'));
     }
 
     /**
