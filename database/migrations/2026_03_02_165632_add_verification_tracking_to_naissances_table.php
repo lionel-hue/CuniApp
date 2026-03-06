@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::table('naissances', function (Blueprint $table) {
             // Only add if column doesn't exist (defensive)
             if (!Schema::hasColumn('naissances', 'sex_verified')) {
-                $table->boolean('sex_verified')->default(false)->after('is_archived');
+                $table->boolean('sex_verified')->default(false);
             }
             if (!Schema::hasColumn('naissances', 'sex_verified_at')) {
                 $table->timestamp('sex_verified_at')->nullable()->after('sex_verified');
