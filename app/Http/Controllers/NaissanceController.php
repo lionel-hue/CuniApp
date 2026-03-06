@@ -116,7 +116,8 @@ class NaissanceController extends Controller
             'rabbits.*.poids_naissance' => 'nullable|numeric|min:0|max:200',
             'rabbits.*.etat_sante' => 'nullable|in:Excellent,Bon,Moyen,Faible',
             'rabbits.*.observations' => 'nullable|string|max:500',
-            'rabbits.*.code' => 'nullable|string|max:20|unique:lapereaux,code',
+            // ✅ FIXED: Only validate uniqueness if code is provided
+            'rabbits.*.code' => 'nullable|string|max:20',
         ];
 
         $validated = array_merge($validated, $request->validate($rabbitsRules));
@@ -152,7 +153,7 @@ class NaissanceController extends Controller
 
         // ✅ VALIDATION 5: Check for duplicate codes if manually entered
         foreach ($validated['rabbits'] as $index => $rabbit) {
-            if (!empty($rabbit['code'])) {
+            if (!empty($rabbit['code']) && $rabbit['code'] !== 'Auto-généré') {
                 if (!Lapereau::isCodeUnique($rabbit['code'])) {
                     $errors[] = "Le code '{$rabbit['code']}' pour le lapereau #" . ($index + 1) . " existe déjà.";
                 }
@@ -176,7 +177,7 @@ class NaissanceController extends Controller
         try {
             // ✅ Create Naissance record (NO femelle_id - comes through mise_bas)
             $naissance = Naissance::create(array_merge($validated, [
-                'user_id' => auth()->id(), 
+                'user_id' => auth()->id(),
             ]));
 
             // ✅ Create Individual Lapereaux
