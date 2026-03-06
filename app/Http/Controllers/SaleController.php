@@ -731,13 +731,13 @@ class SaleController extends Controller
         };
     }
 
-    // ✅ NEW: AJAX endpoint for loading more rabbits
     public function loadRabbits(Request $request)
     {
         $request->validate([
             'type' => 'required|in:males,females,lapereaux',
             'page' => 'nullable|integer|min:1',
             'search' => 'nullable|string|max:100',
+            'count_only' => 'nullable|boolean',  // ✅ NEW: For getting total count without HTML
         ]);
 
         $page = $request->get('page', 1);
@@ -753,7 +753,6 @@ class SaleController extends Controller
                             ->orWhere('code', 'LIKE', "%{$search}%");
                     });
                 }
-                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
                 break;
 
             case 'females':
@@ -765,7 +764,6 @@ class SaleController extends Controller
                             ->orWhere('code', 'LIKE', "%{$search}%");
                     });
                 }
-                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
                 break;
 
             case 'lapereaux':
@@ -778,12 +776,22 @@ class SaleController extends Controller
                             ->orWhere('code', 'LIKE', "%{$search}%");
                     });
                 }
-                $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
                 break;
 
             default:
                 return response()->json(['error' => 'Invalid type'], 400);
         }
+
+        // ✅ NEW: If count_only requested, return just the count (for search filtering)
+        if ($request->boolean('count_only')) {
+            return response()->json([
+                'success' => true,
+                'total_count' => $query->count(),
+            ]);
+        }
+
+        // ✅ Standard pagination
+        $rabbits = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -797,8 +805,9 @@ class SaleController extends Controller
                 'last_page' => $rabbits->lastPage(),
                 'has_more' => $rabbits->hasMorePages(),
                 'next_page' => $rabbits->currentPage() + 1,
-                'total' => $rabbits->total(),
-            ]
+                'total' => $rabbits->total(),  // ✅ Total across ALL pages
+            ],
+            'total_count' => $query->count(),  // ✅ ADDED: For displaying total in tab
         ]);
     }
 }
