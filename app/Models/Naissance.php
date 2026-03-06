@@ -137,6 +137,7 @@ class Naissance extends Model
     // ✅ SCOPE: Active births
     public function scopeActive($query)
     {
+        return $query;
     }
 
     // ✅ Mark sex as verified
