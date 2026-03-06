@@ -165,17 +165,6 @@
                                             title="Détails"><i class="bi bi-eye"></i></a>
                                         <a href="{{ route('naissances.edit', $naissance) }}" class="btn-cuni sm secondary"
                                             title="Modifier"><i class="bi bi-pencil"></i></a>
-                                        @if (!$naissance->is_archived)
-                                            <form action="{{ route('naissances.archive', $naissance) }}" method="POST"
-                                                id="archive-form-{{ $naissance->id }}" style="display:inline;">
-                                                @csrf
-                                                @method('PATCH')
-                                            </form>
-                                            <button type="button" class="btn-cuni sm danger" title="Archiver"
-                                                onclick="showModal('confirm', 'Archiver cette naissance ?', 'Êtes-vous sûr de vouloir archiver cette naissance ? Cette action peut être annulée.', function() { document.getElementById('archive-form-{{ $naissance->id }}').submit(); })">
-                                                <i class="bi bi-archive"></i>
-                                            </button>
-                                        @endif
                                         <form action="{{ route('naissances.destroy', $naissance) }}" method="POST"
                                             style="display:inline;">
                                             @csrf @method('DELETE')
