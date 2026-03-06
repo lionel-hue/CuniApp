@@ -390,17 +390,17 @@
                     });
                 });
 
-                // Handle rabbit selection - CRITICAL FIX
+                // ✅ FIXED: Handle rabbit selection - Show price input when checked
                 function handleRabbitSelection(category, rabbitId) {
                     const checkbox = document.querySelector(
-                        `input[name="selected_${category}[]"][value="${rabbitId}"]`
+                        `input[name="selected_${category}s[]"][value="${rabbitId}"]`
                     );
                     const priceContainer = document.getElementById(`price-${category}-${rabbitId}`);
                     const priceInput = priceContainer?.querySelector('.rabbit-price');
                     const indicator = document.getElementById(`price-indicator-${category}-${rabbitId}`);
 
                     if (checkbox && priceContainer) {
-                        // Show/hide price container based on checkbox state
+                        // ✅ Show/hide price container based on checkbox state
                         priceContainer.style.display = checkbox.checked ? 'block' : 'none';
 
                         if (checkbox.checked && priceInput) {
@@ -411,18 +411,18 @@
                                 priceInput.value = customPrices[customKey];
                                 markPriceAsCustom(category, rabbitId);
                             } else {
-                                // ✅ Apply global price with validation
+                                // ✅ Apply global price
                                 priceInput.value = globalPrices[category] || 0;
                                 if (indicator) {
                                     indicator.style.display = 'block';
                                 }
                             }
-                            priceInput.focus();
 
-                            // ✅ Force validation visual feedback
+                            priceInput.focus();
                             priceInput.classList.remove('error');
                         }
                     }
+
                     calculateTotalAmount();
                 }
 
@@ -437,6 +437,7 @@
                         priceInput.value = globalPrices[category];
                         priceInput.style.borderColor = 'var(--accent-green)';
                         priceInput.style.backgroundColor = 'var(--primary-subtle)';
+
                         if (indicator) {
                             indicator.style.display = 'block';
                         }
@@ -492,61 +493,79 @@
                     }
                 }
 
-                // Apply global prices to all currently selected rabbits
+                // ✅ FIXED: Apply global prices to all currently selected rabbits
                 function applyGlobalPricesToAll() {
                     let count = 0;
                     ['males', 'females', 'lapereaux'].forEach(category => {
                         const checkboxes = document.querySelectorAll(
                             `input[name="selected_${category}[]"]:checked`
                         );
+
                         checkboxes.forEach(checkbox => {
                             const rabbitId = checkbox.value;
+                            const categoryShort = category.replace('s', '');
                             const priceInput = document.querySelector(
-                                `.rabbit-price[data-category="${category}"][data-rabbit-id="${rabbitId}"]`
+                                `.rabbit-price[data-category="${categoryShort}"][data-rabbit-id="${rabbitId}"]`
                             );
                             const indicator = document.getElementById(
-                                `price-indicator-${category}-${rabbitId}`
+                                `price-indicator-${categoryShort}-${rabbitId}`
                             );
 
                             if (priceInput) {
-                                priceInput.value = globalPrices[category];
+                                // ✅ Make sure container is visible
+                                const priceContainer = priceInput.closest('.price-input-container');
+                                if (priceContainer) {
+                                    priceContainer.style.display = 'block';
+                                }
+
+                                priceInput.value = globalPrices[categoryShort];
                                 priceInput.style.borderColor = 'var(--accent-green)';
                                 priceInput.style.backgroundColor = 'var(--primary-subtle)';
+
                                 if (indicator) {
                                     indicator.style.display = 'block';
                                 }
-                                delete customPrices[`${category}-${rabbitId}`];
+
+                                delete customPrices[`${categoryShort}-${rabbitId}`];
                                 count++;
                             }
                         });
                     });
 
                     calculateTotalAmount();
+
                     if (count > 0) {
                         showToast(`${count} prix mis à jour avec les prix globaux`, 'success');
                     } else {
-                        showToast('Aucun lapin sélectionné', 'info');
+                        showToast('Aucun lapin sélectionné', 'warning');
                     }
                 }
 
                 // Apply global prices to selected rabbits in specific category
                 function applyGlobalPricesToSelected(category) {
+                    const categoryShort = category.replace('s', '');
                     const checkboxes = document.querySelectorAll(`input[name="selected_${category}[]"]:checked`);
                     let count = 0;
 
                     checkboxes.forEach(checkbox => {
                         const rabbitId = checkbox.value;
                         const priceInput = document.querySelector(
-                            `.rabbit-price[data-category="${category}"][data-rabbit-id="${rabbitId}"]`
+                            `.rabbit-price[data-category="${categoryShort}"][data-rabbit-id="${rabbitId}"]`
                         );
-                        const indicator = document.getElementById(`price-indicator-${category}-${rabbitId}`);
+                        const indicator = document.getElementById(`price-indicator-${categoryShort}-${rabbitId}`);
 
                         if (priceInput) {
-                            priceInput.value = globalPrices[category];
+                            // ✅ Make sure container is visible
+                            const priceContainer = priceInput.closest('.price-input-container');
+                            if (priceContainer) {
+                                priceContainer.style.display = 'block';
+                            }
+
+                            priceInput.value = globalPrices[categoryShort];
                             if (indicator) {
                                 indicator.style.display = 'block';
                             }
-                            delete customPrices[`${category}-${rabbitId}`];
+                            delete customPrices[`${categoryShort}-${rabbitId}`];
                             count++;
                         }
                     });
@@ -556,7 +575,7 @@
                     }
                 }
 
-                // ✅ FIX: Save global prices as default in settings - JSON error fix
+                // ✅ FIXED: Save global prices as default in settings
                 function saveGlobalPricesAsDefault() {
                     const prices = {
                         default_price_male: parseFloat(document.getElementById('globalPriceMales').value) || 0,
@@ -569,18 +588,16 @@
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json', // ✅ Add this
-                                'X-Requested-With': 'XMLHttpRequest' // ✅ Add this
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
                             },
                             body: JSON.stringify(prices)
                         })
                         .then(async response => {
-                            // ✅ Check if response is JSON before parsing
                             const contentType = response.headers.get('content-type');
                             if (contentType && contentType.includes('application/json')) {
                                 return response.json();
                             } else {
-                                // If redirect, just return success
                                 return {
                                     success: true
                                 };
@@ -620,7 +637,7 @@
                     }, 300);
                 }
 
-                // ✅ Load Rabbits via AJAX with count_only support
+                // ✅ FIXED: Load Rabbits via AJAX with total count
                 function loadRabbits(type, page = 1, search = '') {
                     const gridId = type + 'Grid';
                     const grid = document.getElementById(gridId);
@@ -648,17 +665,20 @@
                         .then(data => {
                             if (data.success) {
                                 grid.innerHTML = data.html;
+
                                 if (paginationInfo) {
-                                    // ✅ Use total_count if available, otherwise fallback to pagination.total
+                                    // ✅ Use total_count from response
                                     const totalCount = data.total_count || data.pagination.total;
                                     paginationInfo.innerHTML =
                                         `Page ${data.pagination.current_page} sur ${data.pagination.last_page} (${totalCount} ${type} au total)`;
                                 }
+
                                 // ✅ Update tab count with filtered results
                                 const countEl = document.getElementById(type + 'Count');
                                 if (countEl && data.total_count !== undefined) {
                                     countEl.textContent = data.total_count;
                                 }
+
                                 // Re-initialize price inputs for new elements
                                 initializePriceInputs(type);
                             }
@@ -697,6 +717,7 @@
                         .then(data => {
                             if (data.success) {
                                 button.remove(); // Remove old button
+
                                 const tempDiv = document.createElement('div');
                                 tempDiv.innerHTML = data.html;
 
@@ -754,6 +775,7 @@
                             handleRabbitSelection(category.replace('s', ''), rabbitId);
                         }
                     });
+
                     calculateTotalAmount();
                 }
 
@@ -817,11 +839,10 @@
                     document.getElementById('selectedSummary').textContent = selectedCount + ' lapin(s) sélectionné(s)';
 
                     // Update total display
-                    document.getElementById('totalAmountDisplay').textContent =
-                        total.toLocaleString('fr-FR', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        }) + ' FCFA';
+                    document.getElementById('totalAmountDisplay').textContent = total.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + ' FCFA';
 
                     // Show warning if prices are missing
                     const warningDiv = document.getElementById('quantityMismatchWarning');
@@ -852,6 +873,7 @@
                     document.querySelectorAll('.rabbit-checkbox:checked').forEach(checkbox => {
                         const card = checkbox.closest('.rabbit-card');
                         const priceInput = card.querySelector('.rabbit-price');
+
                         if (!priceInput || !priceInput.value || parseFloat(priceInput.value) <= 0) {
                             missingPrices++;
                         }
@@ -940,11 +962,19 @@
                     filterRabbits('females', '');
                     filterRabbits('lapereaux', '');
 
+                    // ✅ Initialize price inputs for all existing rabbits
+                    ['males', 'females', 'lapereaux'].forEach(type => {
+                        initializePriceInputs(type);
+                    });
+
                     // Disable submit button initially
                     document.getElementById('submitBtn').disabled = true;
 
                     // Show welcome toast
                     showToast('💡 Astuce: Définissez vos prix globaux pour gagner du temps!', 'info');
+
+                    // ✅ Calculate initial total
+                    calculateTotalAmount();
                 });
 
                 // Expose functions to global scope for inline HTML handlers
