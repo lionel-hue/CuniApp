@@ -11,10 +11,12 @@ use App\Traits\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class NaissanceController extends Controller {
+class NaissanceController extends Controller
+{
     use Notifiable;
 
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $query = Naissance::with(['miseBas.femelle', 'lapereaux'])
             ->active()
             ->latest();
@@ -22,9 +24,9 @@ class NaissanceController extends Controller {
         // ✅ Search functionality
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('miseBas.femelle', function($q) use ($search) {
+            $query->whereHas('miseBas.femelle', function ($q) use ($search) {
                 $q->where('nom', 'LIKE', "%{$search}%")
-                  ->orWhere('code', 'LIKE', "%{$search}%");
+                    ->orWhere('code', 'LIKE', "%{$search}%");
             });
         }
 
@@ -43,9 +45,11 @@ class NaissanceController extends Controller {
         $stats = [
             'total' => Naissance::active()->count(),
             'this_month' => Naissance::active()
-                ->whereHas('miseBas', fn($q) => 
+                ->whereHas(
+                    'miseBas',
+                    fn($q) =>
                     $q->whereMonth('date_mise_bas', now()->month)
-                      ->whereYear('date_mise_bas', now()->year)
+                        ->whereYear('date_mise_bas', now()->year)
                 )
                 ->count(),
             'nb_vivant_total' => Lapereau::whereHas('naissance', fn($q) => $q->active())
@@ -60,12 +64,13 @@ class NaissanceController extends Controller {
         return view('naissances.index', compact('naissances', 'stats'));
     }
 
-    public function create(Request $request) {
+    public function create(Request $request)
+    {
         $miseBas = null;
         if ($request->has('mise_bas_id')) {
             $miseBas = MiseBas::with('femelle')->find($request->mise_bas_id);
         }
-        
+
         $misesBas = MiseBas::with('femelle')
             ->whereDoesntHave('naissances')
             ->orderBy('date_mise_bas', 'desc')
@@ -74,7 +79,8 @@ class NaissanceController extends Controller {
         return view('naissances.create', compact('miseBas', 'misesBas'));
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         // ✅ VALIDATION 1: Basic fields
         $validated = $request->validate([
             'mise_bas_id' => 'required|exists:mises_bas,id',
@@ -134,11 +140,11 @@ class NaissanceController extends Controller {
             if ($totalRabbits > $maxTotal) {
                 $errors[] = "Vous essayez de créer {$totalRabbits} lapereaux mais la mise bas indique un maximum de {$maxTotal} ({$maxVivant} vivants + {$maxMortNe} morts-nés).";
             }
-            
+
             if ($vivantCount > $maxVivant) {
                 $errors[] = "Trop de lapereaux vivants déclarés ({$vivantCount}) par rapport à la mise bas ({$maxVivant}).";
             }
-            
+
             if ($mortCount > $maxMortNe) {
                 $errors[] = "Trop de lapereaux morts-nés déclarés ({$mortCount}) par rapport à la mise bas ({$maxMortNe}).";
             }
@@ -169,17 +175,19 @@ class NaissanceController extends Controller {
         DB::beginTransaction();
         try {
             // ✅ Create Naissance record (NO femelle_id - comes through mise_bas)
-            $naissance = Naissance::create($validated);
+            $naissance = Naissance::create(array_merge($validated, [
+                'user_id' => auth()->id(), 
+            ]));
 
             // ✅ Create Individual Lapereaux
             foreach ($validated['rabbits'] as $rabbitData) {
                 $rabbitData['naissance_id'] = $naissance->id;
-                
+
                 // Auto-generate code if not provided
                 if (empty($rabbitData['code'])) {
                     $rabbitData['code'] = Lapereau::generateUniqueCode();
                 }
-                
+
                 Lapereau::create($rabbitData);
             }
 
@@ -197,10 +205,9 @@ class NaissanceController extends Controller {
             ]);
 
             DB::commit();
-            
+
             return redirect()->route('naissances.show', $naissance)
                 ->with('success', 'Naissance et lapereaux enregistrés ! Sexe à vérifier après 10 jours.');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
@@ -209,28 +216,29 @@ class NaissanceController extends Controller {
         }
     }
 
-    public function show(Naissance $naissance, Request $request) {
+    public function show(Naissance $naissance, Request $request)
+    {
         $naissance->load(['miseBas.femelle', 'miseBas.saillie.male', 'lapereaux']);
-        
+
         $canVerifySex = $naissance->can_verify_sex;
         $daysUntilVerification = max(0, 10 - $naissance->jours_depuis_naissance);
 
         // ✅ Search lapereaux
         $lapereauxQuery = $naissance->lapereaux();
-        
+
         if ($request->has('search_lapereau')) {
             $search = $request->search_lapereau;
-            $lapereauxQuery->where(function($q) use ($search) {
+            $lapereauxQuery->where(function ($q) use ($search) {
                 $q->where('nom', 'LIKE', "%{$search}%")
-                  ->orWhere('code', 'LIKE', "%{$search}%");
+                    ->orWhere('code', 'LIKE', "%{$search}%");
             });
         }
-        
+
         // ✅ Filter by status
         if ($request->has('filter_etat')) {
             $lapereauxQuery->where('etat', $request->filter_etat);
         }
-        
+
         // ✅ Filter by sex
         if ($request->has('filter_sex')) {
             $lapereauxQuery->where('sex', $request->filter_sex);
@@ -242,18 +250,20 @@ class NaissanceController extends Controller {
         return view('naissances.show', compact('naissance', 'canVerifySex', 'daysUntilVerification', 'lapereaux'));
     }
 
-    public function edit(Naissance $naissance) {
+    public function edit(Naissance $naissance)
+    {
         $naissance->load(['miseBas.femelle', 'lapereaux']);
         $canVerifySex = $naissance->can_verify_sex;
-        
+
         // ✅ Get max allowed from mise_bas
         $maxAllowed = $naissance->max_allowed_lapereaux;
         $currentCount = $naissance->lapereaux()->count();
-        
+
         return view('naissances.edit', compact('naissance', 'canVerifySex', 'maxAllowed', 'currentCount'));
     }
 
-    public function update(Request $request, Naissance $naissance) {
+    public function update(Request $request, Naissance $naissance)
+    {
         $validated = $request->validate([
             'poids_moyen_naissance' => 'nullable|numeric|min:0|max:200',
             'etat_sante' => 'required|in:Excellent,Bon,Moyen,Faible',
@@ -261,7 +271,7 @@ class NaissanceController extends Controller {
             'date_sevrage_prevue' => 'nullable|date|after:date_mise_bas',
             'date_vaccination_prevue' => 'nullable|date|after:date_mise_bas',
             'sex_verified' => 'nullable|boolean',
-            
+
             // ✅ Lapereaux with individual health/weight
             'rabbits' => 'required|array|min:1',
             'rabbits.*.id' => 'nullable|exists:lapereaux,id',
@@ -284,7 +294,7 @@ class NaissanceController extends Controller {
         // ✅ VALIDATION: Count against mise_bas
         $maxAllowed = $naissance->max_allowed_lapereaux;
         $newCount = count($validated['rabbits']);
-        
+
         if ($maxAllowed > 0 && $newCount > $maxAllowed) {
             return back()->withErrors([
                 'rabbits' => "Vous ne pouvez pas créer plus de {$maxAllowed} lapereaux pour cette mise bas."
@@ -353,10 +363,9 @@ class NaissanceController extends Controller {
             }
 
             DB::commit();
-            
+
             return redirect()->route('naissances.show', $naissance)
                 ->with('success', 'Naissance mise à jour !');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
@@ -366,33 +375,37 @@ class NaissanceController extends Controller {
     }
 
     // ✅ NEW: Check lapereau code availability (AJAX)
-    public function checkCode(Request $request) {
+    public function checkCode(Request $request)
+    {
         $exists = Lapereau::where('code', $request->code)->exists();
         return response()->json(['available' => !$exists]);
     }
 
-    public function destroy(Naissance $naissance) {
+    public function destroy(Naissance $naissance)
+    {
         $femelleName = $naissance->femelle->nom ?? 'Inconnue';
         $totalLapereaux = $naissance->total_lapereaux;
         $naissance->delete(); // Cascade deletes lapereaux
-        
+
         $this->notifyUser([
             'type' => 'warning',
             'title' => '🗑️ Naissance Supprimée',
             'message' => "Naissance de {$femelleName} ({$totalLapereaux} lapereaux) supprimée",
             'action_url' => route('naissances.index'),
         ]);
-        
+
         return redirect()->route('naissances.index')
             ->with('success', 'Naissance supprimée !');
     }
 
-    public function archive(Naissance $naissance) {
+    public function archive(Naissance $naissance)
+    {
         $naissance->update(['is_archived' => true, 'archived_at' => now()]);
         return back()->with('success', 'Naissance archivée !');
     }
 
-    public function restore(Naissance $naissance) {
+    public function restore(Naissance $naissance)
+    {
         $naissance->update(['is_archived' => false, 'archived_at' => null]);
         return back()->with('success', 'Naissance restaurée !');
     }
