@@ -1239,8 +1239,6 @@ class CuniAppSeeder extends Seeder
                 'first_reminder_sent_at' => $firstReminderSentAt,
                 'last_reminder_sent_at' => $lastReminderSentAt,
                 'reminder_count' => $reminderCount,
-                'is_archived' => $isArchived,
-                'archived_at' => $archivedAt,
                 // ⭐ FIXED: Include user_id which was missing and causing the error
                 'user_id' => $userId,
                 'created_at' => $miseBas->date_mise_bas,
