@@ -83,7 +83,6 @@
                             <br><small>Vous pourrez toujours modifier le prix individuellement si nécessaire.</small>
                         </div>
                     </div>
-
                     <div class="global-prices-grid"
                         style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
                         {{-- Global Price: Mâles --}}
@@ -103,7 +102,6 @@
                                 {{ number_format(\App\Models\Setting::get('default_price_male', 25000), 0, ',', ' ') }} FCFA
                             </small>
                         </div>
-
                         {{-- Global Price: Femelles --}}
                         <div class="global-price-card"
                             style="background: var(--surface); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--surface-border);">
@@ -122,7 +120,6 @@
                                 FCFA
                             </small>
                         </div>
-
                         {{-- Global Price: Lapereaux --}}
                         <div class="global-price-card"
                             style="background: var(--surface); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--surface-border);">
@@ -142,14 +139,13 @@
                             </small>
                         </div>
                     </div>
-
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                         <button type="button" class="btn-cuni secondary" onclick="applyGlobalPricesToAll()">
-                            <i class="bi bi-magic"></i> Appliquer aux lapins déjà sélectionnés
+                            <i class="bi bi-magic"></i> Appliquer à TOUS les sélectionnés
                         </button>
                         <label class="btn-cuni secondary" style="cursor: pointer; margin: 0;">
                             <input type="checkbox" id="autoApplyGlobalPrice" checked style="display: none;">
-                            <i class="bi bi-check-circle"></i> Appliquer automatiquement à la sélection
+                            <i class="bi bi-check-circle"></i> Appliquer auto. à la sélection
                         </label>
                         <button type="button" class="btn-cuni secondary" onclick="saveGlobalPricesAsDefault()">
                             <i class="bi bi-save"></i> Enregistrer comme défaut
@@ -169,7 +165,8 @@
                             <ul style="margin: 8px 0 0 16px; padding: 0;">
                                 <li>Les prix globaux sont appliqués automatiquement à la sélection</li>
                                 <li>Vous pouvez modifier individuellement le prix de chaque lapin</li>
-                                <li>Le total est calculé automatiquement</li>
+                                <li><strong style="color: var(--accent-red);">⚠️ CHAQUE lapin sélectionné DOIT avoir un
+                                        prix!</strong></li>
                             </ul>
                         </div>
                     </div>
@@ -302,10 +299,16 @@
                             </div>
                         </div>
                         <div id="quantityMismatchWarning"
-                            style="margin-top: 12px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius); display: none;">
-                            <i class="bi bi-exclamation-triangle" style="color: var(--accent-orange);"></i>
-                            <span style="color: var(--accent-orange); font-weight: 600;">Veuillez entrer un prix pour
-                                chaque lapin sélectionné!</span>
+                            style="margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius); display: none;">
+                            <i class="bi bi-exclamation-triangle" style="color: var(--accent-red);"></i>
+                            <span style="color: var(--accent-red); font-weight: 600;">
+                                <strong id="missingPricesCount">0</strong> prix manquants! Veuillez entrer un prix pour
+                                chaque lapin sélectionné ou désélectionner les lapins sans prix.
+                            </span>
+                            <button type="button" class="btn-cuni secondary sm" style="margin-left: 12px;"
+                                onclick="applyGlobalPricesToAll()">
+                                <i class="bi bi-magic"></i> Appliquer prix globaux
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -345,7 +348,7 @@
 
                 <div
                     style="margin-top: 32px; display: flex; gap: 12px; padding-top: 24px; border-top: 1px solid var(--surface-border);">
-                    <button type="submit" class="btn-cuni primary" id="submitBtn">
+                    <button type="submit" class="btn-cuni primary" id="submitBtn" disabled>
                         <i class="bi bi-check-circle"></i> Enregistrer la vente
                     </button>
                     <a href="{{ route('sales.index') }}" class="btn-cuni secondary">
@@ -371,6 +374,13 @@
                 // Track custom prices (not from global)
                 let customPrices = {};
 
+                // Track selected rabbit IDs across pagination
+                let selectedRabbits = {
+                    males: new Set(),
+                    females: new Set(),
+                    lapereaux: new Set()
+                };
+
                 // Initialize global price inputs
                 document.querySelectorAll('.global-price-input').forEach(input => {
                     input.addEventListener('change', function() {
@@ -393,13 +403,21 @@
                 // ✅ FIXED: Handle rabbit selection - Show price input when checked
                 function handleRabbitSelection(category, rabbitId) {
                     const checkbox = document.querySelector(
-                        `input[name="selected_${category}s[]"][value="${rabbitId}"]`
+                        `input[name="selected_${category}[]"][value="${rabbitId}"]`
                     );
                     const priceContainer = document.getElementById(`price-${category}-${rabbitId}`);
                     const priceInput = priceContainer?.querySelector('.rabbit-price');
                     const indicator = document.getElementById(`price-indicator-${category}-${rabbitId}`);
 
                     if (checkbox && priceContainer) {
+                        // Track selection across pagination
+                        if (checkbox.checked) {
+                            selectedRabbits[category + 's'].add(rabbitId);
+                        } else {
+                            selectedRabbits[category + 's'].delete(rabbitId);
+                            delete customPrices[`${category}-${rabbitId}`];
+                        }
+
                         // ✅ Show/hide price container based on checkbox state
                         priceContainer.style.display = checkbox.checked ? 'block' : 'none';
 
@@ -471,6 +489,7 @@
                             customPrices[`${category}-${rabbitId}`] = currentValue;
                             priceInput.style.borderColor = 'var(--accent-orange)';
                             priceInput.style.backgroundColor = 'rgba(245, 158, 11, 0.05)';
+
                             if (indicator) {
                                 indicator.style.display = 'none';
                             }
@@ -479,6 +498,7 @@
                             delete customPrices[`${category}-${rabbitId}`];
                             priceInput.style.borderColor = 'var(--accent-green)';
                             priceInput.style.backgroundColor = 'var(--primary-subtle)';
+
                             if (indicator) {
                                 indicator.style.display = 'block';
                             }
@@ -493,17 +513,15 @@
                     }
                 }
 
-                // ✅ FIXED: Apply global prices to all currently selected rabbits
+                // ✅ FIXED: Apply global prices to ALL currently selected rabbits (across all pages)
                 function applyGlobalPricesToAll() {
                     let count = 0;
-                    ['males', 'females', 'lapereaux'].forEach(category => {
-                        const checkboxes = document.querySelectorAll(
-                            `input[name="selected_${category}[]"]:checked`
-                        );
 
-                        checkboxes.forEach(checkbox => {
-                            const rabbitId = checkbox.value;
-                            const categoryShort = category.replace('s', '');
+                    ['males', 'females', 'lapereaux'].forEach(category => {
+                        const categoryShort = category.replace('s', '');
+
+                        // Apply to ALL selected rabbits (including those not currently visible)
+                        selectedRabbits[category].forEach(rabbitId => {
                             const priceInput = document.querySelector(
                                 `.rabbit-price[data-category="${categoryShort}"][data-rabbit-id="${rabbitId}"]`
                             );
@@ -562,9 +580,11 @@
                             }
 
                             priceInput.value = globalPrices[categoryShort];
+
                             if (indicator) {
                                 indicator.style.display = 'block';
                             }
+
                             delete customPrices[`${categoryShort}-${rabbitId}`];
                             count++;
                         }
@@ -667,13 +687,13 @@
                                 grid.innerHTML = data.html;
 
                                 if (paginationInfo) {
-                                    // ✅ Use total_count from response
+                                    // ✅ Use total_count from response (TOTAL, not filtered)
                                     const totalCount = data.total_count || data.pagination.total;
                                     paginationInfo.innerHTML =
                                         `Page ${data.pagination.current_page} sur ${data.pagination.last_page} (${totalCount} ${type} au total)`;
                                 }
 
-                                // ✅ Update tab count with filtered results
+                                // ✅ Update tab count with TOTAL (not filtered)
                                 const countEl = document.getElementById(type + 'Count');
                                 if (countEl && data.total_count !== undefined) {
                                     countEl.textContent = data.total_count;
@@ -681,6 +701,9 @@
 
                                 // Re-initialize price inputs for new elements
                                 initializePriceInputs(type);
+
+                                // Re-check selected rabbits and restore their state
+                                restoreSelectedRabbits(type);
                             }
                         })
                         .catch(error => console.error('Error:', error))
@@ -688,6 +711,20 @@
                             grid.style.opacity = '1';
                             grid.style.pointerEvents = 'auto';
                         });
+                }
+
+                // ✅ Restore selected state after AJAX load
+                function restoreSelectedRabbits(type) {
+                    const category = type.replace('s', '');
+                    selectedRabbits[type].forEach(rabbitId => {
+                        const checkbox = document.querySelector(
+                            `input[name="selected_${type}[]"][value="${rabbitId}"]`
+                        );
+                        if (checkbox && !checkbox.checked) {
+                            checkbox.checked = true;
+                            handleRabbitSelection(category, rabbitId);
+                        }
+                    });
                 }
 
                 // ✅ Load More Button Handler
@@ -736,6 +773,7 @@
                                 }
 
                                 initializePriceInputs(type);
+                                restoreSelectedRabbits(type);
                             }
                         })
                         .finally(() => {
@@ -754,7 +792,13 @@
                         const priceInput = priceContainer?.querySelector('.rabbit-price');
 
                         if (checkbox.checked && priceInput) {
-                            priceInput.value = globalPrices[category] || 0;
+                            // Check if we have a custom price stored
+                            const customKey = `${category}-${rabbitId}`;
+                            if (customPrices[customKey] !== undefined) {
+                                priceInput.value = customPrices[customKey];
+                            } else {
+                                priceInput.value = globalPrices[category] || 0;
+                            }
                             priceContainer.style.display = 'block';
                         }
                     });
@@ -802,9 +846,15 @@
                         }
                     });
 
-                    // ✅ Update count to show filtered results
+                    // ✅ Update count to show filtered results (temporarily)
                     const countEl = document.getElementById(category + 'Count');
-                    if (countEl) countEl.textContent = visibleCount;
+                    if (countEl) {
+                        // Store original count if not already stored
+                        if (!countEl.dataset.originalCount) {
+                            countEl.dataset.originalCount = countEl.textContent;
+                        }
+                        countEl.textContent = visibleCount;
+                    }
                 }
 
                 // ============================================
@@ -822,7 +872,12 @@
                         const priceInput = card.querySelector('.rabbit-price');
 
                         if (priceInput && priceInput.value) {
-                            total += parseFloat(priceInput.value) || 0;
+                            const price = parseFloat(priceInput.value);
+                            if (price > 0) {
+                                total += price;
+                            } else {
+                                missingPrices++;
+                            }
                         } else if (checkbox.checked) {
                             missingPrices++;
                         }
@@ -846,16 +901,14 @@
 
                     // Show warning if prices are missing
                     const warningDiv = document.getElementById('quantityMismatchWarning');
+                    const missingCountSpan = document.getElementById('missingPricesCount');
                     const submitBtn = document.getElementById('submitBtn');
 
                     if (missingPrices > 0 && selectedCount > 0) {
                         warningDiv.style.display = 'block';
-                        warningDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle" style="color: var(--accent-orange);"></i>
-                <span style="color: var(--accent-orange); font-weight: 600;">
-                    Veuillez entrer un prix pour chaque lapin sélectionné (${missingPrices} prix manquants)!
-                </span>
-            `;
+                        if (missingCountSpan) {
+                            missingCountSpan.textContent = missingPrices;
+                        }
                         submitBtn.disabled = true;
                     } else {
                         warningDiv.style.display = 'none';
@@ -887,8 +940,9 @@
 
                     if (missingPrices > 0) {
                         e.preventDefault();
-                        alert(
-                            `⚠️ Veuillez entrer un prix pour chaque lapin sélectionné (${missingPrices} prix manquants).`);
+                        alert(`⚠️ Veuillez entrer un prix pour chaque lapin sélectionné (${missingPrices} prix manquants).
+
+💡 ASTUCE: Cliquez sur "Appliquer à TOUS les sélectionnés" pour appliquer automatiquement les prix globaux!`);
                         return;
                     }
                 });
@@ -947,8 +1001,15 @@
                 from { transform: translateX(0); opacity: 1; }
                 to { transform: translateX(100%); opacity: 0; }
             }
-            .btn-reset-price:hover { background: var(--primary) !important; color: white !important; }
-            .rabbit-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+            .btn-reset-price:hover {
+                background: var(--primary) !important;
+                color: white !important;
+            }
+            .rabbit-card:hover {
+                border-color: var(--primary);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
         `;
                     document.head.appendChild(animationStyle);
                 }
@@ -971,7 +1032,9 @@
                     document.getElementById('submitBtn').disabled = true;
 
                     // Show welcome toast
-                    showToast('💡 Astuce: Définissez vos prix globaux pour gagner du temps!', 'info');
+                    showToast(
+                        '💡 Astuce: Sélectionnez des lapins et les prix globaux s\'appliqueront automatiquement!',
+                        'info');
 
                     // ✅ Calculate initial total
                     calculateTotalAmount();
@@ -992,6 +1055,7 @@
                 window.loadRabbits = loadRabbits;
                 window.initializePriceInputs = initializePriceInputs;
                 window.filterRabbits = filterRabbits;
+                window.restoreSelectedRabbits = restoreSelectedRabbits;
             })();
         </script>
     @endpush
