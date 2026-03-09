@@ -150,6 +150,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/femelles/{femelle}', [FemelleController::class, 'destroy'])->name('femelles.destroy');
         Route::patch('/femelles/{femelle}/toggle-etat', [FemelleController::class, 'toggleEtat'])->name('femelles.toggleEtat');
 
+
+
         // Saillies CRUD
         Route::get('/saillies', [SaillieController::class, 'index'])->name('saillies.index');
         Route::get('/saillies/create', [SaillieController::class, 'create'])->name('saillies.create');

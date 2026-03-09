@@ -5,6 +5,14 @@
 @section('content')
     <div class="page-header">
         <div>
+            <form action="{{ route('femelles.index') }}" method="GET" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" name="search" placeholder="Rechercher par code ou nom..." value="{{ request('search') }}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc;">
+                <button type="submit" style="padding: 5px 15px; border-radius: 5px; background: #007bff; color: white; border: none;">Rechercher</button>
+                @if(request('search'))
+                    <a href="{{ route('femelles.index') }}" style="color: red; text-decoration: none; align-self: center;">Effacer</a>
+                @endif
+            </form>
+
             <h2 class="page-title">
                 <i class="bi bi-arrow-down-right-square"></i>
                 Gestion des Femelles
@@ -86,12 +94,15 @@
                         @empty
                             <tr>
                                 <td colspan="7">
-                                    <div class="table-empty-state">
-                                        <i class="bi bi-inbox"></i>
-                                        <p>Aucune femelle enregistré pour le moment</p>
-                                        <a href="{{ route('femelles.create') }}" class="btn-cuni primary">
-                                            <i class="bi bi-plus-lg"></i> Ajouter une femelle
-                                        </a>
+                                    <div class="py-4 text-center">
+                                        @if(request('search'))
+                                            <p>Aucune femelle ne correspond à votre recherche "<strong>{{ request('search') }}</strong>"</p>
+                                        @else
+                                            <p>Aucune femelle enregistrée pour le moment</p>
+                                            <a href="{{ route('femelles.create') }}" class="btn-cuni primary">
+                                                <i class="bi bi-plus-lg"></i> Ajouter une femelle
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

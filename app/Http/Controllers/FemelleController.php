@@ -13,9 +13,19 @@ class FemelleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $femelles = Femelle::latest()->paginate(10);
+        $search = $request->input('search');
+        $query = Femelle::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('code', 'LIKE', "%{$search}%")
+                  ->orWhere('nom', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $femelles = $query->latest()->paginate(10)->withQueryString();
         return view('femelles.index', compact('femelles'));
     }
 
@@ -203,4 +213,5 @@ class FemelleController extends Controller
         $exists = Femelle::where('code', $request->code)->exists();
         return response()->json(['available' => !$exists]);
     }
+
 }
