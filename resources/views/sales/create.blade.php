@@ -117,7 +117,8 @@
                             <small style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block;">
                                 Défaut:
                                 {{ number_format(\App\Models\Setting::get('default_price_female', 30000), 0, ',', ' ') }}
-                                FCFA </small>
+                                FCFA
+                            </small>
                         </div>
                         {{-- Global Price: Lapereaux --}}
                         <div class="global-price-card"
@@ -134,7 +135,8 @@
                             <small style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block;">
                                 Défaut:
                                 {{ number_format(\App\Models\Setting::get('default_price_lapereau', 15000), 0, ',', ' ') }}
-                                FCFA </small>
+                                FCFA
+                            </small>
                         </div>
                     </div>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -443,7 +445,7 @@
                             delete customPrices[`${category}-${rabbitId}`];
                         }
 
-                        // Show/hide price container based on checkbox state
+                        // ✅ FIX: Show/hide price container based on checkbox state
                         priceContainer.style.display = checkbox.checked ? 'block' : 'none';
 
                         if (checkbox.checked && priceInput) {
@@ -528,7 +530,8 @@
                                 `.rabbit-price[data-category="${category}"][data-rabbit-id="${rabbitId}"]`
                             );
                             const indicator = document.getElementById(
-                                `price-indicator-${category}-${rabbitId}`);
+                                `price-indicator-${category}-${rabbitId}`
+                            );
                             const priceContainer = document.getElementById(`price-${category}-${rabbitId}`);
 
                             if (priceInput) {
@@ -541,14 +544,12 @@
                                 priceInput.value = globalPrice;
                                 priceInput.style.borderColor = 'var(--accent-green)';
                                 priceInput.style.backgroundColor = 'var(--primary-subtle)';
-
                                 if (indicator) {
                                     indicator.style.display = 'block';
                                 }
 
                                 // Remove from custom prices
                                 delete customPrices[`${category}-${rabbitId}`];
-
                                 appliedCount++;
                             }
                         });
@@ -561,7 +562,8 @@
                                 `.rabbit-price[data-category="${category}"][data-rabbit-id="${rabbitId}"]`
                             );
                             const indicator = document.getElementById(
-                                `price-indicator-${category}-${rabbitId}`);
+                                `price-indicator-${category}-${rabbitId}`
+                            );
 
                             if (priceInput && priceInput.value != globalPrice) {
                                 priceInput.value = globalPrice;
@@ -801,6 +803,88 @@
                 }
 
                 // ============================================
+                // LOAD MORE RABBITS (AJAX Pagination) - ✅ FIXED & EXPOSED
+                // ============================================
+                function loadMoreRabbits(button) {
+                    const type = button.dataset.type;
+                    const page = parseInt(button.dataset.page);
+                    const grid = document.getElementById(type + 'Grid');
+                    const paginationInfo = document.getElementById(type + 'PaginationInfo');
+
+                    if (!grid) return;
+
+                    button.disabled = true;
+                    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Chargement...';
+
+                    fetch('{{ route('sales.load-rabbits') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: type,
+                                page: page,
+                                search: document.getElementById('search' + type.charAt(0).toUpperCase() + type
+                                    .slice(1)).value || ''
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Append new cards to grid
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = data.html;
+
+                                tempDiv.querySelectorAll('.rabbit-card').forEach(card => {
+                                    grid.appendChild(card);
+                                });
+
+                                // Update pagination info
+                                if (paginationInfo) {
+                                    const totalCount = data.total_count || data.pagination.total;
+                                    paginationInfo.innerHTML =
+                                        `Page ${data.pagination.current_page} sur ${data.pagination.last_page} (${totalCount} ${type} au total)`;
+                                }
+
+                                // Update load more button or remove if last page
+                                const newLoadMoreBtn = tempDiv.querySelector('.load-more-btn');
+                                const oldLoadMoreBtn = button;
+
+                                if (newLoadMoreBtn) {
+                                    oldLoadMoreBtn.replaceWith(newLoadMoreBtn);
+                                } else {
+                                    oldLoadMoreBtn.remove();
+                                }
+
+                                // Re-initialize price inputs for new elements
+                                initializePriceInputs(type);
+
+                                // Restore selected state for newly loaded rabbits
+                                restoreSelectedRabbits(type);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading more rabbits:', error);
+                            showToast('Erreur lors du chargement', 'error');
+                        })
+                        .finally(() => {
+                            button.disabled = false;
+                            if (!button.classList.contains('load-more-btn')) {
+                                // Button was replaced, find the new one
+                                const newBtn = document.querySelector(`.load-more-btn[data-type="${type}"]`);
+                                if (newBtn) {
+                                    newBtn.disabled = false;
+                                    newBtn.innerHTML = '<i class="bi bi-plus-lg"></i> Charger plus';
+                                }
+                            } else {
+                                button.innerHTML = '<i class="bi bi-plus-lg"></i> Charger plus';
+                            }
+                        });
+                }
+
+                // ============================================
                 // CALCULATE TOTAL AMOUNT
                 // ============================================
                 function calculateTotalAmount() {
@@ -837,10 +921,11 @@
                     document.getElementById('selectedSummary').textContent = selectedCount + ' lapin(s) sélectionné(s)';
 
                     // Update total display
-                    document.getElementById('totalAmountDisplay').textContent = total.toLocaleString('fr-FR', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    }) + ' FCFA';
+                    document.getElementById('totalAmountDisplay').textContent =
+                        total.toLocaleString('fr-FR', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }) + ' FCFA';
 
                     // Show warning if prices are missing
                     const warningDiv = document.getElementById('quantityMismatchWarning');
@@ -931,11 +1016,11 @@
                     }, 3000);
                 }
 
-                // Add animation styles
+                // Add animation styles if not already present
                 if (!document.getElementById('cuniapp-animations-style')) {
-                    const animationStyle = document.createElement('style');
-                    animationStyle.id = 'cuniapp-animations-style';
-                    animationStyle.textContent = `
+                    const style = document.createElement('style');
+                    style.id = 'cuniapp-animations-style';
+                    style.textContent = `
             @keyframes slideInRight {
                 from { transform: translateX(100%); opacity: 0; }
                 to { transform: translateX(0); opacity: 1; }
@@ -950,7 +1035,7 @@
                 box-shadow: var(--shadow-md);
             }
         `;
-                    document.head.appendChild(animationStyle);
+                    document.head.appendChild(style);
                 }
 
                 // ============================================
@@ -977,7 +1062,9 @@
                     calculateTotalAmount();
                 });
 
-                // Expose functions to global scope
+                // ============================================
+                // EXPOSE FUNCTIONS TO GLOBAL SCOPE (CRITICAL FIX)
+                // ============================================
                 window.toggleSelectAll = toggleSelectAll;
                 window.debouncedSearch = debouncedSearch;
                 window.handleRabbitSelection = handleRabbitSelection;
@@ -990,6 +1077,10 @@
                 window.loadRabbits = loadRabbits;
                 window.initializePriceInputs = initializePriceInputs;
                 window.restoreSelectedRabbits = restoreSelectedRabbits;
+                window.loadMoreRabbits = loadMoreRabbits; // ✅ CRITICAL: Expose this function!
+                window.getCategoryFromType = getCategoryFromType;
+                window.getTypeFromCategory = getTypeFromCategory;
+
             })();
         </script>
     @endpush
