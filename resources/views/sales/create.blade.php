@@ -381,6 +381,19 @@
                     lapereaux: new Set()
                 };
 
+                // ============================================
+                // HELPER: Map category (singular) to Set key (plural)
+                // ============================================
+                function getSelectedRabbitsKey(category) {
+                    // French plural mapping
+                    const pluralMap = {
+                        'male': 'males',
+                        'female': 'females',
+                        'lapereau': 'lapereaux' // ← Critical fix: lapereau → lapereaux
+                    };
+                    return pluralMap[category] || category + 's';
+                }
+
                 // Initialize global price inputs
                 document.querySelectorAll('.global-price-input').forEach(input => {
                     input.addEventListener('change', function() {
@@ -511,19 +524,36 @@
                 }
 
                 // ✅ FIXED: Apply global prices to ALL currently selected rabbits (across all pages)
+                // ✅ FIXED: Apply global prices to ALL currently selected rabbits (across all pages)
                 function applyGlobalPricesToAll() {
                     let count = 0;
 
-                    ['males', 'females', 'lapereaux'].forEach(category => {
-                        const categoryShort = category.replace('s', '');
+                    // ✅ FIXED: Use correct category mappings
+                    const categories = [{
+                            singular: 'male',
+                            plural: 'males'
+                        },
+                        {
+                            singular: 'female',
+                            plural: 'females'
+                        },
+                        {
+                            singular: 'lapereau',
+                            plural: 'lapereaux'
+                        } // ← Critical fix
+                    ];
 
+                    categories.forEach(({
+                        singular,
+                        plural
+                    }) => {
                         // Apply to ALL selected rabbits (including those not currently visible)
-                        selectedRabbits[category].forEach(rabbitId => {
+                        selectedRabbits[plural].forEach(rabbitId => {
                             const priceInput = document.querySelector(
-                                `.rabbit-price[data-category="${categoryShort}"][data-rabbit-id="${rabbitId}"]`
+                                `.rabbit-price[data-category="${singular}"][data-rabbit-id="${rabbitId}"]`
                             );
                             const indicator = document.getElementById(
-                                `price-indicator-${categoryShort}-${rabbitId}`
+                                `price-indicator-${singular}-${rabbitId}`
                             );
 
                             if (priceInput) {
@@ -533,7 +563,7 @@
                                     priceContainer.style.display = 'block';
                                 }
 
-                                priceInput.value = globalPrices[categoryShort];
+                                priceInput.value = globalPrices[singular];
                                 priceInput.style.borderColor = 'var(--accent-green)';
                                 priceInput.style.backgroundColor = 'var(--primary-subtle)';
 
@@ -541,7 +571,7 @@
                                     indicator.style.display = 'block';
                                 }
 
-                                delete customPrices[`${categoryShort}-${rabbitId}`];
+                                delete customPrices[`${singular}-${rabbitId}`];
                                 count++;
                             }
                         });
@@ -558,16 +588,18 @@
 
                 // Apply global prices to selected rabbits in specific category
                 function applyGlobalPricesToSelected(category) {
-                    const categoryShort = category.replace('s', '');
+                    // ✅ FIXED: Get correct Set key
+                    const setKey = getSelectedRabbitsKey(category);
+
                     const checkboxes = document.querySelectorAll(`input[name="selected_${category}[]"]:checked`);
                     let count = 0;
 
                     checkboxes.forEach(checkbox => {
                         const rabbitId = checkbox.value;
                         const priceInput = document.querySelector(
-                            `.rabbit-price[data-category="${categoryShort}"][data-rabbit-id="${rabbitId}"]`
+                            `.rabbit-price[data-category="${category}"][data-rabbit-id="${rabbitId}"]`
                         );
-                        const indicator = document.getElementById(`price-indicator-${categoryShort}-${rabbitId}`);
+                        const indicator = document.getElementById(`price-indicator-${category}-${rabbitId}`);
 
                         if (priceInput) {
                             // ✅ Make sure container is visible
@@ -576,13 +608,11 @@
                                 priceContainer.style.display = 'block';
                             }
 
-                            priceInput.value = globalPrices[categoryShort];
-
+                            priceInput.value = globalPrices[category] || 0;
                             if (indicator) {
                                 indicator.style.display = 'block';
                             }
-
-                            delete customPrices[`${categoryShort}-${rabbitId}`];
+                            delete customPrices[`${category}-${rabbitId}`];
                             count++;
                         }
                     });
@@ -712,8 +742,17 @@
 
                 // ✅ Restore selected state after AJAX load
                 function restoreSelectedRabbits(type) {
-                    const category = type.replace('s', '');
-                    selectedRabbits[type].forEach(rabbitId => {
+                    // Convert type (e.g., "males") to singular category (e.g., "male")
+                    const categoryMap = {
+                        'males': 'male',
+                        'females': 'female',
+                        'lapereaux': 'lapereau' // ← Critical fix
+                    };
+
+                    const category = categoryMap[type] || type.replace('s', '');
+                    const setKey = getSelectedRabbitsKey(category); // ✅ Use helper
+
+                    selectedRabbits[setKey].forEach(rabbitId => {
                         const checkbox = document.querySelector(
                             `input[name="selected_${type}[]"][value="${rabbitId}"]`
                         );
