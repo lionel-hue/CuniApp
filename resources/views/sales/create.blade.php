@@ -422,7 +422,7 @@
                     const indicator = document.getElementById(`price-indicator-${category}-${rabbitId}`);
 
                     if (checkbox && priceContainer) {
-                        // ✅ FIX: Get correct key for selectedRabbits
+                        // ✅ FIX: Get correct key for selectedRabbits (French plural mapping)
                         const rabbitsKey = category === 'lapereau' ? 'lapereaux' : category + 's';
 
                         // Track selection across pagination
@@ -438,10 +438,13 @@
 
                         if (checkbox.checked && priceInput) {
                             const customKey = `${category}-${rabbitId}`;
+
+                            // Restore custom price if previously set
                             if (customPrices[customKey] !== undefined) {
                                 priceInput.value = customPrices[customKey];
                                 markPriceAsCustom(category, rabbitId);
                             } else {
+                                // Apply global price by default
                                 priceInput.value = globalPrices[category] || 0;
                                 if (indicator) {
                                     indicator.style.display = 'block';
@@ -451,6 +454,8 @@
                             priceInput.classList.remove('error');
                         }
                     }
+
+                    // Recalculate total amount
                     calculateTotalAmount();
                 }
 
@@ -843,8 +848,17 @@
                 // ============================================
                 // 3. TOGGLE SELECT ALL
                 // ============================================
-                function toggleSelectAll(category, select = true) {
-                    const grid = document.getElementById(category + 'Grid');
+                // ✅ FIXED: Proper plural-to-singular mapping
+                function toggleSelectAll(type, select = true) {
+                    // Map plural tab type to singular category for handleRabbitSelection
+                    const categoryMap = {
+                        'males': 'male',
+                        'females': 'female',
+                        'lapereaux': 'lapereau'
+                    };
+                    const category = categoryMap[type] || type.replace(/s$/, ''); // fallback
+
+                    const grid = document.getElementById(type + 'Grid');
                     const checkboxes = grid.querySelectorAll('.rabbit-checkbox');
 
                     checkboxes.forEach(checkbox => {
@@ -852,10 +866,9 @@
                         if (checkbox.closest('.rabbit-card').style.display !== 'none') {
                             checkbox.checked = select;
                             const rabbitId = checkbox.value;
-                            handleRabbitSelection(category.replace('s', ''), rabbitId);
+                            handleRabbitSelection(category, rabbitId); // ✅ Pass correct singular category
                         }
                     });
-
                     calculateTotalAmount();
                 }
 
