@@ -247,7 +247,7 @@
             .theme-dark .text-muted {
                 color: #9CA3AF !important;
             }
-
+    
             .theme-dark .fw-semibold {
                 color: #E5E7EB !important;
             }
