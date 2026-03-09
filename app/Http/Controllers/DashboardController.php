@@ -22,28 +22,23 @@ class DashboardController extends Controller
 
         // Chiffre d'affaires
         try {
-            // Total CA (ventes payées uniquement)
             $totalRevenue = Sale::where('payment_status', 'paid')->sum('total_amount');
 
-            // CA de la semaine actuelle (pour le pourcentage)
             $startOfWeek = Carbon::now()->startOfWeek();
             $endOfWeek = Carbon::now()->endOfWeek();
             $revenueThisWeek = Sale::where('payment_status', 'paid')
                 ->whereBetween('date_sale', [$startOfWeek, $endOfWeek])
                 ->sum('total_amount');
 
-            // CA de la semaine dernière
             $startLastWeek = Carbon::now()->subWeek()->startOfWeek();
             $endLastWeek = Carbon::now()->subWeek()->endOfWeek();
             $revenueLastWeek = Sale::where('payment_status', 'paid')
                 ->whereBetween('date_sale', [$startLastWeek, $endLastWeek])
                 ->sum('total_amount');
 
-            // Calcul du pourcentage d'évolution du CA
             $revenuePercent = $revenueLastWeek > 0
                 ? (($revenueThisWeek - $revenueLastWeek) / $revenueLastWeek) * 100
                 : ($revenueThisWeek > 0 ? 100 : 0);
-
         } catch (\Exception $e) {
             $totalRevenue = 0;
             $revenuePercent = 0;
@@ -53,6 +48,7 @@ class DashboardController extends Controller
             'change' => ($revenuePercent >= 0 ? '+' : '') . number_format($revenuePercent, 1) . '%',
             'trend' => $revenuePercent > 0 ? 'up' : ($revenuePercent < 0 ? 'down' : 'neutral'),
         ];
+
         // Calcul des pourcentages d'évolution
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
@@ -73,26 +69,17 @@ class DashboardController extends Controller
         $males = Male::latest()->paginate(10);
         $femelles = Femelle::latest()->paginate(10);
 
-
-        // Événements pour le calendrier
+        // ✅ ÉVÉNEMENTS POUR LE CALENDRIER - FIX APPLIQUÉ
         $events = [
             // Saillies (violet)
             'saillies' => Saillie::with(['femelle', 'male'])
                 ->select('id', 'date_saillie', 'femelle_id', 'male_id')
                 ->get()
                 ->map(function ($saillie) {
-                    $nomFemelle = $saillie->femelle?->nom
-                        ?? $saillie->femelle?->tag
-                        ?? $saillie->femelle?->name
-                        ?? "F#{$saillie->femelle_id}";
-                    $nomMale = $saillie->male?->nom
-                        ?? $saillie->male?->tag
-                        ?? $saillie->male?->name
-                        ?? "M#{$saillie->male_id}";
+                    $nomFemelle = $saillie->femelle?->nom ?? $saillie->femelle?->tag ?? $saillie->femelle?->name ?? "F#{$saillie->femelle_id}";
+                    $nomMale = $saillie->male?->nom ?? $saillie->male?->tag ?? $saillie->male?->name ?? "M#{$saillie->male_id}";
                     return [
-                        'date' => $saillie->date_saillie
-                            ? \Carbon\Carbon::parse($saillie->date_saillie)->format('Y-m-d')
-                            : null,
+                        'date' => $saillie->date_saillie ? \Carbon\Carbon::parse($saillie->date_saillie)->format('Y-m-d') : null,
                         'label' => "{$nomFemelle} × {$nomMale}",
                         'saillie_id' => $saillie->id,
                     ];
@@ -100,36 +87,30 @@ class DashboardController extends Controller
                 ->filter(fn($e) => $e['date'] !== null)
                 ->toArray(),
 
-            // ✅ Naissances (vert) → SEULEMENT si nb_vivant > 0
-            'naissances' => \App\Models\Naissance::select('id', 'date_naissance', 'femelle_id', 'nb_vivant')
-                ->with('femelle')
-                ->whereNotNull('date_naissance')
-                ->where('nb_vivant', '>', 0) // ✅ FILTRE : uniquement les vivants
+            // ✅ Naissances (vert) → FIX: Utiliser la relation miseBas
+            'naissances' => \App\Models\Naissance::with(['femelle', 'miseBas'])
+                ->whereHas('miseBas', fn($q) => $q->whereNotNull('date_mise_bas'))
+                ->where('nb_vivant', '>', 0)
                 ->get()
                 ->map(fn($n) => [
-                    'date' => \Carbon\Carbon::parse($n->date_naissance)->format('Y-m-d'),
-
+                    'date' => $n->date_naissance?->format('Y-m-d'), // Utilise l'accessor
                     'label' => sprintf('Naissance: %s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0)
                 ])
+                ->filter(fn($e) => $e['date'] !== null)
                 ->values()
                 ->toArray(),
 
-            //  Sexuations (bleu) → J+10, SEULEMENT si nb_vivant > 0
-            'sexuations' => \App\Models\Naissance::with('femelle')
-                ->whereNotNull('date_naissance')
-                ->where('nb_vivant', '>', 0) // ✅ FILTRE : uniquement les vivants
-                ->where('sex_verified', false) // Optionnel : seulement les non-vérifiées
+            // ✅ Sexuations (bleu) → J+10, FIX: Utiliser la relation miseBas
+            'sexuations' => \App\Models\Naissance::with(['femelle', 'miseBas'])
+                ->where('sex_verified', false)
+                ->where('nb_vivant', '>', 0)
+                ->whereHas('miseBas', fn($q) => $q->whereNotNull('date_mise_bas'))
                 ->get()
                 ->map(function ($n) {
-                    $nomAffiche = $n->femelle?->nom
-                        ?? $n->femelle?->tag
-                        ?? null;
-
+                    $nomAffiche = $n->femelle?->nom ?? $n->femelle?->tag ?? null;
                     return [
-                        'date' => \Carbon\Carbon::parse($n->date_naissance)->addDays(10)->format('Y-m-d'),
-                        'label' => $nomAffiche
-                            ? "Sexage: {$nomAffiche} (#{$n->id})"
-                            : "Sexage: Portée #{$n->id}",
+                        'date' => $n->date_naissance?->addDays(10)?->format('Y-m-d'), // Utilise l'accessor + addDays
+                        'label' => $nomAffiche ? "Sexage: {$nomAffiche} (#{$n->id})" : "Sexage: Portée #{$n->id}",
                         'type' => 'sexuation'
                     ];
                 })
@@ -141,7 +122,7 @@ class DashboardController extends Controller
         // Timeline d'activité dynamique
         $timelineActivities = collect();
 
-        //Récupérer les dernières NAISSANCES (vert) 
+        // Récupérer les dernières NAISSANCES (vert)
         $recentNaissances = Naissance::with('femelle')
             ->where('nb_vivant', '>', 0)
             ->latest('created_at')
@@ -149,17 +130,13 @@ class DashboardController extends Controller
             ->map(fn($n) => [
                 'type' => 'green',
                 'title' => 'Naissance enregistrée',
-                'desc' => sprintf(
-                    '%s (%d nés)',
-                    $n->femelle?->nom ?? 'Inconnue',
-                    $n->nb_vivant ?? 0
-                ),
+                'desc' => sprintf('%s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0),
                 'time' => Carbon::parse($n->created_at)->diffForHumans(),
                 'date' => $n->created_at,
-                'url' => route('naissances.show', $n->id) ?? '#', // ✅ Route vers Naissance
+                'url' => route('naissances.show', $n->id) ?? '#',
             ]);
 
-        // Récupérer les dernières saillies (violet) → inchangé
+        // Récupérer les dernières saillies (violet)
         $recentSaillies = Saillie::with('femelle', 'male')
             ->latest('date_saillie')
             ->limit(1)
@@ -167,15 +144,13 @@ class DashboardController extends Controller
             ->map(fn($s) => [
                 'type' => 'purple',
                 'title' => 'Saillie programmée',
-                'desc' => ($s->femelle?->nom ?? "F#{$s->femelle_id}") .
-                    ' × ' .
-                    ($s->male?->nom ?? "M#{$s->male_id}"),
+                'desc' => ($s->femelle?->nom ?? "F#{$s->femelle_id}") . ' × ' . ($s->male?->nom ?? "M#{$s->male_id}"),
                 'time' => Carbon::parse($s->created_at)->diffForHumans(),
                 'date' => $s->created_at,
                 'url' => route('saillies.show', $s->id) ?? '#',
             ]);
 
-        // Dernières ventes (bleu) → inchangé
+        // Dernières ventes (bleu)
         $recentSales = Sale::latest('created_at')
             ->limit(1)
             ->get()
@@ -194,21 +169,15 @@ class DashboardController extends Controller
             ->get()
             ->map(fn($m) => [
                 'type' => 'amber',
-                'title' => ' Mise bas enregistrée',
-                'desc' => sprintf(
-                    '%s : %d lapereaux',
-                    $m->saillie?->femelle?->nom ?? 'Inconnue',
-                    $m->nb_vivant + ($m->nb_mort_ne ?? 0)
-                ),
+                'title' => 'Mise bas enregistrée',
+                'desc' => sprintf('%s : %d lapereaux', $m->saillie?->femelle?->nom ?? 'Inconnue', $m->nb_vivant + ($m->nb_mort_ne ?? 0)),
                 'time' => Carbon::parse($m->created_at)->diffForHumans(),
                 'date' => $m->created_at,
                 'url' => route('mises-bas.show', $m->id),
             ]);
 
-        // Nouveaux Lapins (AJOUT) - Mâles et Femelles
-        $nouveauxMales = Male::latest('created_at')
-            ->limit(1)
-            ->get()
+        // Nouveaux Lapins
+        $nouveauxMales = Male::latest('created_at')->limit(1)->get()
             ->map(fn($m) => [
                 'type' => 'cyan',
                 'title' => 'Mâle enregistré',
@@ -218,9 +187,7 @@ class DashboardController extends Controller
                 'url' => route('males.show', $m->id),
             ]);
 
-        $nouvellesFemelles = Femelle::latest('created_at')
-            ->limit(1)
-            ->get()
+        $nouvellesFemelles = Femelle::latest('created_at')->limit(1)->get()
             ->map(fn($f) => [
                 'type' => 'cyan',
                 'title' => 'Femelle enregistrée',
@@ -232,8 +199,7 @@ class DashboardController extends Controller
 
         $nouveauxLapins = collect([...$nouveauxMales, ...$nouvellesFemelles]);
 
-
-        // Fusionner, trier par date décroissante et limiter à 6 items
+        // Fusionner, trier et limiter
         $timelineActivities = collect([
             ...$recentNaissances->toArray(),
             ...$recentSaillies->toArray(),
@@ -244,8 +210,6 @@ class DashboardController extends Controller
             ->sortByDesc('date')
             ->take(5)
             ->values();
-
-
 
         return view('dashboard', compact(
             'nbMales',
@@ -268,6 +232,4 @@ class DashboardController extends Controller
             'salesStats'
         ));
     }
-
-
 }
