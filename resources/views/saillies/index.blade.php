@@ -64,6 +64,8 @@
                                 </td>
                                 <td class="pe-4">
                                     <div class="d-flex justify-content-end gap-2">
+                                          <a href="{{ route('saillies.show', $s->id) }}" class="btn-cuni sm secondary"
+                                            title="Détails"><i class="bi bi-eye"></i></a>
                                         <a href="{{ route('saillies.edit', $s) }}" class="btn-cuni sm secondary"
                                             title="Modifier">
                                             <i class="bi bi-pencil"></i>
