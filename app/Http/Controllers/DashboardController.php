@@ -87,29 +87,29 @@ class DashboardController extends Controller
                 ->filter(fn($e) => $e['date'] !== null)
                 ->toArray(),
 
-            // ✅ Naissances (vert) → FIX: Utiliser la relation miseBas
+            // ✅ Naissances (vert) → FIX: Utiliser la relation lapereaux
             'naissances' => \App\Models\Naissance::with(['femelle', 'miseBas'])
                 ->whereHas('miseBas', fn($q) => $q->whereNotNull('date_mise_bas'))
-                ->where('nb_vivant', '>', 0)
+                ->whereHas('lapereaux', fn($q) => $q->where('etat', 'vivant')) // ← Filtrage via relation
                 ->get()
                 ->map(fn($n) => [
-                    'date' => $n->date_naissance?->format('Y-m-d'), // Utilise l'accessor
+                    'date' => $n->date_naissance?->format('Y-m-d'),
                     'label' => sprintf('Naissance: %s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0)
                 ])
                 ->filter(fn($e) => $e['date'] !== null)
                 ->values()
                 ->toArray(),
 
-            // ✅ Sexuations (bleu) → J+10, FIX: Utiliser la relation miseBas
+            // ✅ Sexuations (bleu) → J+10, FIX: Utiliser la relation lapereaux
             'sexuations' => \App\Models\Naissance::with(['femelle', 'miseBas'])
                 ->where('sex_verified', false)
-                ->where('nb_vivant', '>', 0)
+                ->whereHas('lapereaux', fn($q) => $q->where('etat', 'vivant')) // ← Filtrage via relation
                 ->whereHas('miseBas', fn($q) => $q->whereNotNull('date_mise_bas'))
                 ->get()
                 ->map(function ($n) {
                     $nomAffiche = $n->femelle?->nom ?? $n->femelle?->tag ?? null;
                     return [
-                        'date' => $n->date_naissance?->addDays(10)?->format('Y-m-d'), // Utilise l'accessor + addDays
+                        'date' => $n->date_naissance?->addDays(10)?->format('Y-m-d'),
                         'label' => $nomAffiche ? "Sexage: {$nomAffiche} (#{$n->id})" : "Sexage: Portée #{$n->id}",
                         'type' => 'sexuation'
                     ];
@@ -122,15 +122,15 @@ class DashboardController extends Controller
         // Timeline d'activité dynamique
         $timelineActivities = collect();
 
-        // Récupérer les dernières NAISSANCES (vert)
+        // ✅ Récupérer les dernières NAISSANCES (vert) → FIX: Utiliser la relation lapereaux
         $recentNaissances = Naissance::with('femelle')
-            ->where('nb_vivant', '>', 0)
+            ->whereHas('lapereaux', fn($q) => $q->where('etat', 'vivant')) // ← Filtrage via relation
             ->latest('created_at')
             ->get()
             ->map(fn($n) => [
                 'type' => 'green',
                 'title' => 'Naissance enregistrée',
-                'desc' => sprintf('%s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0),
+                'desc' => sprintf('%s (%d nés)', $n->femelle?->nom ?? 'Inconnue', $n->nb_vivant ?? 0), // ← L'accessor fonctionne toujours
                 'time' => Carbon::parse($n->created_at)->diffForHumans(),
                 'date' => $n->created_at,
                 'url' => route('naissances.show', $n->id) ?? '#',
