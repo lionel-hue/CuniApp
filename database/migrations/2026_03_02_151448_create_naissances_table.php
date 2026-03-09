@@ -44,9 +44,7 @@ return new class extends Migration
             
             // Tracking
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->boolean('is_archived')->default(false);
-            $table->timestamp('archived_at')->nullable();
-            
+    
             $table->timestamps();
             
             // Indexes for performance

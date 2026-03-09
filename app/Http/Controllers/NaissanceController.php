@@ -18,7 +18,6 @@ class NaissanceController extends Controller
     public function index(Request $request)
     {
         $query = Naissance::with(['miseBas.femelle', 'lapereaux'])
-            ->active()
             ->latest();
 
         // ✅ Search functionality
@@ -43,9 +42,8 @@ class NaissanceController extends Controller
         $naissances = $query->paginate(15);
 
         $stats = [
-            'total' => Naissance::active()->count(),
-            'this_month' => Naissance::active()
-                ->whereHas(
+            'total' => Naissance::count(),
+            'this_month' => Naissance::whereHas(
                     'miseBas',
                     fn($q) =>
                     $q->whereMonth('date_mise_bas', now()->month)
@@ -116,7 +114,8 @@ class NaissanceController extends Controller
             'rabbits.*.poids_naissance' => 'nullable|numeric|min:0|max:200',
             'rabbits.*.etat_sante' => 'nullable|in:Excellent,Bon,Moyen,Faible',
             'rabbits.*.observations' => 'nullable|string|max:500',
-            'rabbits.*.code' => 'nullable|string|max:20|unique:lapereaux,code',
+            // ✅ FIXED: Only validate uniqueness if code is provided
+            'rabbits.*.code' => 'nullable|string|max:20',
         ];
 
         $validated = array_merge($validated, $request->validate($rabbitsRules));
@@ -152,7 +151,7 @@ class NaissanceController extends Controller
 
         // ✅ VALIDATION 5: Check for duplicate codes if manually entered
         foreach ($validated['rabbits'] as $index => $rabbit) {
-            if (!empty($rabbit['code'])) {
+            if (!empty($rabbit['code']) && $rabbit['code'] !== 'Auto-généré') {
                 if (!Lapereau::isCodeUnique($rabbit['code'])) {
                     $errors[] = "Le code '{$rabbit['code']}' pour le lapereau #" . ($index + 1) . " existe déjà.";
                 }
@@ -176,7 +175,7 @@ class NaissanceController extends Controller
         try {
             // ✅ Create Naissance record (NO femelle_id - comes through mise_bas)
             $naissance = Naissance::create(array_merge($validated, [
-                'user_id' => auth()->id(), 
+                'user_id' => auth()->id(),
             ]));
 
             // ✅ Create Individual Lapereaux
@@ -255,11 +254,20 @@ class NaissanceController extends Controller
         $naissance->load(['miseBas.femelle', 'lapereaux']);
         $canVerifySex = $naissance->can_verify_sex;
 
+        // ✅ ADD THIS: Calculate days until sex verification is allowed
+        $daysUntilVerification = max(0, 10 - $naissance->jours_depuis_naissance);
+
         // ✅ Get max allowed from mise_bas
         $maxAllowed = $naissance->max_allowed_lapereaux;
         $currentCount = $naissance->lapereaux()->count();
 
-        return view('naissances.edit', compact('naissance', 'canVerifySex', 'maxAllowed', 'currentCount'));
+        return view('naissances.edit', compact(
+            'naissance',
+            'canVerifySex',
+            'daysUntilVerification',  // ✅ ADD THIS
+            'maxAllowed',
+            'currentCount'
+        ));
     }
 
     public function update(Request $request, Naissance $naissance)
@@ -396,17 +404,5 @@ class NaissanceController extends Controller
 
         return redirect()->route('naissances.index')
             ->with('success', 'Naissance supprimée !');
-    }
-
-    public function archive(Naissance $naissance)
-    {
-        $naissance->update(['is_archived' => true, 'archived_at' => now()]);
-        return back()->with('success', 'Naissance archivée !');
-    }
-
-    public function restore(Naissance $naissance)
-    {
-        $naissance->update(['is_archived' => false, 'archived_at' => null]);
-        return back()->with('success', 'Naissance restaurée !');
     }
 }
