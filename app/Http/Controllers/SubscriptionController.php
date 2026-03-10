@@ -39,14 +39,14 @@ class SubscriptionController extends Controller
     public function create(Request $request)
     {
         $planId = $request->query('plan_id');
-        
+
         if (!$planId) {
             return redirect()->route('subscription.plans')
                 ->with('error', 'Veuillez sélectionner un plan d\'abonnement.');
         }
 
         $plan = SubscriptionPlan::findOrFail($planId);
-        
+
         if (!$plan->is_active) {
             return redirect()->route('subscription.plans')
                 ->with('error', 'Ce plan n\'est plus disponible.');
@@ -121,7 +121,6 @@ class SubscriptionController extends Controller
             return redirect()->route('payment.initiate', [
                 'transaction_id' => $transaction->transaction_id
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('subscription.plans')
@@ -136,7 +135,7 @@ class SubscriptionController extends Controller
     {
         $user = Auth::user();
         $subscription = $user->activeSubscription();
-        
+
         $allSubscriptions = Subscription::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -177,11 +176,11 @@ class SubscriptionController extends Controller
                 'user_id' => $user->id,
                 'subscription_plan_id' => $plan->id,
                 'status' => 'pending',
-                'start_date' => $subscription->end_date->isFuture() 
-                    ? $subscription->end_date 
+                'start_date' => $subscription->end_date->isFuture()
+                    ? $subscription->end_date
                     : now(),
-                'end_date' => ($subscription->end_date->isFuture() 
-                    ? $subscription->end_date 
+                'end_date' => ($subscription->end_date->isFuture()
+                    ? $subscription->end_date
                     : now())->addMonths($plan->duration_months),
                 'price' => $plan->price,
                 'payment_method' => $request->payment_method,
@@ -205,7 +204,6 @@ class SubscriptionController extends Controller
             return redirect()->route('payment.initiate', [
                 'transaction_id' => $transaction->transaction_id
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('subscription.status')
@@ -251,7 +249,6 @@ class SubscriptionController extends Controller
 
             return redirect()->route('subscription.status')
                 ->with('success', 'Votre abonnement a été annulé. Vous aurez accès jusqu\'à la fin de la période payée.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('subscription.status')
