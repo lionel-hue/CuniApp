@@ -344,38 +344,61 @@ class CuniAppDatabaseSeeder extends Seeder
     /**
      * Seed births (mises bas)
      */
-    private function seedMisesBas(): void
+    protected function seedMisesBas(): void
     {
-        $this->command->info('🥚 Seeding Births (Mises Bas)...');
+        $this->command->getOutput()->writeln("\n🥚 Seeding Births (Mises Bas)...");
 
-        $saillies = Saillie::where('palpation_resultat', '+')->get();
         $femelles = Femelle::all();
+        $saillies = Saillie::all();
 
-        $misesBas = [];
-        for ($i = 1; $i <= 250; $i++) {
-            $dateMiseBas = now()->subDays(rand(1, 300));
-            $nbVivant = rand(4, 12);
-            $nbMortNe = rand(0, 3);
-
-            $misesBas[] = [
+        for ($i = 0; $i < 300; $i++) {
+            // Create Mise Bas (without count columns)
+            $miseBas = MiseBas::create([
                 'femelle_id' => $femelles->random()->id,
-                'saillie_id' => $saillies->isNotEmpty() ? $saillies->random()->id : null,
-                'date_mise_bas' => $dateMiseBas,
-                'nb_vivant' => $nbVivant,
-                'nb_mort_ne' => $nbMortNe,
-                'nb_retire' => 0,
-                'nb_adopte' => 0,
-                'date_sevrage' => $dateMiseBas->copy()->addWeeks(6),
-                'poids_moyen_sevrage' => rand(500, 800) / 1000,
-                'created_at' => $dateMiseBas,
-                'updated_at' => now(),
-            ];
+                'saillie_id' => $saillies->random()->id,
+                'date_mise_bas' => fake()->dateTimeBetween('-1 year', 'now'),
+                'date_sevrage' => fake()->dateTimeBetween('+1 month', '+2 months'),
+                'poids_moyen_sevrage' => fake()->randomFloat(2, 0.4, 0.9),
+            ]);
+
+            // ✅ Create related Naissance with Lapereaux to generate counts
+            $naissance = Naissance::create([
+                'mise_bas_id' => $miseBas->id,
+                'user_id' => User::inRandomOrder()->first()->id,
+                'etat_sante' => fake()->randomElement(['Excellent', 'Bon', 'Moyen', 'Faible']),
+                'poids_moyen_naissance' => fake()->randomFloat(2, 40, 90),
+                'date_sevrage_prevue' => $miseBas->date_sevrage,
+            ]);
+
+            // Create individual Lapereaux (this populates the counts)
+            $nbVivant = fake()->numberBetween(4, 10);
+            $nbMort = fake()->numberBetween(0, 2);
+
+            for ($j = 0; $j < $nbVivant; $j++) {
+                Lapereau::create([
+                    'naissance_id' => $naissance->id,
+                    'code' => Lapereau::generateUniqueCode(),
+                    'nom' => fake()->firstName,
+                    'sex' => fake()->randomElement(['male', 'female']),
+                    'etat' => 'vivant',
+                    'poids_naissance' => fake()->randomFloat(2, 40, 80),
+                    'etat_sante' => 'Bon',
+                ]);
+            }
+
+            for ($j = 0; $j < $nbMort; $j++) {
+                Lapereau::create([
+                    'naissance_id' => $naissance->id,
+                    'code' => Lapereau::generateUniqueCode(),
+                    'nom' => null,
+                    'sex' => null,
+                    'etat' => 'mort',
+                    'poids_naissance' => fake()->randomFloat(2, 30, 60),
+                    'etat_sante' => 'Faible',
+                ]);
+            }
         }
-
-        MiseBas::insert($misesBas);
-
-        $this->command->line('   ✓ <fg=green>250 births created</fg=green>');
-        $this->command->info('');
+        $this->command->getOutput()->writeln("   ✓ 300 mises bas created with related naissances");
     }
 
     /**
