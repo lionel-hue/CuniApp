@@ -443,44 +443,36 @@ class CuniAppDatabaseSeeder extends Seeder
     /**
      * Seed baby rabbits (lapereaux)
      */
-    protected function seedLapereaux(): void
+    private function seedLapereaux(): void
     {
-        $this->command->info("\n🐇 Seeding Baby Rabbits (Lapereaux)...");
+        $this->command->info('🐇 Seeding Baby Rabbits (Lapereaux)...');
 
-        $naissances = \App\Models\Naissance::with('miseBas')->get();
-        $lapereauxData = [];
-        $codeCounter = 1; // Manual counter for seeding
-        $year = date('Y');
+        $naissanceIds = \App\Models\Naissance::pluck('id')->toArray();
+        $healthStates = ['Excellent', 'Bon', 'Moyen', 'Faible'];
+        $etats = ['vivant', 'vendu', 'mort'];
 
-        foreach ($naissances as $naissance) {
-            $nbLapereaux = rand(3, 10);
+        for ($i = 0; $i < 500; $i++) {
+            \App\Models\Lapereau::create([
+                'naissance_id' => $naissanceIds[array_rand($naissanceIds)],
+                'code' => \App\Models\Lapereau::generateUniqueCode(),
+                'nom' => "Lapin #" . ($i + 1),
+                'sex' => ['male', 'female'][array_rand(['male', 'female'])],
+                'etat' => $etats[array_rand($etats)],
+                'poids_naissance' => rand(40, 90),
+                'etat_sante' => $healthStates[array_rand($healthStates)],
+                'observations' => rand(0, 1) ? Str::random(30) : null,
+                'categorie' => ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'][array_rand(['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'])],
+                'alimentation_jour' => round(rand(5, 25) / 100, 2),
+                'alimentation_semaine' => round(rand(35, 175) / 100, 2),
+            ]);
 
-            for ($i = 0; $i < $nbLapereaux; $i++) {
-                // ✅ Pre-generate unique code without DB query
-                $code = sprintf('LAP-%s-%04d', $year, $codeCounter++);
-
-                $lapereauxData[] = [
-                    'naissance_id' => $naissance->id,
-                    'code' => $code, // Use pre-generated code
-                    'nom' => "Lapereau {$code}",
-                    'sex' => ['male', 'female'][array_rand(['male', 'female'])],
-                    'etat' => ['vivant', 'vendu', 'mort', 'archivé'][array_rand(['vivant', 'vendu', 'mort', 'archivé'])],
-                    'poids_naissance' => rand(40, 80),
-                    'etat_sante' => ['Excellent', 'Bon', 'Moyen', 'Faible'][array_rand(['Excellent', 'Bon', 'Moyen', 'Faible'])],
-                    'observations' => "Lapereau en bonne santé - " . substr(md5(uniqid()), 0, 16),
-                    'categorie' => ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'][array_rand(['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'])],
-                    'alimentation_jour' => round(rand(50, 150) / 100, 2),
-                    'alimentation_semaine' => round(rand(300, 1000) / 100, 2),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+            if (($i + 1) % 100 === 0) {
+                $count = $i + 1;
+                $this->command->info("   → {$count}/500 lapereaux created...");
             }
         }
 
-        // ✅ Now bulk insert is safe since codes are pre-generated
-        \App\Models\Lapereau::insert(array_chunk($lapereauxData, 500));
-
-        $this->command->info("   ✓ " . count($lapereauxData) . " lapereaux created");
+        $this->command->info('   ✓ 500 lapereaux created');
     }
 
     /**
