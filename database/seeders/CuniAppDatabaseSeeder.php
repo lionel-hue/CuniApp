@@ -447,49 +447,51 @@ class CuniAppDatabaseSeeder extends Seeder
     {
         $this->command->info('🐇 Seeding Baby Rabbits (Lapereaux)...');
 
-        $naissances = Naissance::all();
-        $sexe = ['male', 'female'];
-        $etats = ['vivant', 'vendu', 'mort', 'archivé'];
-        $etatsSante = ['Excellent', 'Bon', 'Moyen', 'Faible'];
-        $categories = ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'];
-
-        $lapereaux = [];
-        $lapereauCount = 0;
+        // ✅ CORRECTION: Generate codes manually with counter (NOT using model's boot method)
+        $naissances = Naissance::with('miseBas')->get();
+        $codeCounter = 1;
+        $year = date('Y');
+        $batchSize = 100;
+        $lapereauxToCreate = [];
 
         foreach ($naissances as $naissance) {
-            $nbLapereaux = rand(4, 10);
+            // Get number of lapereaux for this birth (random 3-8 for seeding)
+            $nbLapereaux = rand(3, 8);
 
-            for ($j = 1; $j <= $nbLapereaux; $j++) {
-                $lapereauCount++;
-                $year = date('Y');
-                $code = "LAP-{$year}-" . str_pad($lapereauCount, 4, '0', STR_PAD_LEFT);
+            for ($i = 0; $i < $nbLapereaux; $i++) {
+                // ✅ Generate unique code manually (sequential, no DB query)
+                $code = sprintf('LAP-%s-%04d', $year, $codeCounter++);
 
-                $lapereaux[] = [
+                $lapereauxToCreate[] = [
                     'naissance_id' => $naissance->id,
-                    'code' => $code,
-                    'nom' => "Lapereau {$code}",
-                    'sex' => $sexe[array_rand($sexe)],
-                    'etat' => $etats[array_rand($etats)],
+                    'code' => $code, // ✅ Manual code generation
+                    'nom' => 'Lapereau ' . $code,
+                    'sex' => rand(0, 1) ? 'male' : 'female',
+                    'etat' => ['vivant', 'vendu', 'mort', 'archivé'][rand(0, 3)],
+                    'etat_sante' => ['Excellent', 'Bon', 'Moyen', 'Faible'][rand(0, 3)],
                     'poids_naissance' => rand(40, 80),
-                    'etat_sante' => $etatsSante[array_rand($etatsSante)],
-                    'observations' => "Lapereau en bonne santé - " . Str::random(15),
-                    'categorie' => $categories[array_rand($categories)],
-                    'alimentation_jour' => rand(50, 150) / 100,
-                    'alimentation_semaine' => rand(300, 1000) / 100,
-                    'created_at' => $naissance->created_at,
+                    'categorie' => ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'][rand(0, 3)],
+                    'alimentation_jour' => round(rand(50, 150) / 100, 2),
+                    'alimentation_semaine' => round(rand(300, 1000) / 100, 2),
+                    'observations' => 'Lapereau en bonne santé - ' . Str::random(16),
+                    'created_at' => now(),
                     'updated_at' => now(),
                 ];
+
+                // ✅ Batch insert every 100 records
+                if (count($lapereauxToCreate) >= $batchSize) {
+                    Lapereau::insert($lapereauxToCreate);
+                    $lapereauxToCreate = [];
+                }
             }
         }
 
-        // Insert in batches of 500
-        $chunks = array_chunk($lapereaux, 500);
-        foreach ($chunks as $chunk) {
-            Lapereau::insert($chunk);
+        // ✅ Insert remaining records
+        if (!empty($lapereauxToCreate)) {
+            Lapereau::insert($lapereauxToCreate);
         }
 
-        $this->command->line('   ✓ <fg=green>' . count($lapereaux) . ' baby rabbits created</fg=green>');
-        $this->command->info('');
+        $this->command->info('✓ ' . Lapereau::count() . ' lapereaux created');
     }
 
     /**
