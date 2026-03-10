@@ -19,7 +19,7 @@ class SubscriptionManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['activeSubscription.plan']);
+        $query = User::with(['activeSubscriptionRelation.plan']);
 
         // Filter by subscription status
         if ($request->has('status')) {
