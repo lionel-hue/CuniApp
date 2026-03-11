@@ -84,10 +84,24 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisteredUserController::class, 'store']);
 
     // Password Reset Flow
-    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    // Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    // Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    // Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    // Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+
+    // 🔐 Password Reset Flow - Noms de routes STANDARDS
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');  // ← Nom standard
+    
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');    // ← Nom standard
+    
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');    // ← Nom standard
+    
+    // ⚠️ IMPORTANT : 'password.store' et NON 'password.update'
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');    // ← Correspond au controller method
 
     // Email Verification Code System
     Route::post('/verification/code/verify', [EmailVerificationCodeController::class, 'verify'])->name('verification.code.verify');
@@ -466,3 +480,10 @@ Route::fallback(function () {
     }
     return response()->view('errors.404', ['path' => request()->path()], 404);
 })->name('fallback');
+
+
+
+// =====================================================
+// ✅ ROUTES D'AUTHENTIFICATION - MOT DE PASSE
+// =====================================================
+
