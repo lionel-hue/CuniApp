@@ -885,6 +885,8 @@
     <div class="cuniapp-dashboard">
 
 
+      
+
         <header class="dash-header">
             <div class="header-wrapper-dash">
                 <div class="brand-identity-dash">
@@ -991,7 +993,7 @@
                             'value' => number_format($totalRevenue, 0, ',', ' ') . ' FCFA', // ← Format avec devise
                             'label' => 'CA Total',
                             'type' => 'purple',
-                            'change' => $salesStats['change'],
+                            'change' => $salesStats['change'], 
                             'trend' => $salesStats['trend'],
                             'route' => 'sales.index',
                         ],
