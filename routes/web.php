@@ -162,8 +162,8 @@ Route::middleware('auth')->group(function () {
                 ->middleware(VerifyWebhookIp::class);
 
             // ✅ FEDAPAY CALLBACK (user redirect after payment)
-            Route::get('/payment/callback/fedapay', [PaymentController::class, 'callback'])
-                ->name('payment.callback.fedapay');
+            Route::get('/payment/callback/{provider}', [PaymentController::class, 'callback'])
+                ->name('payment.callback');  // ← Add 'payment.' prefix
 
             // ❌ REMOVE generic {provider} webhook route (no longer needed)
 

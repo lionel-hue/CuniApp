@@ -277,28 +277,58 @@ class PaymentController extends Controller
      * ✅ FEDAPAY CALLBACK (after payment completion)
      */
     // app/Http/Controllers/PaymentController.php - UPDATE callback() method
+    // app/Http/Controllers/PaymentController.php - UPDATE callback() method
     public function callback(Request $request)
     {
-        // FedaPay sends 'reference' not 'transaction_id'
-        $transactionId = $request->get('reference') ?? $request->get('transaction_id');
-        $status = $request->get('status') ?? $request->get('transaction_status');
+        Log::channel('webhooks')->info('FedaPay Callback received', [
+            'query' => $request->query(),
+            'ip' => $request->ip(),
+        ]);
+
+        // FedaPay sends 'reference' as primary identifier
+        $transactionId = $request->get('reference')
+            ?? $request->get('transaction_id')
+            ?? $request->get('id');
 
         if (!$transactionId) {
+            Log::channel('webhooks')->error('FedaPay Callback: Missing transaction reference');
             return redirect()->route('subscription.status')
                 ->with('error', 'Référence de transaction manquante');
         }
 
-        $transaction = PaymentTransaction::where('transaction_id', $transactionId)->firstOrFail();
+        $transaction = PaymentTransaction::where('transaction_id', $transactionId)->first();
 
-        if ($status === 'completed' || $status === 'SUCCESS') {
+        if (!$transaction) {
+            Log::channel('webhooks')->error('FedaPay Callback: Transaction not found', [
+                'transaction_id' => $transactionId
+            ]);
+            return redirect()->route('subscription.status')
+                ->with('error', 'Transaction non trouvée');
+        }
+
+        $status = $request->get('status') ?? $request->get('transaction_status');
+
+        if (in_array($status, ['completed', 'SUCCESS', 'approved'])) {
             $transaction->update(['status' => 'completed', 'paid_at' => now()]);
+
             if ($transaction->subscription) {
                 $this->activateSubscription($transaction->subscription);
             }
+
             $transaction->user->notify(new PaymentSuccessfulNotification($transaction));
+
+            Log::channel('webhooks')->info('FedaPay Callback: Payment completed', [
+                'transaction_id' => $transactionId
+            ]);
+
             return redirect()->route('subscription.status')
                 ->with('success', 'Paiement réussi !');
         }
+
+        Log::channel('webhooks')->warning('FedaPay Callback: Payment failed', [
+            'transaction_id' => $transactionId,
+            'status' => $status
+        ]);
 
         return redirect()->route('subscription.status')
             ->with('error', 'Paiement échoué');
