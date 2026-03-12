@@ -20,25 +20,22 @@
             Ajouter un mâle
         </a>
     </div>
-        <form method="GET" action="{{ route('males.index') }}" class="mb-4">
-            <div class="d-flex gap-2">
-                <div class="flex-grow-1">
-                    <input type="text" 
-                        name="search" 
-                        value="{{ request()->get('search') }}"
-                        class="form-control" 
-                        placeholder="Rechercher par nom, code ou race...">
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> Rechercher
-                </button>
-                
-                <a href="{{ route('males.index') }}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-clockwise"></i> Effacer
-                </a>
+    <form method="GET" action="{{ route('males.index') }}" class="mb-4">
+        <div class="d-flex gap-2">
+            <div class="flex-grow-1">
+                <input type="text" name="search" value="{{ request()->get('search') }}" class="form-control"
+                    placeholder="Rechercher par nom, code ou race...">
             </div>
-        </form>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+
+            <a href="{{ route('males.index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Effacer
+            </a>
+        </div>
+    </form>
     <div class="cuni-card">
         <div class="card-header-custom">
             <h3 class="card-title">
@@ -72,17 +69,46 @@
                                 </td>
                                 <td class="text-muted">{{ $m->origine }}</td>
                                 <td class="text-muted">{{ date('d/m/Y', strtotime($m->date_naissance)) }}</td>
-                                <td>
+                                {{-- <td>
                                     <form action="{{ route('males.toggleEtat', $m->id) }}" method="POST">
                                         @csrf @method('PATCH')
                                         <button type="submit" class="badge border-0 status-{{ strtolower($m->etat) }}">
                                             {{ $m->etat }}
                                         </button>
                                     </form>
+                                </td> --}}
+
+                                <td>
+                                    <form action="{{ route('males.toggleEtat', $m->id) }}" method="POST">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="badge border-0"
+                                            style="
+                    {{ $m->etat === 'vendu'
+                        ? 'background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3);'
+                        : ($m->etat === 'Active'
+                            ? 'background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3);'
+                            : ($m->etat === 'Malade'
+                                ? 'background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);'
+                                : 'background: rgba(107, 114, 128, 0.15); color: #6B7280; border: 1px solid rgba(107, 114, 128, 0.3);')) }}
+                    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; cursor: pointer;
+                ">
+                                            @if ($m->etat === 'vendu')
+                                                <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i> Vendu
+                                            @elseif($m->etat === 'Active')
+                                                <i class="bi bi-check-circle" style="margin-right: 4px;"></i> Actif
+                                            @elseif($m->etat === 'Malade')
+                                                <i class="bi bi-exclamation-triangle" style="margin-right: 4px;"></i> Malade
+                                            @else
+                                                <i class="bi bi-pause-circle" style="margin-right: 4px;"></i>
+                                                {{ $m->etat }}
+                                            @endif
+                                        </button>
+                                    </form>
                                 </td>
+
                                 <td class="pe-4">
                                     <div class="action-buttons">
-                                         <a href="{{ route('males.show', $m->id) }}" class="btn-cuni sm secondary"
+                                        <a href="{{ route('males.show', $m->id) }}" class="btn-cuni sm secondary"
                                             title="Détails"><i class="bi bi-eye"></i></a>
                                         <a href="{{ route('males.edit', $m->id) }}" class="btn-cuni sm secondary"
                                             title="Modifier">

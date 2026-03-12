@@ -63,7 +63,7 @@
                                 </td>
                                 <td class="text-muted">{{ $femelle->origine }}</td>
                                 <td class="text-muted">{{ date('d/m/Y', strtotime($femelle->date_naissance)) }}</td>
-                                <td>
+                                {{-- <td>
                                     <form action="{{ route('femelles.toggleEtat', $femelle->id) }}" method="POST">
                                         @csrf @method('PATCH')
                                         <button type="submit"
@@ -71,7 +71,37 @@
                                             {{ $femelle->etat }}
                                         </button>
                                     </form>
-                                </td>
+                                </td> --}}
+<td>
+    <form action="{{ route('femelles.toggleEtat', $femelle->id) }}" method="POST">
+        @csrf @method('PATCH')
+        <button type="submit" class="badge border-0" 
+                style="
+                    {{ $femelle->etat === 'vendu' 
+                        ? 'background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3);' 
+                        : ($femelle->etat === 'Active' 
+                            ? 'background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3);' 
+                            : ($femelle->etat === 'Gestante' || $femelle->etat === 'Allaitante'
+                                ? 'background: rgba(139, 92, 246, 0.15); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3);' 
+                                : 'background: rgba(107, 114, 128, 0.15); color: #6B7280; border: 1px solid rgba(107, 114, 128, 0.3);'
+                            )
+                        )
+                    }}
+                    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; cursor: pointer;
+                ">
+            @if($femelle->etat === 'vendu')
+                <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i> Vendu
+            @elseif($femelle->etat === 'Active')
+                <i class="bi bi-check-circle" style="margin-right: 4px;"></i> Active
+            @elseif(in_array($femelle->etat, ['Gestante', 'Allaitante']))
+                <i class="bi bi-egg-fill" style="margin-right: 4px;"></i> {{ $femelle->etat }}
+            @else
+                <i class="bi bi-pause-circle" style="margin-right: 4px;"></i> {{ $femelle->etat }}
+            @endif
+        </button>
+    </form>
+</td>
+
                                 <td class="pe-4">
                                     <div class="action-buttons">
                                          <a href="{{ route('femelles.show', $femelle->id) }}" class="btn-cuni sm secondary"
