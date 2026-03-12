@@ -42,29 +42,29 @@ class CuniappSeeder extends Seeder
     private function seedSettings(): void
     {
         $this->command->info('⚙️  Seeding Settings...');
-        
+
         $settings = [
             // Farm Info
             ['key' => 'farm_name', 'value' => 'Ferme CuniApp Test', 'type' => 'string', 'group' => 'general', 'label' => 'Nom de la ferme'],
             ['key' => 'farm_address', 'value' => 'Houéyiho après le pont devant Volta United, Cotonou, Bénin', 'type' => 'string', 'group' => 'general', 'label' => 'Adresse'],
             ['key' => 'farm_phone', 'value' => '+2290152415241', 'type' => 'string', 'group' => 'general', 'label' => 'Téléphone'],
             ['key' => 'farm_email', 'value' => 'contact@anyxtech.com', 'type' => 'string', 'group' => 'general', 'label' => 'Email'],
-            
+
             // Breeding Settings
             ['key' => 'gestation_days', 'value' => '31', 'type' => 'number', 'group' => 'breeding', 'label' => 'Jours de gestation'],
             ['key' => 'weaning_weeks', 'value' => '6', 'type' => 'number', 'group' => 'breeding', 'label' => 'Semaines de sevrage'],
             ['key' => 'alert_threshold', 'value' => '80', 'type' => 'number', 'group' => 'breeding', 'label' => "Seuil d'alerte (%)"],
-            
+
             // Verification Settings
             ['key' => 'verification_initial_days', 'value' => '10', 'type' => 'number', 'group' => 'breeding', 'label' => 'Délai initial de vérification (jours)'],
             ['key' => 'verification_reminder_days', 'value' => '15', 'type' => 'number', 'group' => 'breeding', 'label' => 'Délai premier rappel (jours)'],
             ['key' => 'verification_interval_days', 'value' => '5', 'type' => 'number', 'group' => 'breeding', 'label' => 'Intervalle des rappels (jours)'],
-            
+
             // Default Prices
             ['key' => 'default_price_male', 'value' => '25000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix par défaut - Mâles'],
             ['key' => 'default_price_female', 'value' => '30000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix par défaut - Femelles'],
             ['key' => 'default_price_lapereau', 'value' => '15000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix par défaut - Lapereaux'],
-            
+
             // FedaPay Settings
             ['key' => 'fedapay_public_key', 'value' => 'pk_sandbox_ueJp-OoTG2G0wIc1bxKX4GOz', 'type' => 'string', 'group' => 'payments', 'label' => 'Clé Publique FedaPay'],
             ['key' => 'fedapay_secret_key', 'value' => 'sk_sandbox_nSuimlDFVbiDjTFJMrF5xXop', 'type' => 'string', 'group' => 'payments', 'label' => 'Clé Secrète FedaPay'],
@@ -95,7 +95,7 @@ class CuniappSeeder extends Seeder
     private function seedSubscriptionPlans(): void
     {
         $this->command->info('💳 Seeding Subscription Plans...');
-        
+
         $plans = [
             [
                 'name' => 'Mensuel',
@@ -177,9 +177,9 @@ class CuniappSeeder extends Seeder
     private function seedUsers(): void
     {
         $this->command->info('👥 Seeding Users...');
-        
+
         $plans = SubscriptionPlan::all();
-        
+
         // 1. Admin Account
         $admin = User::create([
             'name' => 'Administrateur CuniApp',
@@ -221,7 +221,7 @@ class CuniappSeeder extends Seeder
 
         foreach ($userSubscriptions as $index => $userData) {
             $plan = $plans[$userData['plan_index']];
-            
+
             $user = User::create([
                 'name' => $userData['name'],
                 'email' => $userData['email'],
@@ -262,7 +262,8 @@ class CuniappSeeder extends Seeder
                 'paid_at' => now(),
             ]);
 
-            $this->command->info("   ✓ User {$index + 1}: {$userData['email']} ({$userData['plan_name']})");
+            $userNumber = $index + 1;
+            $this->command->info("   ✓ User {$userNumber}: {$userData['email']} ({$userData['plan_name']})");
         }
 
         $this->command->info('   ✓ 5 Normal user accounts created');
@@ -274,7 +275,7 @@ class CuniappSeeder extends Seeder
     private function seedBreedingData(): void
     {
         $this->command->info('🐰 Seeding Breeding Data...');
-        
+
         $admin = User::where('role', 'admin')->first();
         $userId = $admin ? $admin->id : 1;
 
@@ -282,7 +283,7 @@ class CuniappSeeder extends Seeder
         $males = [];
         $maleNames = ['Titan', 'Max', 'Rocky', 'Zeus', 'Apollo', 'Thor', 'Hercule', 'Sultan', 'Prince', 'Duke'];
         $races = ['Géant des Flandres', 'Californien', 'Blanc de Vienne', 'Rex', 'Nain'];
-        
+
         for ($i = 0; $i < 10; $i++) {
             $male = Male::create([
                 'user_id' => $userId,
@@ -301,7 +302,7 @@ class CuniappSeeder extends Seeder
         $femelles = [];
         $femelleNames = ['Luna', 'Bella', 'Daisy', 'Rosie', 'Coco', 'Mina', 'Lola', 'Nina', 'Zoe', 'Ruby', 'Lily', 'Mia', 'Olivia', 'Emma', 'Chloé'];
         $etats = ['Active', 'Gestante', 'Allaitante', 'Vide'];
-        
+
         for ($i = 0; $i < 15; $i++) {
             $femelle = Femelle::create([
                 'user_id' => $userId,
@@ -338,7 +339,7 @@ class CuniappSeeder extends Seeder
         for ($i = 0; $i < 15; $i++) {
             $femelle = $femelles[array_rand($femelles)];
             $dateMiseBas = now()->subDays(rand(10, 90));
-            
+
             $miseBas = MiseBas::create([
                 'user_id' => $userId,
                 'femelle_id' => $femelle->id,
@@ -357,7 +358,7 @@ class CuniappSeeder extends Seeder
             $miseBas = $misesBas[array_rand($misesBas)];
             $nbVivant = rand(4, 10);
             $nbMortNe = rand(0, 2);
-            
+
             $naissance = Naissance::create([
                 'user_id' => $userId,
                 'mise_bas_id' => $miseBas->id,
@@ -397,7 +398,7 @@ class CuniappSeeder extends Seeder
     private function seedSalesData(): void
     {
         $this->command->info('💰 Seeding Sales Data...');
-        
+
         $admin = User::where('role', 'admin')->first();
         $userId = $admin ? $admin->id : 1;
 
@@ -407,12 +408,12 @@ class CuniappSeeder extends Seeder
         $femelles = Femelle::where('etat', 'Active')->limit(5)->get();
 
         $buyerNames = ['M. Koffi', 'Mme. Adjara', 'M. Dossou', 'Mme. Mensah', 'M. Agbani', 'Mme. Hounkpe', 'M. Sossou', 'Mme. Gbédji'];
-        
+
         // Create 10 sales
         for ($i = 0; $i < 10; $i++) {
             $totalAmount = 0;
             $quantity = 0;
-            
+
             $sale = Sale::create([
                 'user_id' => $userId,
                 'date_sale' => now()->subDays(rand(1, 60)),
