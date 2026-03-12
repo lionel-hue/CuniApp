@@ -89,7 +89,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-payment', [NewPasswordController::class, 'store'])->name('password.store');
+
+    // ✅ FIX: Changed from 'reset-payment' to 'reset-password'
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 
     // Email Verification Code System
     Route::post('/verification/code/verify', [EmailVerificationCodeController::class, 'verify'])->name('verification.code.verify');
@@ -138,7 +140,6 @@ Route::middleware('auth')->group(function () {
         // ================================================================
         // 💳 SUBSCRIPTION ROUTES (No subscription check - users need to access these)
         // ================================================================
-
         Route::prefix('subscription')->name('subscription.')->group(function () {
             Route::get('/plans', [SubscriptionController::class, 'index'])->name('plans');
             Route::get('/subscribe', [SubscriptionController::class, 'create'])->name('subscribe');
@@ -151,23 +152,22 @@ Route::middleware('auth')->group(function () {
         // ================================================================
         // 💰 PAYMENT ROUTES (No subscription check - users need to pay)
         // ================================================================
-
         Route::prefix('payment')->name('payment.')->group(function () {
             Route::get('/initiate/{transaction_id}', [PaymentController::class, 'initiate'])->name('initiate');
             Route::post('/process', [PaymentController::class, 'process'])->name('process');
 
-            // ✅ FEDAPAY WEBHOOK (specific provider)
+            // ✅ FEDAPAY WEBHOOK (specific provider) - Protected with IP verification
             Route::post('/webhook/fedapay', [PaymentController::class, 'webhook'])
                 ->name('webhook.fedapay')
                 ->middleware(VerifyWebhookIp::class);
 
             // ✅ FEDAPAY CALLBACK (user redirect after payment)
-            Route::get('/payment/callback/{provider}', [PaymentController::class, 'callback'])
-                ->name('payment.callback');  // ← Add 'payment.' prefix
+            Route::get('/callback/{provider}', [PaymentController::class, 'callback'])
+                ->name('callback');
 
-            // ❌ REMOVE generic {provider} webhook route (no longer needed)
+            // ✅ REMOVE DUPLICATE: This was causing conflicts
+            // Route::get('/payment/callback/{provider}', ...) - REMOVED (duplicate)
 
-            Route::get('/callback/{provider}', [PaymentController::class, 'callback'])->name('callback');
             Route::get('/verify/{transaction_id}', [PaymentController::class, 'verify'])->name('verify');
             Route::post('/manual-confirm', [PaymentController::class, 'manualConfirm'])->name('manual-confirm');
         });
@@ -175,7 +175,6 @@ Route::middleware('auth')->group(function () {
         // ================================================================
         // 🛡️ PROTECTED CRUD ROUTES (Require active subscription)
         // ================================================================
-
         Route::middleware('check.subscription')->group(function () {
             // MÂLES
             Route::prefix('males')->name('males.')->group(function () {
@@ -268,9 +267,8 @@ Route::middleware('auth')->group(function () {
         });
 
         // ================================================================
-        // ✅ SETTINGS & NOTIFICATIONS
+        // ✅ SETTINGS & NOTIFICATIONS (Protected by subscription)
         // ================================================================
-
         Route::middleware('check.subscription')->group(function () {
             Route::prefix('settings')->name('settings.')->group(function () {
                 Route::get('/', [SettingsController::class, 'index'])->name('index');
@@ -294,9 +292,8 @@ Route::middleware('auth')->group(function () {
         });
 
         // ================================================================
-        // 👑 ADMIN ROUTES
+        // 👑 ADMIN ROUTES (Admin middleware)
         // ================================================================
-
         Route::prefix('admin')->name('admin.')->middleware('check.admin')->group(function () {
             Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
                 Route::get('/', [SubscriptionManagementController::class, 'index'])->name('index');
@@ -352,12 +349,16 @@ Route::get('/sitemap.xml', function () {
         route('privacy'),
         route('terms'),
     ];
+
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL;
+
     foreach ($pages as $page) {
         $xml .= "  <url><loc>$page</loc><lastmod>" . now()->format('Y-m-d') . "</lastmod><changefreq>monthly</changefreq></url>" . PHP_EOL;
     }
+
     $xml .= '</urlset>';
+
     return response($xml, 200, ['Content-Type' => 'application/xml']);
 });
 
@@ -427,5 +428,6 @@ Route::fallback(function () {
             'path' => request()->path()
         ], 404);
     }
+
     return response()->view('errors.404', ['path' => request()->path()], 404);
 })->name('fallback');
