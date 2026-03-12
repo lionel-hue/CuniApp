@@ -276,18 +276,26 @@ class PaymentController extends Controller
     /**
      * ✅ FEDAPAY CALLBACK (after payment completion)
      */
+    // app/Http/Controllers/PaymentController.php - UPDATE callback() method
     public function callback(Request $request)
     {
-        $transactionId = $request->get('transaction_id');
-        $status = $request->get('status');
+        // FedaPay sends 'reference' not 'transaction_id'
+        $transactionId = $request->get('reference') ?? $request->get('transaction_id');
+        $status = $request->get('status') ?? $request->get('transaction_status');
+
+        if (!$transactionId) {
+            return redirect()->route('subscription.status')
+                ->with('error', 'Référence de transaction manquante');
+        }
 
         $transaction = PaymentTransaction::where('transaction_id', $transactionId)->firstOrFail();
 
-        if ($status === 'completed') {
+        if ($status === 'completed' || $status === 'SUCCESS') {
             $transaction->update(['status' => 'completed', 'paid_at' => now()]);
             if ($transaction->subscription) {
                 $this->activateSubscription($transaction->subscription);
             }
+            $transaction->user->notify(new PaymentSuccessfulNotification($transaction));
             return redirect()->route('subscription.status')
                 ->with('success', 'Paiement réussi !');
         }
