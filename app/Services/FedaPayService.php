@@ -78,15 +78,23 @@ class FedaPayService
         }
     }
 
-    /**
-     * ✅ VERIFY WEBHOOK SIGNATURE
-     */
+    // UPDATE verifyWebhookSignature()
     public static function verifyWebhookSignature($payload, $signature)
     {
         $secretKey = Setting::get('fedapay_webhook_secret');
 
         if (!$secretKey) {
-            Log::error('FedaPay: Webhook secret not configured');
+            Log::channel('webhooks')->error('FedaPay: Webhook secret not configured in Settings');
+            return false;
+        }
+
+        if (empty($payload)) {
+            Log::channel('webhooks')->error('FedaPay: Empty webhook payload');
+            return false;
+        }
+
+        if (empty($signature)) {
+            Log::channel('webhooks')->error('FedaPay: Missing webhook signature');
             return false;
         }
 
@@ -94,7 +102,16 @@ class FedaPayService
         $expectedSignature = hash_hmac('sha256', $payload, $secretKey);
 
         // Timing-safe comparison
-        return hash_equals($expectedSignature, $signature);
+        $isValid = hash_equals($expectedSignature, $signature);
+
+        if (!$isValid) {
+            Log::channel('webhooks')->warning('FedaPay: Signature verification failed', [
+                'expected' => substr($expectedSignature, 0, 10) . '...',
+                'received' => substr($signature, 0, 10) . '...',
+            ]);
+        }
+
+        return $isValid;
     }
 
     /**
