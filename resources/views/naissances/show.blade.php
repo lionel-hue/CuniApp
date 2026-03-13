@@ -75,7 +75,7 @@
                             @if ($naissance->sex_verified)
                                 <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
                                     <i class="bi bi-check-circle"></i> Vérifié le
-                                    {{ $naissance->sex_verified_at->format('d/m/Y') }}
+                                    {{ $naissance->sex_verified_at?->format('d/m/Y') ?? 'Date non disponible' }}
                                 </span>
                             @else
                                 <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
