@@ -15,13 +15,72 @@ class FedaPayService
 
     public function __construct()
     {
-        $this->publicKey = Setting::get('fedapay_public_key');
-        $this->secretKey = Setting::get('fedapay_secret_key');
-        $this->environment = Setting::get('fedapay_environment', 'sandbox');
+        // ✅ PRIORITY 1: Environment variables (most secure)
+        // ✅ PRIORITY 2: Config (cached)
+        // ✅ PRIORITY 3: Settings table (fallback only)
+
+        $this->publicKey = Config::get('services.fedapay.public_key')
+            ?? $_ENV['FEDAPAY_PUBLIC_KEY']
+            ?? Setting::get('fedapay_public_key');
+
+        $this->secretKey = Config::get('services.fedapay.secret_key')
+            ?? $_ENV['FEDAPAY_SECRET_KEY']
+            ?? Setting::get('fedapay_secret_key');
+
+        $this->webhookSecret = Config::get('services.fedapay.webhook_secret')
+            ?? $_ENV['FEDAPAY_WEBHOOK_SECRET']
+            ?? Setting::get('fedapay_webhook_secret');
+
+        $this->environment = Config::get('services.fedapay.environment')
+            ?? $_ENV['FEDAPAY_ENVIRONMENT']
+            ?? Setting::get('fedapay_environment', 'sandbox');
 
         $this->baseUrl = $this->environment === 'production'
             ? 'https://api.fedapay.com'
             : 'https://sandbox.fedapay.com';
+    }
+
+    // ✅ SECURE: Never log secrets
+    public static function verifyWebhookSignature($payload, $signature)
+    {
+        $secretKey = Config::get('services.fedapay.webhook_secret')
+            ?? $_ENV['FEDAPAY_WEBHOOK_SECRET']
+            ?? Setting::get('fedapay_webhook_secret');
+
+        if (!$secretKey) {
+            // ✅ Log error WITHOUT exposing secret
+            Log::channel('webhooks')->error('FedaPay: Webhook secret not configured', [
+                'timestamp' => now()->toIso8601String(),
+            ]);
+            return false;
+        }
+
+        if (empty($payload)) {
+            Log::channel('webhooks')->error('FedaPay: Empty webhook payload');
+            return false;
+        }
+
+        if (empty($signature)) {
+            Log::channel('webhooks')->error('FedaPay: Missing webhook signature');
+            return false;
+        }
+
+        // FedaPay uses HMAC-SHA256
+        $expectedSignature = hash_hmac('sha256', $payload, $secretKey);
+
+        // Timing-safe comparison
+        $isValid = hash_equals($expectedSignature, $signature);
+
+        if (!$isValid) {
+            // ✅ Log verification failure WITHOUT exposing secrets
+            Log::channel('webhooks')->warning('FedaPay: Signature verification failed', [
+                'expected_prefix' => substr($expectedSignature, 0, 8) . '...',
+                'received_prefix' => substr($signature, 0, 8) . '...',
+                'timestamp' => now()->toIso8601String(),
+            ]);
+        }
+
+        return $isValid;
     }
 
     /**
