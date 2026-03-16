@@ -203,7 +203,7 @@
     </div>
 
     <!-- Add this section after payment history -->
-    <div class="cuni-card" style="margin-top: 24px;">
+    {{-- <div class="cuni-card" style="margin-top: 24px;">
         <div class="card-header-custom">
             <h3 class="card-title">
                 <i class="bi bi-receipt"></i> Factures
@@ -268,7 +268,7 @@
                 </div>
             @endif
         </div>
-    </div>
+    </div> --}}
 
     {{-- Cancel Modal --}}
     @if ($subscription)

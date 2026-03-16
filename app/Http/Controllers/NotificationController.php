@@ -23,24 +23,51 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'unreadCount'));
     }
 
-    public function markAsRead(string $id)
+    // public function markAsRead(string $id)
+    // {
+    //     $notification = Notification::where('user_id', Auth::id())
+    //         ->findOrFail($id);
+
+    //     $notification->markAsRead();
+
+    //     // Always return JSON for AJAX calls from dashboard
+    //     if ($notification->action_url) {
+    //         return response()->json([
+    //             'success' => true,
+    //             'redirect' => $notification->action_url
+    //         ]);
+    //     }
+
+    //     return response()->json(['success' => true]);
+    // }
+
+    
+        public function markAsRead(string $id)
     {
         $notification = Notification::where('user_id', Auth::id())
             ->findOrFail($id);
 
         $notification->markAsRead();
 
-        // Always return JSON for AJAX calls from dashboard
-        if ($notification->action_url) {
-            return response()->json([
-                'success' => true,
-                'redirect' => $notification->action_url
-            ]);
+        // Vérifie si la requête est une demande AJAX (attend du JSON)
+        if (request()->expectsJson() || request()->ajax()) {
+            // Cas 1 : Appel depuis le dashboard (petite cloche) via JS
+            if ($notification->action_url) {
+                return response()->json([
+                    'success' => true,
+                    'redirect' => $notification->action_url
+                ]);
+            }
+            return response()->json(['success' => true]);
         }
 
-        return response()->json(['success' => true]);
+        // Cas 2 : Appel direct depuis le bouton dans la page "Notifications"
+        // On retourne simplement vers la page précédente avec un message de succès
+        return back()->with('success', 'Notification marquée comme lue');
     }
-
+    
+    
+    
     public function markAllAsRead()
     {
         Notification::where('user_id', Auth::id())

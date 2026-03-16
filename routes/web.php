@@ -443,3 +443,4 @@ Route::fallback(function () {
 
     return response()->view('errors.404', ['path' => request()->path()], 404);
 })->name('fallback');
+
