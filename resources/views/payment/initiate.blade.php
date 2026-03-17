@@ -1,8 +1,6 @@
 {{-- resources/views/payment/initiate.blade.php --}}
 @extends('layouts.cuniapp')
-
 @section('title', 'Paiement - CuniApp Élevage')
-
 @section('content')
     <div class="page-header">
         <div>
@@ -66,24 +64,28 @@
                 <div
                     style="margin-top: 24px; padding: 16px; background: var(--primary-subtle); border-radius: var(--radius-lg);">
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--primary);">
-                        <i class="bi bi-info-circle"></i> Méthode sélectionnée
+                        <i class="bi bi-info-circle"></i> Comment ça marche ?
                     </h4>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div
-                            style="width: 40px; height: 40px; border-radius: var(--radius); 
-                background: var(--surface); display: flex; align-items: center; 
-                justify-content: center;">
-                            {{-- FedaPay Logo or Generic Payment Icon --}}
+                            style="width: 40px; height: 40px; border-radius: var(--radius); background: var(--surface); display: flex; align-items: center; justify-content: center;">
                             <i class="bi bi-credit-card-2-front" style="color: var(--primary); font-size: 20px;"></i>
                         </div>
                         <div>
-                            <div style="font-weight: 600; color: var(--text-primary);">
-                                Paiement Mobile Money
-                            </div>
-                            <div style="font-size: 12px; color: var(--text-tertiary);">
-                                MTN MoMo • Moov Pay • Celtis Cash via FedaPay
-                            </div>
+                            <div style="font-weight: 600; color: var(--text-primary);">Paiement Mobile Money</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">MTN MoMo • Moov Pay • Celtis Cash via
+                                FedaPay</div>
                         </div>
+                    </div>
+                    <div
+                        style="margin-top: 16px; padding: 12px; background: var(--surface); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary);">
+                        <strong>📱 Étapes :</strong>
+                        <ol style="margin: 8px 0 0 20px; padding: 0; line-height: 1.8;">
+                            <li>Entrez votre numéro de téléphone mobile money</li>
+                            <li>Vous recevrez une notification USSD sur votre téléphone</li>
+                            <li>Confirmez le paiement avec votre code secret</li>
+                            <li>Vous serez automatiquement redirigé vers votre espace après confirmation</li>
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -131,7 +133,8 @@
                             <i class="bi bi-shield-check" style="color: var(--primary); font-size: 18px;"></i>
                             <div style="font-size: 13px; color: var(--text-secondary);">
                                 <strong>Paiement sécurisé</strong><br>
-                                Vous recevrez une notification sur votre téléphone pour confirmer la transaction.
+                                Vous recevrez une notification sur votre téléphone pour confirmer la transaction. Après
+                                confirmation, vous serez automatiquement redirigé.
                             </div>
                         </div>
                     </div>
@@ -166,9 +169,8 @@
                     <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 12px;">
                         <i class="bi bi-question-circle"></i> Besoin d'aide ?
                     </p>
-                    <a href="{{ route('contact') }}" class="text-primary" style="font-size: 13px; font-weight: 500;">
-                        Contacter le support
-                    </a>
+                    <a href="{{ route('contact') }}" class="text-primary"
+                        style="font-size: 13px; font-weight: 500;">Contacter le support</a>
                 </div>
             </div>
         </div>
