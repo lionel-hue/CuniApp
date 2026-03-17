@@ -1,238 +1,307 @@
-# 📋 COMPREHENSIVE TESTING & FIX PROMPT
+# 📋 Prompt: Complete Payment Notification System Setup (Laravel 12)
 
-```markdown
-## CONTEXT:
-- **Laravel Version**: 12.x (middleware registered in `bootstrap/app.php`, NOT `app/Http/Kernel.php`)
-- **Payment Provider**: FedaPay (Mobile Money: MTN MoMo, Moov, Celtis Cash)
-- **Current Issue**: Two critical problems need resolution
+---
 
-## PROBLEMS TO FIX:
+## 🎯 OBJECTIF
 
-### 1. ✅ SANCTUM MIDDLEWARE ERROR (Critical - Breaks API)
-**File**: `bootstrap/app.php`
-**Issue**: `\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class` is referenced but Sanctum package is not installed/defined
-**Error Type**: Class not found / Undefined type
+Configurer les notifications de paiement complètes pour votre application CuniApp Élevage en suivant les étapes 5 et 6 adaptées à **Laravel 12**.
 
-**SOLUTION NEEDED**:
-- Either install Laravel Sanctum: `composer require laravel/sanctum`
-- OR remove the middleware line if Sanctum is not needed for this project
-- Provide the exact corrected code for `bootstrap/app.php`
+---
 
-### 2. ✅ PAYMENT FORM AJAX SUBMISSION
-**File**: `resources/views/payment/initiate.blade.php`
-**Issue**: Payment form submits as standard HTML but controller returns JSON → users see raw JSON instead of redirecting to FedaPay
-**SOLUTION**: Update form to intercept submission with JavaScript, send via AJAX/Fetch API, handle JSON response, redirect to FedaPay checkout URL
+## ✅ ÉTAPE 5 : Mettre à jour le Contrôleur Admin d'Abonnement
 
-## TESTING CHECKLIST TO VERIFY:
+**Fichier :** `app/Http/Controllers/Admin/SubscriptionManagementController.php`
 
-### Phase 1: Payment Flow Testing
-- [ ] Navigate to `/subscription/plans`
-- [ ] Select a plan and click "S'abonner"
-- [ ] Verify redirect to `/payment/initiate/{transaction_id}`
-- [ ] Enter phone number (test auto-format +229)
-- [ ] Check validation errors appear for invalid phone
-- [ ] Accept terms checkbox
-- [ ] Click "Payer" button
-- [ ] Verify loading state appears on button
-- [ ] Verify success toast shows ("Paiement initié ! Redirection vers FedaPay...")
-- [ ] Verify redirect to FedaPay checkout URL
-- [ ] Complete test payment in FedaPay sandbox
-- [ ] Verify redirect back to `/subscription/status`
-- [ ] Verify success message displays
-- [ ] Verify subscription status shows "Actif"
+### 📌 Ce que vous devez faire :
 
-### Phase 2: Payment Callback Handling
-- [ ] After FedaPay payment, check callback URL receives data
-- [ ] Verify transaction status updates to "completed"
-- [ ] Verify subscription activates automatically
-- [ ] Verify invoice is generated
-- [ ] Verify email notification is sent
-- [ ] Check `storage/logs/laravel.log` for errors
+Ajouter les notifications lors de l'activation et la désactivation manuelle des abonnements par l'admin.
 
-### Phase 3: Invoice Generation
-- [ ] Navigate to `/invoices`
-- [ ] Verify new invoice appears after payment
-- [ ] Click "PDF" button
-- [ ] Verify PDF downloads correctly
-- [ ] Check invoice has correct amount, date, number
-- [ ] Verify invoice email notification received
+### 🔧 Modifications à apporter :
 
-### Phase 4: Subscription Protection Middleware
-- [ ] Create test user WITHOUT subscription
-- [ ] Try to access `/males` (protected route)
-- [ ] Verify redirect to `/subscription/plans`
-- [ ] Verify warning message displays
-- [ ] Purchase subscription
-- [ ] Try to access `/males` again
-- [ ] Verify access is granted
+#### 1. Dans la méthode `activate()` :
 
-### Phase 5: Admin Subscription Management
-- [ ] Login as admin
-- [ ] Navigate to `/admin/subscriptions`
-- [ ] Verify user list displays
-- [ ] Click "Activer Abonnement" on inactive user
-- [ ] Select plan and duration
-- [ ] Verify subscription activates
-- [ ] Verify invoice is generated
-- [ ] Verify user receives email
+**Ajoutez après l'activation de l'abonnement :**
 
-### Phase 6: Failed Payment Handling
-- [ ] Initiate payment
-- [ ] Cancel at FedaPay checkout
-- [ ] Verify redirect back to `/subscription/status`
-- [ ] Verify transaction status is "failed" or "pending"
-- [ ] Verify error message displays
-- [ ] Try payment again with same transaction
-
-### Phase 7: Phone Number Validation
-- [ ] Test: `01524152` → should auto-format to `+22901524152`
-- [ ] Test: `+22901524152` → should accept as-is
-- [ ] Test: `123` → should show error (too short)
-- [ ] Test: `abcdefgh` → should show error (invalid chars)
-- [ ] Test: Empty → should show error (required)
-
-### Phase 8: Edge Cases
-- [ ] Test with slow internet (loading state persists)
-- [ ] Test with JavaScript disabled (graceful degradation)
-- [ ] Test session timeout during payment
-- [ ] Test duplicate transaction submission
-- [ ] Test with expired subscription
-- [ ] Test admin manual activation flow
-
-## EXPECTED USER FLOW:
-
-```
-1. User clicks "S'abonner" on plan
-        ↓
-2. Transaction created (status: pending)
-        ↓
-3. Redirect to /payment/initiate/{id}
-        ↓
-4. User enters phone + accepts terms
-        ↓
-5. AJAX submits to /payment/process
-        ↓
-6. FedaPay API called → checkout_url returned
-        ↓
-7. User redirected to FedaPay
-        ↓
-8. User confirms payment on phone
-        ↓
-9. FedaPay redirects to /payment/callback
-        ↓
-10. Transaction updated (status: completed)
-        ↓
-11. Subscription activated
-        ↓
-12. Invoice generated
-        ↓
-13. Email sent to user
-        ↓
-14. Redirect to /subscription/status with success
+```php
+// ✅ Send activation notification
+$user->notify(new \App\Notifications\SubscriptionActivatedNotification($subscription));
 ```
 
-## DELIVERABLES NEEDED:
+**Emplacement :** Juste après `$user->update([...])` et avant `DB::commit()`
 
-### 1. ✅ FIXED `bootstrap/app.php`
-Provide the EXACT corrected code with either:
-- Sanctum installed and properly configured, OR
-- Sanctum middleware line removed if not needed
+#### 2. Dans la méthode `deactivate()` :
 
-### 2. ✅ UPDATED `payment/initiate.blade.php`
-Complete file with:
-- AJAX form submission (prevent default)
-- Loading state on button
-- Toast notifications (success/error)
-- Phone number auto-formatting (+229 prefix)
-- Form validation feedback before submission
-- Redirect feedback message ("Redirecting to payment...")
+**Ajoutez après la désactivation :**
 
-### 3. ✅ SERVER SETUP COMMANDS
-```bash
-# Storage link
-php artisan storage:link
+```php
+// ✅ Send expiration notification
+use App\Notifications\SubscriptionExpiredNotification;
 
-# Clear caches
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-
-# Cron jobs for subscription expiration
-crontab -e
-# Add: 0 8 * * * cd /path/to/project && php artisan subscriptions:check-expiration >> /dev/null 2>&1
-
-# Set permissions
-chmod -R 755 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
+$user->notify(new SubscriptionExpiredNotification($subscription));
 ```
 
-### 4. ✅ QUICK TEST COMMANDS
-```bash
-# Test subscription command
-php artisan subscriptions:check-expiration
+**Emplacement :** Juste après `$subscription->user->update([...])` et avant `DB::commit()`
 
-# Test transaction cleanup
-php artisan transactions:cleanup-pending
+### 📁 Fichiers de notification requis :
 
-# View logs in real-time
-tail -f storage/logs/laravel.log
+Assurez-vous que ces fichiers existent dans `app/Notifications/` :
 
-# Test database
-php artisan tinker
->>> App\Models\PaymentTransaction::latest()->first();
->>> App\Models\Subscription::latest()->first();
+| Fichier | Purpose |
+|---------|---------|
+| `SubscriptionActivatedNotification.php` | Notification quand admin active un abonnement |
+| `SubscriptionExpiredNotification.php` | Notification quand abonnement expire/désactivé |
+| `SubscriptionExpiringSoonNotification.php` | Rappel avant expiration (7, 3, 1 jours) |
+| `PaymentSuccessfulNotification.php` | Paiement réussi |
+| `PaymentFailedNotification.php` | Paiement échoué |
+| `InvoiceEmailNotification.php` | Facture générée |
+
+---
+
+## ✅ ÉTAPE 6 : Planifier les Commandes (Laravel 12)
+
+**⚠️ IMPORTANT :** Laravel 12 n'utilise PLUS `app/Console/Kernel.php` pour la planification !
+
+### 📌 Option A : Via `bootstrap/app.php` (Recommandé Laravel 12)
+
+**Fichier :** `bootstrap/app.php`
+
+**Ajoutez le bloc `->withSchedule()` :**
+
+```php
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Console\Scheduling\Schedule;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withSchedule(function (Schedule $schedule) {
+        // ✅ Vérification des abonnements expirés (tous les jours à 8h)
+        $schedule->command('subscriptions:check-expiration')
+            ->dailyAt('08:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+        
+        // ✅ Nettoyage des transactions en attente (toutes les 30 minutes)
+        $schedule->command('transactions:cleanup-pending')
+            ->everyThirtyMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+        
+        // ✅ Vérification des naissances (tous les jours à 9h)
+        $schedule->command('births:check-verification')
+            ->dailyAt('09:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+    })
+    ->withMiddleware(function (Middleware $middleware) {
+        // Vos middlewares...
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        // Gestion des exceptions...
+    })->create();
 ```
 
-## IMPORTANT REQUIREMENTS:
-- ✅ Keep French language in UI messages
-- ✅ Maintain existing CuniApp design system styling
-- ✅ Ensure CSRF token is properly handled in AJAX
-- ✅ Keep error handling robust with user-friendly messages
-- ✅ Fix the Sanctum middleware issue (either install or remove)
-- ✅ Provide COMPLETE code blocks (not snippets)
+### 📌 Option B : Via `routes/console.php` (Alternative)
 
-## VERIFICATION STEPS AFTER FIX:
-```bash
-# Check middleware is registered
-php artisan route:list | grep "subscription"
+**Fichier :** `routes/console.php`
 
-# Check routes are protected
-php artisan route:list | grep "males"
+```php
+<?php
 
-# Verify FedaPay config
-php artisan tinker
->>> config('services.fedapay.secret_key')
->>> App\Models\Setting::get('fedapay_environment')
+use Illuminate\Support\Facades\Schedule;
 
-# Check storage permissions
-ls -la storage/app/invoices/
-```
+// ✅ Vérification des abonnements expirés
+Schedule::command('subscriptions:check-expiration')
+    ->dailyAt('08:00')
+    ->withoutOverlapping()
+    ->onOneServer();
 
-## TROUBLESHOOTING GUIDE:
+// ✅ Nettoyage des transactions en attente
+Schedule::command('transactions:cleanup-pending')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->onOneServer();
 
-| Issue | Solution |
-|-------|----------|
-| **JSON shown instead of redirect** | Ensure AJAX form submission with proper response handling |
-| **CSRF token error** | Check `<meta name="csrf-token">` in layout |
-| **FedaPay API fails** | Verify keys in `.env` and `Settings` table |
-| **Invoice not generated** | Check `storage/app/invoices` permissions |
-| **Email not sent** | Verify SMTP config in `.env` |
-| **Middleware not working** | Clear cache: `php artisan config:clear` |
-| **Sanctum class not found** | Install Sanctum OR remove middleware line |
-| **Phone validation fails** | Check regex pattern in JavaScript |
+// ✅ Vérification des naissances
+Schedule::command('births:check-verification')
+    ->dailyAt('09:00')
+    ->withoutOverlapping()
+    ->onOneServer();
 ```
 
 ---
 
-## 🎯 SUMMARY OF WHAT NEEDS TO BE FIXED:
+## 🧪 COMMANDES DE TEST
 
-1. **Sanctum Middleware Issue** - The class `\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class` doesn't exist because Sanctum isn't installed. Either:
-   - Run `composer require laravel/sanctum` and publish config, OR
-   - Remove that line from `bootstrap/app.php` if API stateful requests aren't needed
+### 1. Vérifier que les commandes existent :
 
-2. **Payment Form AJAX** - Update `payment/initiate.blade.php` to handle JSON responses properly instead of standard form submission
+```bash
+php artisan list | grep subscriptions
+php artisan list | grep transactions
+php artisan list | grep births
+```
 
-3. **Complete Testing** - Follow the 8-phase testing checklist to verify everything works end-to-end
+**Résultat attendu :**
+```
+subscriptions:check-expiration
+transactions:cleanup-pending
+births:check-verification
+```
 
-Please provide the complete fixed code files and confirmation that all tests pass! 🚀
+### 2. Exécuter manuellement pour tester :
+
+```bash
+php artisan subscriptions:check-expiration
+php artisan transactions:cleanup-pending
+php artisan births:check-verification
+```
+
+### 3. Vérifier la planification :
+
+```bash
+php artisan schedule:list
+```
+
+**Résultat attendu :** 3 tâches affichées avec leurs horaires
+
+### 4. Tester le scheduler :
+
+```bash
+php artisan schedule:work
+```
+
+### 5. Vérifier les notifications en base de données :
+
+```bash
+php artisan tinker
+>>> App\Models\Notification::latest()->take(10)->get(['type', 'title', 'created_at'])
+>>> App\Models\Subscription::where('status', 'expired')->count()
+>>> App\Models\PaymentTransaction::where('status', 'cancelled')->count()
+```
+
+---
+
+## 🔧 CONFIGURATION CRON (Production)
+
+**Sur votre serveur de production :**
+
+```bash
+# Éditer le crontab
+crontab -e
+
+# Ajouter cette ligne (UNE SEULE suffit pour toutes les tâches)
+* * * * * cd /chemin/vers/cuniapp && php artisan schedule:run >> /dev/null 2>&1
+
+# Vérifier
+crontab -l
+
+# Redémarrer le service cron
+sudo service cron restart
+```
+
+---
+
+## 📊 TABLEAU RÉCAPITULATIF DES NOTIFICATIONS
+
+| Événement | Base de données | Email | Déclencheur |
+|-----------|-----------------|-------|-------------|
+| Paiement initié | ✅ | ✅ | `PaymentController@initiate` |
+| Paiement réussi | ✅ | ✅ | `PaymentController@callback` |
+| Paiement échoué | ✅ | ✅ | `PaymentController@process/callback` |
+| Paiement expiré | ✅ | ✅ | `CleanupPendingTransactions` |
+| Abonnement activé | ✅ | ✅ | `PaymentController@activateSubscription` + `Admin@activate` |
+| Abonnement expire (7 jours) | ✅ | ✅ | `SendSubscriptionExpirationNotifications` |
+| Abonnement expire (3 jours) | ✅ | ✅ | `SendSubscriptionExpirationNotifications` |
+| Abonnement expire (1 jour) | ✅ | ✅ | `SendSubscriptionExpirationNotifications` |
+| Abonnement expiré | ✅ | ✅ | `SendSubscriptionExpirationNotifications` + `Admin@deactivate` |
+| Facture générée | ✅ | ✅ | `InvoiceService@createFromTransaction` |
+
+---
+
+## ✅ CHECKLIST DE VALIDATION
+
+- [ ] Les 6 classes de notification existent dans `app/Notifications/`
+- [ ] `bootstrap/app.php` contient le bloc `->withSchedule()`
+- [ ] Les 3 commandes sont listées avec `php artisan schedule:list`
+- [ ] Les commandes s'exécutent manuellement sans erreur
+- [ ] Les notifications apparaissent dans la table `notifications`
+- [ ] Les emails sont envoyés (vérifier boîte mail)
+- [ ] Le cron est configuré sur le serveur de production
+- [ ] Les logs ne montrent pas d'erreurs (`tail -f storage/logs/laravel.log`)
+
+---
+
+## 🚨 DÉPANNAGE
+
+| Problème | Solution |
+|----------|----------|
+| `schedule:list` ne montre rien | `php artisan config:clear` + vérifier `bootstrap/app.php` |
+| Commandes non trouvées | Vérifier `app/Console/Commands/` + `php artisan command:cache` |
+| Notifications non envoyées | Vérifier config mail + queue worker |
+| Emails non reçus | Vérifier `.env` SMTP + logs mail |
+| Cron ne s'exécute pas | `sudo service cron status` + vérifier chemin absolu |
+
+---
+
+## 📁 STRUCTURE ATTENDUE
+
+```
+cuniapp/
+├── app/
+│   ├── Console/
+│   │   └── Commands/
+│   │       ├── CheckBirthVerification.php
+│   │       ├── CleanupPendingTransactions.php
+│   │       └── SendSubscriptionExpirationNotifications.php
+│   ├── Notifications/
+│   │   ├── PaymentSuccessfulNotification.php
+│   │   ├── PaymentFailedNotification.php
+│   │   ├── SubscriptionActivatedNotification.php
+│   │   ├── SubscriptionExpiredNotification.php
+│   │   ├── SubscriptionExpiringSoonNotification.php
+│   │   └── InvoiceEmailNotification.php
+│   └── Http/
+│       └── Controllers/
+│           └── Admin/
+│               └── SubscriptionManagementController.php (modifié)
+├── bootstrap/
+│   └── app.php (avec ->withSchedule())
+├── routes/
+│   └── console.php (option alternative)
+└── storage/
+    └── logs/
+        └── laravel.log
+```
+
+---
+
+## 🎯 RÉSULTAT FINAL ATTENDU
+
+Après ces modifications :
+
+1. ✅ Les utilisateurs reçoivent des notifications pour TOUS les événements de paiement
+2. ✅ Les emails sont envoyés automatiquement selon les préférences utilisateur
+3. ✅ Les commandes planifiées s'exécutent automatiquement
+4. ✅ L'admin peut activer/désactiver avec notifications
+5. ✅ Les abonnements expirés sont détectés et notifiés
+6. ✅ Les transactions en attente sont nettoyées automatiquement
+
+---
+
+**Une fois terminé, exécutez :**
+
+```bash
+php artisan schedule:list
+php artisan subscriptions:check-expiration
+php artisan transactions:cleanup-pending
+tail -f storage/logs/laravel.log
+```
+
+**Et vérifiez que tout fonctionne sans erreur !** 🚀
