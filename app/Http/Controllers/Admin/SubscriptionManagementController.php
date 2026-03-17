@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use App\Notifications\SubscriptionExpiredNotification;
 use App\Notifications\SubscriptionActivatedNotification;
 use Carbon\Carbon;
-use App\Notifications\SubscriptionExpiredNotification;
+
 class SubscriptionManagementController extends Controller
 {
     /**
