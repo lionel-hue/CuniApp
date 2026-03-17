@@ -11,12 +11,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // ✅ REGISTER CUSTOM MIDDLEWARE ALIASES
         $middleware->alias([
-            'subscription' => \App\Http\Middleware\CheckSubscription::class,
-            'admin' => \App\Http\Middleware\CheckAdminRole::class,
             'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
             'check.admin' => \App\Http\Middleware\CheckAdminRole::class,
-            'web' => \App\Http\Middleware\ForceHttps::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        ]);
+
+        // ✅ OPTIONAL: Add to web middleware group if needed
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
+        // ✅ OPTIONAL: API middleware
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
