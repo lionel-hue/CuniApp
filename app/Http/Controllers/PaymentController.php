@@ -34,10 +34,11 @@ class PaymentController extends Controller
         }
 
         // ✅ Send notification when payment page is viewed
-        if (!$transaction->user->notifications()->where('type', 'info')
+        if ($transaction->user->customNotifications()->where('type', 'info')
             ->where('title', 'LIKE', '%Paiement en Cours%')
             ->where('created_at', '>', now()->subMinutes(5))
-            ->exists()) {
+            ->exists()
+        ) {
 
             $transaction->user->notify(new PaymentInitiatedNotification($transaction));
         }

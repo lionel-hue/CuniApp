@@ -1,4 +1,6 @@
-<?php namespace App\Models;
+<?php
+
+namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -94,5 +96,11 @@ class User extends Authenticatable
             ->where('status', 'active')
             ->where('end_date', '>=', now())
             ->first();
+    }
+
+    // Add this method to User model
+    public function customNotifications()
+    {
+        return $this->hasMany(\App\Models\Notification::class, 'user_id');
     }
 }
