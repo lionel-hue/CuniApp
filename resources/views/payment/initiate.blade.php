@@ -184,39 +184,50 @@
             const submitBtn = document.getElementById('submitBtn');
 
             form.addEventListener('submit', function(e) {
-                // Show loading state
-                submitBtn.disabled = true;
-                submitBtn.innerHTML =
-                    '<i class="bi bi-hourglass-split"></i> <span>Traitement en cours...</span>';
+                e.preventDefault(); // ✅ STOP standard submission
 
-                // Optional: Add client-side phone validation
+                // Validation
                 const phoneInput = form.querySelector('input[name="phone_number"]');
                 const phoneRegex = /^(\+229)?[0-9]{8,12}$/;
-
                 if (!phoneRegex.test(phoneInput.value.replace(/\s/g, ''))) {
-                    e.preventDefault();
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="bi bi-lock"></i> <span>Payer</span>';
-                    alert('Veuillez entrer un numéro de téléphone valide au format Bénin (+229XXXXXXXX).');
-                    phoneInput.focus();
+                    alert('Veuillez entrer un numéro de téléphone valide.');
+                    return;
                 }
+
+                // Loading State
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Traitement...';
+
+                // AJAX Submission
+                const formData = new FormData(form);
+
+                fetch('{{ route('payment.process') }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                            // CSRF token is handled automatically by Laravel/Axios if setup, 
+                            // but FormData usually handles it if meta tag exists
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.checkout_url) {
+                            // ✅ REDIRECT TO FEDAPAY
+                            window.location.href = data.checkout_url;
+                        } else {
+                            alert('Erreur: ' + (data.message || 'Échec du paiement'));
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="bi bi-lock"></i> Payer';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur technique est survenue.');
+                        submitBtn.disabled = false;
+                    });
             });
-
-            // Format phone number as user types
-            const phoneInput = form.querySelector('input[name="phone_number"]');
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function() {
-                    // Remove all non-digit characters except +
-                    let value = this.value.replace(/[^\d+]/g, '');
-
-                    // Auto-add +229 prefix if starting with 01, 02, etc.
-                    if (value.startsWith('0') && value.length === 1) {
-                        value = '+229' + value.substring(1);
-                    }
-
-                    this.value = value;
-                });
-            }
         });
     </script>
 @endpush
