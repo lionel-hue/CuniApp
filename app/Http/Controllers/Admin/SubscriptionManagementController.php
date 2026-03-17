@@ -12,8 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\SubscriptionExpiredNotification;
+use App\Notifications\SubscriptionActivatedNotification;
 use Carbon\Carbon;
-
+use App\Notifications\SubscriptionExpiredNotification;
 class SubscriptionManagementController extends Controller
 {
     /**
@@ -120,7 +121,7 @@ class SubscriptionManagementController extends Controller
                 'subscription_plan_id' => $plan->id,
                 'status' => 'active',
                 'start_date' => now(),
-                'end_date' => now()->addMonths($durationMonths), // ✅ Now receives int
+                'end_date' => now()->addMonths($durationMonths),
                 'price' => $plan->price,
                 'payment_method' => 'manual',
                 'payment_reference' => 'MANUAL-' . strtoupper(uniqid()),
@@ -162,14 +163,15 @@ class SubscriptionManagementController extends Controller
                 'subscription_ends_at' => $subscription->end_date,
             ]);
 
-            $user->notify(new \App\Notifications\SubscriptionActivatedNotification($subscription));
+            // ✅ SEND ACTIVATION NOTIFICATION (BEFORE commit)
+            $user->notify(new SubscriptionActivatedNotification($subscription));
 
             DB::commit();
+
             return redirect()->route('admin.subscriptions.show', $user->id)
                 ->with('success', 'Abonnement activé avec succès pour ' . $user->name . '. Facture générée.');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return redirect()->route('admin.subscriptions.index')
                 ->with('error', 'Erreur: ' . $e->getMessage());
         }
@@ -201,6 +203,7 @@ class SubscriptionManagementController extends Controller
                 'subscription_ends_at' => now(),
             ]);
 
+            // ✅ SEND EXPIRATION NOTIFICATION (BEFORE commit)
             $subscription->user->notify(new SubscriptionExpiredNotification($subscription));
 
             DB::commit();

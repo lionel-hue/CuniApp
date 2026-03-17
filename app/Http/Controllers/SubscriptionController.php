@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
@@ -153,19 +154,31 @@ class SubscriptionController extends Controller
 
     public function renew(Request $request)
     {
-        $request->validate([
+        // ✅ Enhanced validation with custom messages
+        $validated = $request->validate([
             'subscription_id' => 'required|exists:subscriptions,id',
             'payment_method' => 'required|in:momo,celtis,moov,manual',
-            'phone_number' => 'required_if:payment_method,momo,celtis,moov|nullable',
+            'phone_number' => 'nullable|string|min:8|max:15',
+        ], [
+            'subscription_id.required' => 'Veuillez sélectionner un abonnement à renouveler',
+            'subscription_id.exists' => 'Abonnement non trouvé',
+            'payment_method.required' => 'Veuillez sélectionner un mode de paiement',
+            'payment_method.in' => 'Mode de paiement invalide',
+            'phone_number.min' => 'Numéro de téléphone trop court',
         ]);
 
         $user = Auth::user();
 
         // ✅ Verify subscription belongs to user
         $subscription = Subscription::where('user_id', $user->id)
-            ->findOrFail($request->subscription_id);
+            ->findOrFail($validated['subscription_id']);
 
         $plan = $subscription->plan;
+
+        if (!$plan || !$plan->is_active) {
+            return redirect()->route('subscription.status')
+                ->with('error', 'Ce plan n\'est plus disponible pour le renouvellement.');
+        }
 
         DB::beginTransaction();
         try {
@@ -173,7 +186,7 @@ class SubscriptionController extends Controller
             $newSubscription = Subscription::create([
                 'user_id' => $user->id,
                 'subscription_plan_id' => $plan->id,
-                'status' => 'pending', // ← Pending until payment
+                'status' => 'pending', // ← Pending until payment confirmed
                 'start_date' => $subscription->end_date->isFuture()
                     ? $subscription->end_date
                     : now(),
@@ -181,7 +194,7 @@ class SubscriptionController extends Controller
                     ? $subscription->end_date
                     : now())->addMonths($plan->duration_months),
                 'price' => $plan->price,
-                'payment_method' => $request->payment_method,
+                'payment_method' => $validated['payment_method'],
                 'auto_renew' => $subscription->auto_renew,
             ]);
 
@@ -190,23 +203,45 @@ class SubscriptionController extends Controller
                 'user_id' => $user->id,
                 'subscription_id' => $newSubscription->id,
                 'amount' => $plan->price,
-                'payment_method' => $request->payment_method,
+                'payment_method' => $validated['payment_method'],
                 'transaction_id' => 'TXN-' . strtoupper(uniqid()),
                 'status' => 'pending',
-                'provider' => $request->payment_method,
-                'phone_number' => $request->phone_number,
+                'provider' => $validated['payment_method'],
+                'phone_number' => $validated['phone_number'] ?? null,
             ]);
 
             DB::commit();
 
-            // ✅ Redirect to payment
-            return redirect()->route('payment.initiate', [
-                'transaction_id' => $transaction->transaction_id
-            ]);
+            // ✅ Redirect to payment initiation for mobile money
+            if (in_array($validated['payment_method'], ['momo', 'celtis', 'moov'])) {
+                return redirect()->route('payment.initiate', [
+                    'transaction_id' => $transaction->transaction_id
+                ]);
+            }
+
+            // ✅ For manual payment (admin only), activate immediately
+            if ($validated['payment_method'] === 'manual' && $user->isAdmin()) {
+                $this->activateSubscription($newSubscription);
+                return redirect()->route('subscription.status')
+                    ->with('success', 'Abonnement renouvelé avec succès (paiement manuel).');
+            }
+
+            return redirect()->route('subscription.status')
+                ->with('success', 'Paiement initié. Veuillez finaliser sur la page de paiement.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // ✅ Log error for debugging
+            \Log::error('Subscription renewal failed: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'subscription_id' => $validated['subscription_id'] ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return redirect()->route('subscription.status')
-                ->with('error', 'Erreur lors du renouvellement: ' . $e->getMessage());
+                ->with('error', 'Erreur lors du renouvellement: ' . $e->getMessage())
+                ->withInput(); // ← Keep form data for retry
         }
     }
 
@@ -253,5 +288,23 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.status')
                 ->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Activate subscription (helper method)
+     */
+    private function activateSubscription($subscription)
+    {
+        if (!$subscription) return;
+
+        $subscription->update(['status' => 'active']);
+
+        $subscription->user->update([
+            'subscription_status' => 'active',
+            'subscription_ends_at' => $subscription->end_date,
+        ]);
+
+        // Send activation notification
+        $subscription->user->notify(new \App\Notifications\SubscriptionActivatedNotification($subscription));
     }
 }
