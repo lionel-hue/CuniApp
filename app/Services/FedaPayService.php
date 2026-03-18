@@ -119,26 +119,39 @@ class FedaPayService
     public function verifyTransaction($fedapayTransactionId)
     {
         try {
+            Log::info('FedaPay verify request', [
+                'url' => $this->baseUrl . '/v1/transactions/' . $fedapayTransactionId,
+                'secret_key_set' => !empty($this->secretKey),
+            ]);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
             ])->get($this->baseUrl . '/v1/transactions/' . $fedapayTransactionId);
 
+            Log::info('FedaPay verify response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'is_json' => json_decode($response->body(), true) !== null,
+            ]);
+
             if ($response->successful()) {
+                $jsonData = $response->json();
                 return [
                     'success' => true,
-                    'data' => $response->json(),
+                    'data' => $jsonData,
                 ];
             }
 
             return [
                 'success' => false,
-                'error' => 'Transaction not found',
+                'error' => 'Transaction not found (HTTP ' . $response->status() . ')',
+                'body' => $response->body(),
             ];
         } catch (\Exception $e) {
             Log::error('FedaPay transaction verification failed: ' . $e->getMessage());
             return [
                 'success' => false,
-                'error' => 'Erreur de vérification',
+                'error' => 'Erreur de vérification: ' . $e->getMessage(),
             ];
         }
     }

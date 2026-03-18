@@ -52,6 +52,17 @@ class PaymentController extends Controller
      */
     public function process(Request $request)
     {
+        $transaction = PaymentTransaction::where('transaction_id', $request->transaction_id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Check if already processed
+        if ($transaction->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction déjà traitée. Statut: ' . $transaction->status
+            ], 400);
+        }
         $request->validate([
             'transaction_id' => 'required|exists:payment_transactions,transaction_id',
             'phone_number' => 'required|string|min:8',
