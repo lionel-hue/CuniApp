@@ -254,4 +254,6 @@ class SubscriptionController extends Controller
                 ->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
         }
     }
+
+ 
 }
