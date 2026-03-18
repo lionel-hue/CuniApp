@@ -1,12 +1,10 @@
 <?php
 // app/Services/FedaPayService.php
-
 namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
 
 class FedaPayService
 {
@@ -17,38 +15,46 @@ class FedaPayService
 
     public function __construct()
     {
-        $this->publicKey = config('services.fedapay.public_key')
-            ?? $_ENV['FEDAPAY_PUBLIC_KEY']
-            ?? \App\Models\Setting::get('fedapay_public_key');
+        // ✅ Priority: .env > config > settings
+        $this->publicKey = $_ENV['FEDAPAY_PUBLIC_KEY']
+            ?? config('services.fedapay.public_key')
+            ?? Setting::get('fedapay_public_key');
 
-        $this->secretKey = config('services.fedapay.secret_key')
-            ?? $_ENV['FEDAPAY_SECRET_KEY']
-            ?? \App\Models\Setting::get('fedapay_secret_key');
+        $this->secretKey = $_ENV['FEDAPAY_SECRET_KEY']
+            ?? config('services.fedapay.secret_key')
+            ?? Setting::get('fedapay_secret_key');
 
-        // 🔍 DEBUG LOG
+        $this->environment = $_ENV['FEDAPAY_ENVIRONMENT']
+            ?? config('services.fedapay.environment')
+            ?? Setting::get('fedapay_environment', 'sandbox');
+
+        // ✅ Log configuration for debugging
         Log::info('FedaPay config loaded', [
             'public_key_set' => !empty($this->publicKey),
             'secret_key_set' => !empty($this->secretKey),
             'environment' => $this->environment,
-            'base_url' => $this->baseUrl,
         ]);
-
-        $this->environment = config('services.fedapay.environment')
-            ?? $_ENV['FEDAPAY_ENVIRONMENT']
-            ?? \App\Models\Setting::get('fedapay_environment', 'sandbox');
 
         $this->baseUrl = $this->environment === 'production'
             ? 'https://api.fedapay.com'
             : 'https://sandbox.fedapay.com';
+
+        Log::info('FedaPay base URL: ' . $this->baseUrl);
     }
 
     /**
      * ✅ INITIATE PAYMENT WITH FEDAPAY
-     * Creates a transaction and returns checkout URL
      */
     public function initiatePayment($transaction)
     {
         try {
+            Log::info('Initiating FedaPay payment', [
+                'transaction_id' => $transaction->transaction_id,
+                'amount' => $transaction->amount,
+                'phone' => $transaction->phone_number,
+                'method' => $transaction->payment_method,
+            ]);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
                 'Content-Type' => 'application/json',
@@ -58,7 +64,6 @@ class FedaPayService
                 'currency' => 'XOF',
                 'description' => 'Abonnement CuniApp Élevage',
                 'reference' => $transaction->transaction_id,
-                // ✅ IMPORTANT: Callback URL for redirect after payment
                 'callback_url' => route('payment.callback', ['provider' => 'fedapay']),
                 'return_url' => route('subscription.status'),
                 'customer' => [
@@ -71,6 +76,11 @@ class FedaPayService
                 ],
             ]);
 
+            Log::info('FedaPay API response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
             if ($response->successful()) {
                 $data = $response->json();
                 return [
@@ -81,31 +91,30 @@ class FedaPayService
                 ];
             }
 
+            Log::error('FedaPay payment failed', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+
             return [
                 'success' => false,
-                'error' => $response->json('message') ?? 'Erreur FedaPay',
+                'error' => $response->json('message') ?? 'Erreur FedaPay: ' . $response->status(),
                 'response' => $response->json(),
             ];
-            // Dans la méthode initiatePayment(), autour de la ligne 45
-            // Dans la méthode initiatePayment(), autour de la ligne ~45
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('FedaPay payment initiation failed: ' . $e->getMessage(), [
+            Log::error('FedaPay payment initiation failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
-                'response' => $response->body() ?? 'No response',
-                'status' => $response->status() ?? 'No status'
             ]);
 
             return [
                 'success' => false,
                 'error' => 'Erreur de connexion à FedaPay: ' . $e->getMessage(),
-                'response' => null,
             ];
         }
     }
 
     /**
-     * ✅ VERIFY TRANSACTION STATUS WITH FEDAPAY API
-     * Used for callback security - verify payment directly with FedaPay
+     * ✅ VERIFY TRANSACTION STATUS
      */
     public function verifyTransaction($fedapayTransactionId)
     {
@@ -135,51 +144,14 @@ class FedaPayService
     }
 
     /**
-     * ✅ VERIFY TRANSACTION BY REFERENCE (our transaction_id)
-     * Alternative verification method using our reference
-     */
-    public function verifyTransactionByReference($reference)
-    {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->secretKey,
-            ])->get($this->baseUrl . '/v1/transactions', [
-                'reference' => $reference,
-            ]);
-
-            if ($response->successful()) {
-                $transactions = $response->json('transactions', []);
-                if (!empty($transactions)) {
-                    return [
-                        'success' => true,
-                        'data' => $transactions[0],
-                    ];
-                }
-            }
-
-            return [
-                'success' => false,
-                'error' => 'Transaction not found',
-            ];
-        } catch (\Exception $e) {
-            Log::error('FedaPay transaction verification by reference failed: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => 'Erreur de vérification',
-            ];
-        }
-    }
-
-    /**
      * ✅ GET FEDAPAY METHOD CODE
-     * Maps our payment method to FedaPay's method codes
      */
     private function getFedaPayMethod($paymentMethod)
     {
         return match ($paymentMethod) {
-            'momo' => 'mtn_bj',      // MTN Mobile Money Benin
-            'moov' => 'moov_bj',     // Moov Money Benin
-            'celtis' => 'celtis_bj', // Celtis Cash Benin
+            'momo' => 'mtn_bj',
+            'moov' => 'moov_bj',
+            'celtis' => 'celtis_bj',
             default => 'mtn_bj',
         };
     }
