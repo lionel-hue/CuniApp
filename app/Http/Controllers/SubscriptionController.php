@@ -137,7 +137,9 @@ class SubscriptionController extends Controller
         $user = Auth::user();
         $subscription = $user->activeSubscription();
 
+        // ✅ Load ALL subscriptions with transactions
         $allSubscriptions = Subscription::where('user_id', $user->id)
+            ->with(['plan', 'transactions']) // ← Important!
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -290,5 +292,43 @@ class SubscriptionController extends Controller
         }
     }
 
- 
+    /**
+     * Retry payment for a pending subscription
+     */
+    public function retryPayment(Request $request, Subscription $subscription)
+    {
+        // Security check
+        if ($subscription->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only allow retry on pending subscriptions
+        if ($subscription->status !== 'pending') {
+            return back()->with('error', 'Cet abonnement ne peut pas être payé.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Create a NEW transaction for the same subscription intent
+            $transaction = PaymentTransaction::create([
+                'user_id' => auth()->id(),
+                'subscription_id' => $subscription->id,
+                'amount' => $subscription->price,
+                'payment_method' => $subscription->payment_method, // Keep original method or let user choose
+                'transaction_id' => 'TXN-' . strtoupper(uniqid()),
+                'status' => 'pending',
+                'provider' => $subscription->payment_method,
+            ]);
+
+            DB::commit();
+
+            // Redirect to payment initiation with the NEW transaction ID
+            return redirect()->route('payment.initiate', [
+                'transaction_id' => $transaction->transaction_id
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Erreur lors de la génération du lien de paiement: ' . $e->getMessage());
+        }
+    }
 }
