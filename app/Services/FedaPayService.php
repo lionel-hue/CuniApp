@@ -13,33 +13,35 @@ class FedaPayService
     protected $environment;
     protected $baseUrl;
 
+
     public function __construct()
     {
-        // ✅ Priority: .env > config > settings
-        $this->publicKey = $_ENV['FEDAPAY_PUBLIC_KEY']
+        // ✅ Remplacer par
+        $this->publicKey = env('FEDAPAY_PUBLIC_KEY')
             ?? config('services.fedapay.public_key')
             ?? Setting::get('fedapay_public_key');
 
-        $this->secretKey = $_ENV['FEDAPAY_SECRET_KEY']
+        $this->secretKey = env('FEDAPAY_SECRET_KEY')
             ?? config('services.fedapay.secret_key')
             ?? Setting::get('fedapay_secret_key');
 
-        $this->environment = $_ENV['FEDAPAY_ENVIRONMENT']
+        $this->environment = env('FEDAPAY_ENVIRONMENT', 'sandbox')
             ?? config('services.fedapay.environment')
             ?? Setting::get('fedapay_environment', 'sandbox');
 
-        // ✅ Log configuration for debugging
+        // URL de base - plus simple
+        $this->baseUrl = env('FEDAPAY_BASE_URL')
+            ?? ($this->environment === 'production'
+                ? 'https://api.fedapay.com'
+                : 'https://sandbox-api.fedapay.com');
+
+        // Log configuration for debugging
         Log::info('FedaPay config loaded', [
             'public_key_set' => !empty($this->publicKey),
             'secret_key_set' => !empty($this->secretKey),
             'environment' => $this->environment,
+            'base_url' => $this->baseUrl,  // Ajout pour debug
         ]);
-
-        $this->baseUrl = $this->environment === 'production'
-            ? 'https://api.fedapay.com'
-            : 'https://sandbox.fedapay.com';
-
-        Log::info('FedaPay base URL: ' . $this->baseUrl);
     }
 
     /**
@@ -48,20 +50,24 @@ class FedaPayService
     public function initiatePayment($transaction)
     {
         try {
+            // ✅ Convertir proprement en centimes
+            $amountInCents = (int) round(floatval($transaction->amount) * 100);
+
             Log::info('Initiating FedaPay payment', [
                 'transaction_id' => $transaction->transaction_id,
-                'amount' => $transaction->amount,
+                'amount_original' => $transaction->amount,
+                'amount_cents' => $amountInCents,  // ← Debug utile
                 'phone' => $transaction->phone_number,
                 'method' => $transaction->payment_method,
             ]);
 
-            // ✅ CORRECT ENDPOINT: /transactions (NOT /v1/transactions)
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/transactions', [ // ← Removed /v1/
-                'amount' => (int) $transaction->amount * 100, // ← FedaPay expects amount in cents!
+                'User-Agent' => 'CuniApp/1.0 Laravel/' . app()->version(),
+            ])->post($this->baseUrl . '/v1/transactions', [
+                'amount' => $amountInCents,  // ← Ex: 750000 pour 7500 FCFA
                 'currency' => 'XOF',
                 'description' => 'Abonnement CuniApp Élevage',
                 'reference' => $transaction->transaction_id,
@@ -75,6 +81,9 @@ class FedaPayService
                 'settings' => [
                     'methods' => [$this->getFedaPayMethod($transaction->payment_method)],
                 ],
+            ], [
+                'connect_timeout' => 30,
+                'timeout' => 60,
             ]);
 
             Log::info('FedaPay API response', [
@@ -122,7 +131,7 @@ class FedaPayService
             // ✅ Also remove /v1/ here
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
-            ])->get($this->baseUrl . '/transactions/' . $fedapayTransactionId);
+            ])->get($this->baseUrl . '/v1/transactions/' . $fedapayTransactionId);
 
             if ($response->successful()) {
                 $jsonData = $response->json();
@@ -155,10 +164,8 @@ class FedaPayService
         };
     }
 
-    // ✅ ADD THIS HELPER: Format phone number for FedaPay
     private function formatPhoneNumber($phone)
     {
-        // Remove spaces, dashes, and ensure +229 prefix
         $cleaned = preg_replace('/[\s\-]/', '', $phone);
 
         if (strpos($cleaned, '+229') === 0) {
@@ -167,10 +174,11 @@ class FedaPayService
         if (strpos($cleaned, '229') === 0) {
             return '+' . $cleaned;
         }
-        if (strpos($cleaned, '01') === 0) {
+        if (preg_match('/^01\d{8}$/', $cleaned)) {
             return '+229' . substr($cleaned, 1);
         }
 
-        return '+229' . $cleaned;
+        // Fallback : ajouter +229 si ce n'est pas déjà fait
+        return '+229' . preg_replace('/^0+/', '', $cleaned);
     }
 }

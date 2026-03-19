@@ -109,7 +109,7 @@
                     <form id="paymentForm" data-transaction-id="{{ $transaction->transaction_id }}">
                         @csrf
                         <input type="hidden" name="transaction_id" value="{{ $transaction->transaction_id }}">
-                        <input type="hidden" name="payment_method" value="{{ $transaction->provider ?? 'momo' }}">
+                        <input type="hidden" name="payment_method" value="{{ $transaction->payment_method ?? 'momo' }}">
 
                         <!-- Phone Number -->
                         <div class="form-group">
@@ -218,6 +218,7 @@
                     let value = this.value.replace(/\s/g, '');
                     value = value.replace(/[^\d+]/g, '');
 
+                    // Limit length based on format
                     if (value.startsWith('+229')) {
                         if (value.length > 14) {
                             value = value.substring(0, 14);
@@ -232,6 +233,7 @@
                         }
                     }
 
+                    // Auto-prepend + if starting with 229
                     if (value.startsWith('229') && !this.value.startsWith('+')) {
                         this.value = '+' + value;
                     } else {
@@ -279,7 +281,10 @@
                         return false;
                     }
 
+                    // Remove + for regex check
                     const digits = phone.replace('+', '');
+
+                    // Benin mobile money patterns: 01XXXXXXXX or 22901XXXXXXXX
                     const beninRegexLocal = /^01[0-9]{8}$/;
                     const beninRegexIntl = /^22901[0-9]{8}$/;
 
@@ -314,25 +319,30 @@
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
 
+                    // Clear previous errors
                     phoneError.style.display = 'none';
                     termsError.style.display = 'none';
                     phoneInput.classList.remove('error');
 
+                    // Validate phone number
                     if (!validatePhone()) {
                         phoneInput.focus();
                         return;
                     }
 
+                    // Validate terms checkbox
                     if (!confirmCheckbox.checked) {
                         termsError.style.display = 'flex';
                         confirmCheckbox.focus();
                         return;
                     }
 
+                    // Show loading state
                     submitBtn.disabled = true;
                     btnText.style.display = 'none';
                     btnLoading.style.display = 'inline-flex';
 
+                    // Transform phone number for FedaPay
                     const originalPhone = phoneInput.value;
                     const fedapayPhone = transformForFedaPay(originalPhone);
 
@@ -371,9 +381,13 @@
                         .catch(error => {
                             console.error('Payment error:', error);
                             showToast('❌ ' + (error.message || 'Une erreur est survenue'), 'error');
+
+                            // Reset button state
                             submitBtn.disabled = false;
                             btnText.style.display = 'inline';
                             btnLoading.style.display = 'none';
+
+                            // Show error in form
                             phoneError.style.display = 'flex';
                             phoneError.querySelector('span').textContent = error.message ||
                                 'Échec du paiement. Veuillez réessayer.';
@@ -412,6 +426,7 @@
         `;
 
                     document.body.appendChild(toast);
+
                     setTimeout(() => {
                         toast.style.animation = 'slideOutRight 0.3s ease';
                         setTimeout(() => toast.remove(), 300);
@@ -429,8 +444,8 @@
     @push('styles')
         <style>
             /* ============================================
-           PAYMENT PAGE LAYOUT - DESKTOP FIRST
-           ============================================ */
+                PAYMENT PAGE LAYOUT - DESKTOP FIRST
+                ============================================ */
             .payment-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -774,6 +789,31 @@
 
                 to {
                     transform: rotate(360deg);
+                }
+            }
+
+            /* Toast Animations */
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
                 }
             }
 

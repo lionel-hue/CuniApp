@@ -107,10 +107,8 @@ class PaymentController extends Controller
 
             if ($paymentResult['success']) {
                 DB::commit();
-
                 // ✅ Send initiated notification
                 $transaction->user->notify(new PaymentInitiatedNotification($transaction));
-
                 return response()->json([
                     'success' => true,
                     'message' => 'Redirection vers FedaPay...',
@@ -123,10 +121,8 @@ class PaymentController extends Controller
                     'failure_reason' => $paymentResult['error'],
                 ]);
                 DB::commit();
-
                 // ✅ Send failed notification
                 $transaction->user->notify(new PaymentFailedNotification($transaction));
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Échec du paiement: ' . $paymentResult['error']
@@ -135,14 +131,12 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Payment processing error: ' . $e->getMessage());
-
             // ✅ Send error notification
             $transaction->update([
                 'status' => 'failed',
                 'failure_reason' => 'Erreur système: ' . $e->getMessage(),
             ]);
             $transaction->user->notify(new PaymentFailedNotification($transaction));
-
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du traitement du paiement'
