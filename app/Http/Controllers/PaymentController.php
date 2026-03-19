@@ -63,83 +63,129 @@ class PaymentController extends Controller
      */
     public function process(Request $request)
     {
-        $transaction = PaymentTransaction::where('transaction_id', $request->transaction_id)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
-
-        // Check if already processed
-        if ($transaction->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaction déjà traitée. Statut: ' . $transaction->status
-            ], 400);
-        }
-
+        // Validate request first
         $request->validate([
             'transaction_id' => 'required|exists:payment_transactions,transaction_id',
             'phone_number' => 'nullable|string|min:8',
             'payment_method' => 'required|in:momo,moov,celtis,manual',
         ]);
 
+        // ✅ STEP 1: Fetch transaction with pessimistic lock to prevent race conditions
         $transaction = PaymentTransaction::where('transaction_id', $request->transaction_id)
             ->where('user_id', Auth::id())
+            ->lockForUpdate()  // ← Critical: Locks the row until transaction completes
             ->firstOrFail();
 
-        if ($transaction->status !== 'pending') {
+        // ✅ STEP 2: Check status INSIDE the locked context - prevents double-processing
+        if (!in_array($transaction->status, ['pending', 'failed'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaction déjà traitée'
-            ], 400);
+                'message' => 'Transaction déjà traitée. Statut actuel: ' . ucfirst($transaction->status),
+                'current_status' => $transaction->status,
+            ], 409); // 409 = Conflict
+        }
+
+        // ✅ STEP 3: If previously failed, allow retry but log it
+        if ($transaction->status === 'failed') {
+            Log::info('Payment retry initiated', [
+                'transaction_id' => $transaction->transaction_id,
+                'user_id' => $transaction->user_id,
+                'previous_failure' => $transaction->failure_reason,
+            ]);
         }
 
         DB::beginTransaction();
         try {
-            // Update transaction
+            // ✅ STEP 4: Re-check status AFTER beginning transaction (defense in depth)
+            $transaction->refresh(); // Refresh to get latest DB state
+            if (!in_array($transaction->status, ['pending', 'failed'])) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction modifiée entre-temps. Veuillez rafraîchir.',
+                ], 409);
+            }
+
+            // ✅ STEP 5: Update transaction metadata
             $transaction->update([
                 'phone_number' => $request->phone_number,
                 'provider' => 'fedapay',
                 'payment_method' => $request->payment_method,
+                // Reset failure reason on retry
+                'failure_reason' => $transaction->status === 'failed' ? null : $transaction->failure_reason,
             ]);
 
-            // ✅ Call FedaPay API
+            // ✅ STEP 6: Call FedaPay API
             $fedaPayService = new FedaPayService();
             $paymentResult = $fedaPayService->initiatePayment($transaction);
 
             if ($paymentResult['success']) {
                 DB::commit();
-                // ✅ Send initiated notification
-                $transaction->user->notify(new PaymentInitiatedNotification($transaction));
+
+                // ✅ Send initiated notification (only if not already sent)
+                if (!$transaction->user->notifications()->where('type', 'info')
+                    ->where('title', 'LIKE', '%Paiement en Cours%')
+                    ->where('created_at', '>', now()->subMinutes(5))
+                    ->exists()) {
+                    $transaction->user->notify(new PaymentInitiatedNotification($transaction));
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Redirection vers FedaPay...',
                     'checkout_url' => $paymentResult['checkout_url'],
-                    'redirect' => route('subscription.status')
+                    'redirect' => route('subscription.status'),
+                    'transaction_id' => $transaction->transaction_id,
                 ]);
             } else {
+                // ✅ Handle FedaPay API failure
                 $transaction->update([
                     'status' => 'failed',
                     'failure_reason' => $paymentResult['error'],
+                    'provider_response' => $paymentResult['response'] ?? null,
                 ]);
                 DB::commit();
-                // ✅ Send failed notification
+
                 $transaction->user->notify(new PaymentFailedNotification($transaction));
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Échec du paiement: ' . $paymentResult['error']
+                    'message' => 'Échec du paiement: ' . $paymentResult['error'],
+                    'error_code' => 'FEDAPAY_API_ERROR',
                 ], 400);
             }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // ✅ Handle database lock timeout or constraint violations
+            DB::rollBack();
+            Log::error('Payment processing DB error: ' . $e->getMessage(), [
+                'transaction_id' => $request->transaction_id,
+                'error_code' => $e->getCode(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur de base de données. Veuillez réessayer.',
+                'error_code' => 'DB_ERROR',
+            ], 500);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Payment processing error: ' . $e->getMessage());
-            // ✅ Send error notification
+            Log::error('Payment processing error: ' . $e->getMessage(), [
+                'transaction_id' => $request->transaction_id,
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ]);
+
+            // Update transaction status to failed for audit
             $transaction->update([
                 'status' => 'failed',
                 'failure_reason' => 'Erreur système: ' . $e->getMessage(),
             ]);
+
             $transaction->user->notify(new PaymentFailedNotification($transaction));
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du traitement du paiement'
+                'message' => 'Erreur lors du traitement du paiement',
+                'error_code' => 'SYSTEM_ERROR',
             ], 500);
         }
     }
