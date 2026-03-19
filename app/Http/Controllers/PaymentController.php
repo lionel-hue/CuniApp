@@ -74,10 +74,11 @@ class PaymentController extends Controller
                 'message' => 'Transaction déjà traitée. Statut: ' . $transaction->status
             ], 400);
         }
+
         $request->validate([
             'transaction_id' => 'required|exists:payment_transactions,transaction_id',
-            'phone_number' => 'required|string|min:8',
-            'payment_method' => 'required|in:momo,moov,celtis',
+            'phone_number' => 'nullable|string|min:8',
+            'payment_method' => 'required|in:momo,moov,celtis,manual',
         ]);
 
         $transaction = PaymentTransaction::where('transaction_id', $request->transaction_id)
