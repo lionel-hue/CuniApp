@@ -39,24 +39,33 @@ class FedaPayService
     }
 
     /**
-     * Initiate payment with FedaPay
+     * Initiate payment with FedaPay - COMPLETE METHOD WITH DEBUGGING
      */
     public function initiatePayment($transaction)
     {
+        // 🔍 DEBUG: Log entry point
+        Log::debug('[FedaPayService] initiatePayment() called', [
+            'transaction_id' => $transaction->transaction_id ?? 'N/A',
+            'user_id' => $transaction->user_id ?? 'N/A',
+        ]);
+
         try {
-            // ✅ Amount in smallest unit (XOF has no decimals, so just cast to int)
+            // ✅ Amount in smallest unit (XOF has no decimals)
             $amount = (int) round($transaction->amount);
 
             // ✅ Format phone: remove +, ensure Benin format
             $phone = $this->formatPhoneNumber($transaction->phone_number);
 
-            Log::info('FedaPay payment request', [
+            // 🔍 DEBUG: Log request preparation
+            Log::info('[FedaPayService] Preparing payment request', [
                 'transaction_id' => $transaction->transaction_id,
                 'amount' => $amount,
                 'phone' => $phone,
                 'method' => $transaction->payment_method,
+                'base_url' => $this->baseUrl,
             ]);
 
+            // ✅ Build payload according to FedaPay API v1 specification
             $payload = [
                 // ✅ REQUIRED: description field
                 'description' => 'Abonnement CuniApp - ' . $transaction->transaction_id,
@@ -65,7 +74,6 @@ class FedaPayService
                 'reference' => $transaction->transaction_id,
                 'callback_url' => route('payment.callback', ['provider' => 'fedapay'], true),
                 'return_url' => route('subscription.status', [], true),
-
                 // ✅ Customer object - simplified structure
                 'customer' => [
                     'email' => $transaction->user->email,
@@ -76,55 +84,179 @@ class FedaPayService
                         'country' => 'bj',
                     ],
                 ],
-
                 // ✅ Payment method mapping
                 'payment_method' => $this->getFedaPayMethod($transaction->payment_method),
             ];
 
+            // 🔍 DEBUG: Log the exact payload being sent (without sensitive data)
+            $debugPayload = $payload;
+            if (isset($debugPayload['customer']['phone_number'])) {
+                $debugPayload['customer']['phone_number']['number'] = '***MASKED***';
+            }
+            Log::debug('[FedaPayService] Request payload', [
+                'payload' => $debugPayload,
+            ]);
+
+            // ✅ Make HTTP request to FedaPay API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->post($this->baseUrl . '/v1/transactions', $payload);
 
+            // 🔍 DEBUG: Log raw response details
+            Log::info('[FedaPayService] FedaPay API response received', [
+                'status_code' => $response->status(),
+                'response_body_preview' => substr($response->body(), 0, 500),
+                'response_headers' => $response->headers(),
+                'transaction_id' => $transaction->transaction_id,
+            ]);
+
+            // ✅ Handle successful HTTP response (200-299)
             if ($response->successful()) {
                 $data = $response->json();
-                $checkoutUrl = $data['transaction']['url']
-                    ?? $data['url']
-                    ?? $data['checkout_url']
-                    ?? null;
 
+                // 🔍 DEBUG: Log parsed JSON structure for debugging
+                Log::debug('[FedaPayService] Parsed response structure', [
+                    'response_keys' => array_keys($data ?? []),
+                    'has_transaction' => isset($data['transaction']),
+                    'has_v1_transaction' => isset($data['v1/transaction']),
+                    'has_url' => isset($data['url']),
+                    'has_checkout_url' => isset($data['checkout_url']),
+                ]);
+
+                // 🔍 FIX: FedaPay API v1 returns data under 'v1/transaction' key
+                // Check multiple possible locations for the checkout URL
+                $checkoutUrl = null;
+                $fedapayTransactionId = null;
+
+                // Option 1: API v1 format - nested under 'v1/transaction'
+                if (isset($data['v1/transaction']['payment_url'])) {
+                    $checkoutUrl = $data['v1/transaction']['payment_url'];
+                    $fedapayTransactionId = $data['v1/transaction']['id'] ?? null;
+                    Log::info('[FedaPayService] Found checkout_url in v1/transaction.payment_url');
+                }
+                // Option 2: Standard format - transaction.url
+                elseif (isset($data['transaction']['url'])) {
+                    $checkoutUrl = $data['transaction']['url'];
+                    $fedapayTransactionId = $data['transaction']['id'] ?? null;
+                    Log::info('[FedaPayService] Found checkout_url in transaction.url');
+                }
+                // Option 3: Direct url field
+                elseif (isset($data['url'])) {
+                    $checkoutUrl = $data['url'];
+                    $fedapayTransactionId = $data['id'] ?? null;
+                    Log::info('[FedaPayService] Found checkout_url in root url');
+                }
+                // Option 4: checkout_url field
+                elseif (isset($data['checkout_url'])) {
+                    $checkoutUrl = $data['checkout_url'];
+                    $fedapayTransactionId = $data['id'] ?? null;
+                    Log::info('[FedaPayService] Found checkout_url in root checkout_url');
+                }
+                // Option 5: payment_url at root level
+                elseif (isset($data['payment_url'])) {
+                    $checkoutUrl = $data['payment_url'];
+                    $fedapayTransactionId = $data['id'] ?? null;
+                    Log::info('[FedaPayService] Found checkout_url in root payment_url');
+                }
+
+                // ✅ If we found a valid checkout URL, return success
                 if ($checkoutUrl) {
+                    Log::info('[FedaPayService] Payment initiation SUCCESS', [
+                        'transaction_id' => $transaction->transaction_id,
+                        'fedapay_transaction_id' => $fedapayTransactionId,
+                        'checkout_url' => $checkoutUrl,
+                    ]);
+
                     return [
                         'success' => true,
                         'checkout_url' => $checkoutUrl,
-                        'fedapay_transaction_id' => $data['transaction']['id'] ?? $data['id'] ?? null,
-                        'raw_response' => $data,
+                        'fedapay_transaction_id' => $fedapayTransactionId,
+                        'raw_response' => $data, // Include full response for debugging if needed
                     ];
                 }
+
+                // 🔍 DEBUG: If no checkout URL found, log the full response for analysis
+                Log::error('[FedaPayService] No checkout_url found in successful response', [
+                    'transaction_id' => $transaction->transaction_id,
+                    'full_response' => $data,
+                    'response_keys' => array_keys($data ?? []),
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => 'FedaPay API returned success but no checkout URL found. Check response structure.',
+                    'response' => $data,
+                    'debug_info' => [
+                        'response_keys' => array_keys($data ?? []),
+                        'suggestion' => 'FedaPay API v1 may return data under "v1/transaction" key',
+                    ],
+                ];
             }
 
-            Log::error('FedaPay payment initiation failed', [
+            // ❌ Handle HTTP error responses (4xx, 5xx)
+            Log::error('[FedaPayService] FedaPay payment initiation FAILED (HTTP error)', [
                 'status' => $response->status(),
-                'response' => $response->json(),
-                'request_payload' => $payload,
-                'headers_sent' => ['Authorization' => 'Bearer ***', 'Content-Type' => 'application/json'],
+                'response_body' => $response->json() ?? $response->body(),
+                'request_payload' => $debugPayload,
+                'headers_sent' => [
+                    'Authorization' => 'Bearer ***',
+                    'Content-Type' => 'application/json',
+                    'X-Request-ID' => $response->header('X-Request-Id') ?? 'N/A',
+                ],
+                'transaction_id' => $transaction->transaction_id,
             ]);
 
             return [
                 'success' => false,
-                'error' => 'FedaPay API Error: ' . ($response->json('error') ?? 'HTTP ' . $response->status()),
-                'response' => $response->json(),
+                'error' => 'FedaPay API Error (HTTP ' . $response->status() . '): ' .
+                    ($response->json('error') ?? $response->json('message') ?? 'Unknown error'),
+                'response' => $response->json() ?? ['raw_body' => $response->body()],
+                'http_status' => $response->status(),
             ];
-        } catch (\Exception $e) {
-            Log::error('FedaPay service exception: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            // 🔍 DEBUG: Network/connection errors
+            Log::error('[FedaPayService] Connection error to FedaPay API', [
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+                'transaction_id' => $transaction->transaction_id ?? 'N/A',
+                'base_url' => $this->baseUrl,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Connection error: Unable to reach FedaPay API. Please check your internet connection.',
+                'error_code' => 'CONNECTION_ERROR',
+            ];
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            // 🔍 DEBUG: Request-level errors (timeouts, etc.)
+            Log::error('[FedaPayService] Request exception', [
+                'message' => $e->getMessage(),
+                'response' => $e->response?->body() ?? 'No response body',
                 'transaction_id' => $transaction->transaction_id ?? 'N/A',
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Connection error: ' . $e->getMessage(),
+                'error' => 'Request error: ' . $e->getMessage(),
+                'error_code' => 'REQUEST_EXCEPTION',
+            ];
+        } catch (\Exception $e) {
+            // 🔍 DEBUG: Catch-all for unexpected errors
+            Log::error('[FedaPayService] Unexpected exception', [
+                'class' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+                'transaction_id' => $transaction->transaction_id ?? 'N/A',
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Unexpected error: ' . $e->getMessage(),
+                'error_code' => 'UNEXPECTED_ERROR',
             ];
         }
     }
@@ -135,6 +267,11 @@ class FedaPayService
     public function verifyTransaction($fedapayId)
     {
         try {
+            Log::info('[FedaPayService] Verifying transaction', [
+                'fedapay_id' => $fedapayId,
+                'base_url' => $this->baseUrl,
+            ]);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->secretKey,
                 'Accept' => 'application/json',
@@ -144,9 +281,14 @@ class FedaPayService
                 return ['success' => true, 'data' => $response->json()];
             }
 
+            Log::warning('[FedaPayService] Transaction verification failed', [
+                'fedapay_id' => $fedapayId,
+                'status' => $response->status(),
+            ]);
+
             return ['success' => false, 'error' => 'Not found (HTTP ' . $response->status() . ')'];
         } catch (\Exception $e) {
-            Log::error('FedaPay verification failed: ' . $e->getMessage());
+            Log::error('[FedaPayService] Verification exception: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -160,6 +302,9 @@ class FedaPayService
         parse_str(parse_url('http://x?' . $signature, PHP_URL_QUERY), $parts);
 
         if (!isset($parts['t']) || !isset($parts['s'])) {
+            Log::warning('[FedaPayService] Webhook signature missing components', [
+                'signature_preview' => substr($signature ?? '', 0, 50),
+            ]);
             return false;
         }
 
@@ -168,6 +313,11 @@ class FedaPayService
 
         // Reject if timestamp is too old (>5 minutes)
         if (abs(time() - $timestamp) > 300) {
+            Log::warning('[FedaPayService] Webhook timestamp too old', [
+                'timestamp' => $timestamp,
+                'current_time' => time(),
+                'diff' => abs(time() - $timestamp),
+            ]);
             return false;
         }
 
@@ -175,7 +325,14 @@ class FedaPayService
         $signedPayload = $timestamp . '.' . $payload;
         $computedSignature = hash_hmac('sha256', $signedPayload, $secret);
 
-        return hash_equals($computedSignature, $expectedSignature);
+        $isValid = hash_equals($computedSignature, $expectedSignature);
+
+        Log::info('[FedaPayService] Webhook signature verification', [
+            'is_valid' => $isValid,
+            'timestamp' => $timestamp,
+        ]);
+
+        return $isValid;
     }
 
     /**
