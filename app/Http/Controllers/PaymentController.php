@@ -22,7 +22,6 @@ class PaymentController extends Controller
     /**
      * ✅ INITIATE PAYMENT WITH FEDAPAY
      */
-
     public function initiate(Request $request, $transaction_id)
     {
         $transaction = PaymentTransaction::where('transaction_id', $transaction_id)
@@ -55,6 +54,7 @@ class PaymentController extends Controller
         }
 
         $subscription = $transaction->subscription;
+
         return view('payment.initiate', compact('transaction', 'subscription'));
     }
 
@@ -95,6 +95,7 @@ class PaymentController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             // ✅ STEP 4: Re-check status AFTER beginning transaction (defense in depth)
             $transaction->refresh(); // Refresh to get latest DB state
@@ -159,7 +160,6 @@ class PaymentController extends Controller
                 'transaction_id' => $request->transaction_id,
                 'error_code' => $e->getCode(),
             ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur de base de données. Veuillez réessayer.',
@@ -195,7 +195,6 @@ class PaymentController extends Controller
     {
         // This is for USER redirect after payment on FedaPay page
         // Webhooks handle the actual status update server-side
-
         $transactionId = $request->get('reference') ?? $request->get('transaction_id');
 
         if (!$transactionId) {
@@ -233,6 +232,7 @@ class PaymentController extends Controller
         try {
             $fedaPayService = new FedaPayService();
             $result = $fedaPayService->verifyTransaction($transactionId);
+
             if ($result['success']) {
                 return [
                     'status' => $result['data']['status'] ?? 'unknown',
@@ -272,6 +272,7 @@ class PaymentController extends Controller
     {
         $transaction = PaymentTransaction::where('transaction_id', $transaction_id)
             ->firstOrFail();
+
         return response()->json([
             'success' => true,
             'transaction' => [
@@ -284,7 +285,6 @@ class PaymentController extends Controller
             ]
         ]);
     }
-
 
     /**
      * Handle FedaPay webhook notifications (server-to-server)
@@ -302,7 +302,7 @@ class PaymentController extends Controller
 
         // ✅ Verify signature
         $fedapayService = new \App\Services\FedaPayService();
-        $webhookSecret = Setting::get('fedapay_webhook_secret')
+        $webhookSecret = \App\Models\Setting::get('fedapay_webhook_secret')
             ?? env('FEDAPAY_WEBHOOK_SECRET');
 
         if (!$webhookSecret || !$fedapayService->verifyWebhookSignature($payload, $signature, $webhookSecret)) {
@@ -353,6 +353,7 @@ class PaymentController extends Controller
         }
 
         \DB::beginTransaction();
+
         try {
             // Update transaction
             $transaction->update([
@@ -366,7 +367,6 @@ class PaymentController extends Controller
             if ($transaction->subscription && $transaction->subscription->status !== 'active') {
                 $subscription = $transaction->subscription;
                 $subscription->update(['status' => 'active']);
-
                 $subscription->user->update([
                     'subscription_status' => 'active',
                     'subscription_ends_at' => $subscription->end_date,
@@ -393,6 +393,7 @@ class PaymentController extends Controller
             $transaction->user->notify(new \App\Notifications\PaymentSuccessfulNotification($transaction));
 
             \DB::commit();
+
             Log::channel('payments')->info('Webhook processed successfully', [
                 'transaction_id' => $transaction->id,
                 'user_id' => $transaction->user_id,
@@ -420,7 +421,6 @@ class PaymentController extends Controller
                 'failure_reason' => $data['reason'] ?? 'Declined by FedaPay',
                 'provider_response' => $data,
             ]);
-
             $transaction->user?->notify(new \App\Notifications\PaymentFailedNotification($transaction));
 
             Log::channel('payments')->info('Webhook: transaction declined', ['reference' => $reference]);
