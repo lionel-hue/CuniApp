@@ -1710,496 +1710,393 @@
         </script>
     @endif
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-                    console.log('🚀 Welcome page loaded successfully');
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('🚀 Welcome page loaded successfully');
 
-                    // Network Status Check
-                    function updateNetworkStatus() {
-                        const networkStatus = document.getElementById('networkStatus');
-                        if (navigator.onLine) {
-                            networkStatus.style.display = 'none';
-                        } else {
-                            networkStatus.style.display = 'flex';
-                            networkStatus.className = 'network-status offline';
-                            networkStatus.innerHTML = '<i class="bi bi-wifi-off"></i><span>Aucune connexion réseau</span>';
-                        }
+                // ==================== NETWORK STATUS ====================
+                function updateNetworkStatus() {
+                    const networkStatus = document.getElementById('networkStatus');
+                    if (navigator.onLine) {
+                        networkStatus.style.display = 'none';
+                    } else {
+                        networkStatus.style.display = 'flex';
                     }
+                }
 
-                    window.addEventListener('online', updateNetworkStatus);
-                    window.addEventListener('offline', updateNetworkStatus);
-                    updateNetworkStatus();
+                window.addEventListener('online', updateNetworkStatus);
+                window.addEventListener('offline', updateNetworkStatus);
+                updateNetworkStatus();
 
-                    // Tab Switching Function
-                    function switchTab(tabName) {
-                        const tabs = document.querySelectorAll('.auth-tab');
-                        const forms = document.querySelectorAll('.auth-form');
-
-                        tabs.forEach(tab => tab.classList.remove('active'));
-                        forms.forEach(form => form.classList.remove('active'));
-
-                        const selectedTab = document.querySelector(`.auth-tab[data-tab="${tabName}"]`);
-                        if (selectedTab) selectedTab.classList.add('active');
-
-                        const selectedForm = document.querySelector(`#form-${tabName}`);
-                        if (selectedForm) selectedForm.classList.add('active');
-
-                        clearAllValidations();
-                        sessionStorage.setItem('cuniapp_current_tab', tabName);
-                    }
-
-                    function clearAllValidations() {
-                        document.querySelectorAll('.validation-message').forEach(msg => {
-                            msg.style.display = 'none';
-                            msg.className = 'validation-message';
-                        });
-                        document.querySelectorAll('.form-input').forEach(input => {
-                            input.classList.remove('error', 'success');
-                        });
-                    }
-
+                // ==================== TAB SWITCHING ====================
+                function switchTab(tabName) {
                     const tabs = document.querySelectorAll('.auth-tab');
-                    tabs.forEach(tab => {
-                        tab.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            switchTab(this.getAttribute('data-tab'));
-                        });
-                    });
+                    const forms = document.querySelectorAll('.auth-form');
 
-                    @if ($errors->has('email') || $errors->has('password'))
-                        switchTab('login');
-                    @elseif ($errors->has('name') || $errors->has('password_confirmation'))
-                        switchTab('register');
-                    @else
-                        const savedTab = sessionStorage.getItem('cuniapp_current_tab');
-                        if (savedTab) {
-                            switchTab(savedTab);
-                        }
-                    @endif
+                    tabs.forEach(tab => tab.classList.remove('active'));
+                    forms.forEach(form => form.classList.remove('active'));
 
-                    // Password Strength Checker
-                    const registerPassword = document.getElementById('registerPassword');
-                    const passwordStrengthFill = document.getElementById('passwordStrengthFill');
-                    const passwordStrengthText = document.getElementById('passwordStrengthText');
-                    const passwordConfirmation = document.getElementById('passwordConfirmation');
-                    const passwordMatchValidation = document.getElementById('passwordMatchValidation');
+                    const selectedTab = document.querySelector(`.auth-tab[data-tab="${tabName}"]`);
+                    const selectedForm = document.querySelector(`#form-${tabName}`);
 
-                    if (registerPassword) {
-                        registerPassword.addEventListener('input', function() {
-                            checkPasswordStrength(this.value);
-                            checkPasswordMatch();
-                        });
-                    }
+                    if (selectedTab) selectedTab.classList.add('active');
+                    if (selectedForm) selectedForm.classList.add('active');
 
-                    if (passwordConfirmation) {
-                        passwordConfirmation.addEventListener('input', checkPasswordMatch);
-                    }
+                    sessionStorage.setItem('cuniapp_current_tab', tabName);
+                }
 
-                    function checkPasswordStrength(password) {
-                        const requirements = {
-                            length: password.length >= 8,
-                            uppercase: /[A-Z]/.test(password),
-                            lowercase: /[a-z]/.test(password),
-                            number: /[0-9]/.test(password),
-                            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-                        };
-
-                        updateRequirement('req-length', requirements.length);
-                        updateRequirement('req-uppercase', requirements.uppercase);
-                        updateRequirement('req-lowercase', requirements.lowercase);
-                        updateRequirement('req-number', requirements.number);
-                        updateRequirement('req-special', requirements.special);
-
-                        const strength = Object.values(requirements).filter(Boolean).length;
-
-                        passwordStrengthFill.className = 'password-strength-fill';
-                        passwordStrengthText.className = 'password-strength-text';
-
-                        if (strength <= 2) {
-                            passwordStrengthFill.classList.add('weak');
-                            passwordStrengthText.classList.add('weak');
-                            passwordStrengthText.textContent = 'Faible';
-                        } else if (strength === 3) {
-                            passwordStrengthFill.classList.add('fair');
-                            passwordStrengthText.classList.add('fair');
-                            passwordStrengthText.textContent = 'Moyen';
-                        } else if (strength === 4) {
-                            passwordStrengthFill.classList.add('good');
-                            passwordStrengthText.classList.add('good');
-                            passwordStrengthText.textContent = 'Bon';
-                        } else {
-                            passwordStrengthFill.classList.add('strong');
-                            passwordStrengthText.classList.add('strong');
-                            passwordStrengthText.textContent = 'Excellent';
-                        }
-                    }
-
-                    function updateRequirement(id, met) {
-                        const element = document.getElementById(id);
-                        if (element) {
-                            element.classList.toggle('met', met);
-                            element.querySelector('i').className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle';
-                        }
-                    }
-
-                    function checkPasswordMatch() {
-                        if (!passwordConfirmation || !registerPassword) return;
-
-                        const password = registerPassword.value;
-                        const confirmation = passwordConfirmation.value;
-
-                        if (confirmation.length === 0) {
-                            passwordMatchValidation.style.display = 'none';
-                            return;
-                        }
-
-                        if (password === confirmation) {
-                            passwordMatchValidation.className = 'validation-message success';
-                            passwordMatchValidation.innerHTML =
-                                '<i class="bi bi-check-circle-fill"></i><span>Les mots de passe correspondent</span>';
-                            passwordMatchValidation.style.display = 'flex';
-                            passwordConfirmation.classList.remove('error');
-                            passwordConfirmation.classList.add('success');
-                        } else {
-                            passwordMatchValidation.className = 'validation-message error';
-                            passwordMatchValidation.innerHTML =
-                                '<i class="bi bi-x-circle-fill"></i><span>Les mots de passe ne correspondent pas</span>';
-                            passwordMatchValidation.style.display = 'flex';
-                            passwordConfirmation.classList.remove('success');
-                            passwordConfirmation.classList.add('error');
-                        }
-                    }
-
-                    // Name Character Counter
-                    const registerName = document.getElementById('registerName');
-                    const nameCharCounter = document.getElementById('nameCharCounter');
-                    const nameValidation = document.getElementById('nameValidation');
-
-                    if (registerName && nameCharCounter) {
-                        registerName.addEventListener('input', function() {
-                            const length = this.value.length;
-                            nameCharCounter.textContent = `${length}/50`;
-
-                            if (length > 50) {
-                                nameCharCounter.classList.add('exceeded');
-                                nameValidation.className = 'validation-message error';
-                                nameValidation.innerHTML =
-                                    '<i class="bi bi-x-circle-fill"></i><span>Le nom est trop long (max 50 caractères)</span>';
-                                nameValidation.style.display = 'flex';
-                                this.classList.add('error');
-                            } else if (length > 0 && length < 2) {
-                                nameValidation.className = 'validation-message warning';
-                                nameValidation.innerHTML =
-                                    '<i class="bi bi-exclamation-circle-fill"></i><span>Le nom est trop court (min 2 caractères)</span>';
-                                nameValidation.style.display = 'flex';
-                                this.classList.add('error');
-                            } else if (length >= 2) {
-                                nameCharCounter.classList.remove('exceeded');
-                                nameValidation.style.display = 'none';
-                                this.classList.remove('error');
-                                this.classList.add('success');
-                            } else {
-                                nameCharCounter.classList.remove('exceeded');
-                                nameValidation.style.display = 'none';
-                                this.classList.remove('error', 'success');
-                            }
-                        });
-                    }
-
-                    // Email Validation
-                    const loginEmail = document.getElementById('loginEmail');
-                    const registerEmail = document.getElementById('registerEmail');
-                    const loginEmailValidation = document.getElementById('loginEmailValidation');
-                    const emailValidation = document.getElementById('emailValidation');
-
-                    function validateEmail(input, validationElement) {
-                        if (!input || !validationElement) return;
-
-                        input.addEventListener('blur', function() {
-                            const email = this.value;
-                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-                            if (email.length === 0) {
-                                validationElement.style.display = 'none';
-                                return;
-                            }
-
-                            if (!emailRegex.test(email)) {
-                                validationElement.className = 'validation-message error';
-                                validationElement.innerHTML =
-                                    '<i class="bi bi-x-circle-fill"></i><span>Format d\'email invalide</span>';
-                                validationElement.style.display = 'flex';
-                                this.classList.add('error');
-                                this.classList.remove('success');
-                            } else {
-                                validationElement.style.display = 'none';
-                                this.classList.remove('error');
-                                this.classList.add('success');
-                            }
-                        });
-                    }
-
-                    validateEmail(loginEmail, loginEmailValidation);
-                    validateEmail(registerEmail, emailValidation);
-
-                    // Form Loading State
-                    document.querySelectorAll('form').forEach(form => {
-                        form.addEventListener('submit', function() {
-                            const submitBtn = this.querySelector('.btn-submit');
-                            if (submitBtn) {
-                                submitBtn.classList.add('loading');
-                                submitBtn.querySelector('span').textContent = 'Chargement...';
-                                submitBtn.querySelector('i').className = 'bi bi-hourglass-split';
-                            }
-                        });
-                    });
-
-                    // resources/views/welcome.blade.php - In the script section
-
-                    // ==================== VERIFICATION MODAL FUNCTIONS ====================
-                    let resendTimerInterval;
-
-                    window.closeVerificationModal = function() {
-                        const overlay = document.getElementById('verificationOverlay');
-                        if (overlay) {
-                            overlay.classList.remove('active');
-                            setTimeout(() => {
-                                overlay.style.display = 'none';
-                                document.body.style.overflow = '';
-                            }, 300);
-                        }
-                    }
-
-                    // Verification Code Input Handling
-                    document.querySelectorAll('.verification-code-input').forEach((input, index, inputs) => {
-                        input.addEventListener('input', function() {
-                            if (this.value.length === 1) {
-                                this.classList.add('filled');
-                                if (index < inputs.length - 1) {
-                                    inputs[index + 1].focus();
-                                }
-                            }
-                            updateVerificationCode();
-                        });
-
-                        input.addEventListener('keydown', function(e) {
-                            if (e.key === 'Backspace' && this.value === '' && index > 0) {
-                                inputs[index - 1].focus();
-                                inputs[index - 1].value = '';
-                                inputs[index - 1].classList.remove('filled');
-                                updateVerificationCode();
-                            }
-                        });
-                    });
-
-                    function updateVerificationCode() {
-                        let code = '';
-                        document.querySelectorAll('.verification-code-input').forEach(input => {
-                            code += input.value;
-                        });
-                        document.getElementById('verificationCodeInput').value = code;
-
-                        // Auto-submit when all 6 digits entered
-                        if (code.length === 6) {
-                            // Optional: auto-submit
-                            // document.getElementById('verificationForm').submit();
-                        }
-                    }
-
-                    // Resend Timer
-                    function startResendTimer() {
-                        const timerElement = document.getElementById('resendTimer');
-                        const timerCount = document.getElementById('timerCount');
-                        const resendLink = document.getElementById('resendCode');
-
-                        if (!timerElement || !timerCount || !resendLink) return;
-
-                        let seconds = 60;
-                        timerElement.classList.remove('disabled');
-                        resendLink.style.pointerEvents = 'none';
-                        resendLink.style.opacity = '0.5';
-
-                        clearInterval(resendTimerInterval);
-                        resendTimerInterval = setInterval(() => {
-                            seconds--;
-                            timerCount.textContent = seconds;
-                            if (seconds <= 0) {
-                                clearInterval(resendTimerInterval);
-                                timerElement.classList.add('disabled');
-                                resendLink.style.pointerEvents = 'auto';
-                                resendLink.style.opacity = '1';
-                            }
-                        }, 1000);
-                    }
-
-                    window.resendVerificationCode = function(e) {
+                const tabs = document.querySelectorAll('.auth-tab');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function(e) {
                         e.preventDefault();
-                        const email = document.getElementById('verificationEmailDisplay').textContent;
+                        switchTab(this.getAttribute('data-tab'));
+                    });
+                });
 
-                        fetch('{{ route('verification.code.resend') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    email: email
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    alert('Un nouveau code a été envoyé à votre adresse email.');
-                                    startResendTimer();
-                                } else {
-                                    alert('Une erreur est survenue. Veuillez réessayer.');
-                                }
-                            })
-                            .catch(error => {
-                                alert('Une erreur est survenue. Veuillez réessayer.');
-                            });
+                // Restore saved tab
+                @if ($errors->has('email') || $errors->has('password'))
+                    switchTab('login');
+                @elseif ($errors->has('name') || $errors->has('password_confirmation'))
+                    switchTab('register');
+                @else
+                    const savedTab = sessionStorage.getItem('cuniapp_current_tab');
+                    if (savedTab) switchTab(savedTab);
+                @endif
+
+                // ==================== PASSWORD STRENGTH ====================
+                const registerPassword = document.getElementById('registerPassword');
+                const passwordStrengthFill = document.getElementById('passwordStrengthFill');
+                const passwordStrengthText = document.getElementById('passwordStrengthText');
+
+                if (registerPassword) {
+                    registerPassword.addEventListener('input', function() {
+                        const password = this.value;
+                        const strength = calculatePasswordStrength(password);
+                        updatePasswordStrengthUI(strength);
+                    });
+                }
+
+                function calculatePasswordStrength(password) {
+                    let score = 0;
+                    if (password.length >= 8) score++;
+                    if (/[A-Z]/.test(password)) score++;
+                    if (/[a-z]/.test(password)) score++;
+                    if (/[0-9]/.test(password)) score++;
+                    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+                    return score;
+                }
+
+                function updatePasswordStrengthUI(strength) {
+                    if (!passwordStrengthFill || !passwordStrengthText) return;
+
+                    const classes = ['weak', 'fair', 'good', 'strong'];
+                    const labels = ['Faible', 'Moyen', 'Bon', 'Excellent'];
+                    const widths = ['25%', '50%', '75%', '100%'];
+
+                    const index = Math.min(strength - 1, 3);
+                    if (index >= 0) {
+                        passwordStrengthFill.className = 'password-strength-fill ' + classes[index];
+                        passwordStrengthFill.style.width = widths[index];
+                        passwordStrengthText.className = 'password-strength-text ' + classes[index];
+                        passwordStrengthText.textContent = labels[index];
                     }
+                }
 
-                    // Close modal on Escape key
-                    document.addEventListener('keydown', function(e) {
-                        if (e.key === 'Escape') {
-                            closeVerificationModal();
+                // ==================== FORM LOADING STATE ====================
+                document.querySelectorAll('form').forEach(form => {
+                    form.addEventListener('submit', function() {
+                        const submitBtn = this.querySelector('.btn-submit');
+                        if (submitBtn) {
+                            submitBtn.classList.add('loading');
+                            submitBtn.querySelector('span').textContent = 'Chargement...';
                         }
                     });
+                });
 
-                    // ✅ START TIMER ON LOAD IF VERIFICATION IS PENDING
-                    @if (session('verification_pending'))
-                        document.addEventListener('DOMContentLoaded', function() {
-                            startResendTimer();
-                            // Focus first input
-                            setTimeout(() => {
-                                document.querySelector('.verification-code-input')?.focus();
-                            }, 500);
-                        });
-                    @endif
+                // ==================== VERIFICATION MODAL ====================
+                let resendTimerInterval;
 
-                    // ============================================
-                    // ✅ REGISTRATION FORM STEP NAVIGATION
-                    // ============================================
-                    let currentStep = 1;
+                window.closeVerificationModal = function() {
+                    const overlay = document.getElementById('verificationOverlay');
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                            document.body.style.overflow = '';
+                        }, 300);
+                    }
+                };
 
-                    function nextStep(step) {
-                        // Validate current step before proceeding
-                        if (!validateStep(currentStep)) {
-                            return;
+                // Verification Code Input Handling
+                document.querySelectorAll('.verification-code-input').forEach((input, index, inputs) => {
+                    input.addEventListener('input', function() {
+                        if (this.value.length === 1) {
+                            this.classList.add('filled');
+                            if (index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            }
                         }
+                        updateVerificationCode();
+                    });
 
-                        // Hide current step
-                        document.querySelector(`.form-step[data-step="${currentStep}"]`).style.display = 'none';
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                            inputs[index - 1].focus();
+                            inputs[index - 1].value = '';
+                            inputs[index - 1].classList.remove('filled');
+                            updateVerificationCode();
+                        }
+                    });
+                });
 
-                        // Show next step
-                        document.querySelector(`.form-step[data-step="${step}"]`).style.display = 'block';
+                function updateVerificationCode() {
+                    let code = '';
+                    document.querySelectorAll('.verification-code-input').forEach(input => {
+                        code += input.value;
+                    });
+                    const codeInput = document.getElementById('verificationCodeInput');
+                    if (codeInput) codeInput.value = code;
+                }
 
-                        // Update step indicator
-                        updateStepIndicator(step);
+                function startResendTimer() {
+                    const timerElement = document.getElementById('resendTimer');
+                    const timerCount = document.getElementById('timerCount');
+                    const resendLink = document.getElementById('resendCode');
 
-                        currentStep = step;
+                    if (!timerElement || !timerCount || !resendLink) return;
 
-                        // Scroll to top of form
-                        document.getElementById('form-register').scrollIntoView({
+                    let seconds = 60;
+                    timerElement.classList.remove('disabled');
+                    resendLink.style.pointerEvents = 'none';
+                    resendLink.style.opacity = '0.5';
+
+                    clearInterval(resendTimerInterval);
+                    resendTimerInterval = setInterval(() => {
+                        seconds--;
+                        timerCount.textContent = seconds;
+                        if (seconds <= 0) {
+                            clearInterval(resendTimerInterval);
+                            timerElement.classList.add('disabled');
+                            resendLink.style.pointerEvents = 'auto';
+                            resendLink.style.opacity = '1';
+                        }
+                    }, 1000);
+                }
+
+                window.resendVerificationCode = function(e) {
+                    e.preventDefault();
+                    const emailDisplay = document.getElementById('verificationEmailDisplay');
+                    if (!emailDisplay) return;
+
+                    const email = emailDisplay.textContent;
+                    fetch('{{ route('verification.code.resend') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                email: email
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Un nouveau code a été envoyé à votre adresse email.');
+                                startResendTimer();
+                            } else {
+                                alert('Une erreur est survenue. Veuillez réessayer.');
+                            }
+                        })
+                        .catch(error => {
+                            alert('Une erreur est survenue. Veuillez réessayer.');
+                        });
+                };
+
+                // Close modal on Escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeVerificationModal();
+                    }
+                });
+
+                // Start timer if verification pending
+                @if (session('verification_pending'))
+                    startResendTimer();
+                    setTimeout(() => {
+                        const firstInput = document.querySelector('.verification-code-input');
+                        if (firstInput) firstInput.focus();
+                    }, 500);
+                @endif
+
+                // ==================== REGISTRATION STEP NAVIGATION ====================
+                let currentStep = 1;
+
+                window.nextStep = function(step) {
+                    if (!validateStep(currentStep)) {
+                        return;
+                    }
+
+                    const currentStepEl = document.querySelector(`.form-step[data-step="${currentStep}"]`);
+                    const nextStepEl = document.querySelector(`.form-step[data-step="${step}"]`);
+
+                    if (currentStepEl) currentStepEl.style.display = 'none';
+                    if (nextStepEl) nextStepEl.style.display = 'block';
+
+                    updateStepIndicator(step);
+                    currentStep = step;
+
+                    const form = document.getElementById('form-register');
+                    if (form) {
+                        form.scrollIntoView({
                             behavior: 'smooth',
                             block: 'start'
                         });
                     }
+                };
 
-                    function previousStep(step) {
-                        // Hide current step
-                        document.querySelector(`.form-step[data-step="${currentStep}"]`).style.display = 'none';
+                window.previousStep = function(step) {
+                    const currentStepEl = document.querySelector(`.form-step[data-step="${currentStep}"]`);
+                    const prevStepEl = document.querySelector(`.form-step[data-step="${step}"]`);
 
-                        // Show previous step
-                        document.querySelector(`.form-step[data-step="${step}"]`).style.display = 'block';
+                    if (currentStepEl) currentStepEl.style.display = 'none';
+                    if (prevStepEl) prevStepEl.style.display = 'block';
 
-                        // Update step indicator
-                        updateStepIndicator(step);
+                    updateStepIndicator(step);
+                    currentStep = step;
+                };
 
-                        currentStep = step;
-                    }
+                function updateStepIndicator(step) {
+                    const circles = document.querySelectorAll('.step-circle');
+                    const progress = document.querySelector('.step-progress');
+                    const stepTexts = document.querySelectorAll('.step span');
 
-                    function updateStepIndicator(step) {
-                        const circles = document.querySelectorAll('.step-circle');
-                        const progress = document.querySelector('.step-progress');
-                        const stepTexts = document.querySelectorAll('.step span');
+                    circles.forEach((circle, index) => {
+                        if (index < step) {
+                            circle.style.background = 'var(--primary)';
+                            circle.style.color = 'white';
+                        } else {
+                            circle.style.background = 'var(--gray-200)';
+                            circle.style.color = 'var(--text-secondary)';
+                        }
+                    });
 
-                        circles.forEach((circle, index) => {
-                            if (index < step) {
-                                circle.style.background = 'var(--primary)';
-                                circle.style.color = 'white';
-                            } else {
-                                circle.style.background = 'var(--gray-200)';
-                                circle.style.color = 'var(--text-secondary)';
-                            }
-                        });
+                    stepTexts.forEach((text, index) => {
+                        if (index < step) {
+                            text.style.color = 'var(--text-primary)';
+                            text.style.fontWeight = '600';
+                        } else {
+                            text.style.color = 'var(--text-secondary)';
+                            text.style.fontWeight = '500';
+                        }
+                    });
 
-                        stepTexts.forEach((text, index) => {
-                            if (index < step) {
-                                text.style.color = 'var(--text-primary)';
-                                text.style.fontWeight = '600';
-                            } else {
-                                text.style.color = 'var(--text-secondary)';
-                                text.style.fontWeight = '500';
-                            }
-                        });
-
-                        // Update progress bar
+                    if (progress) {
                         progress.style.width = step === 1 ? '0%' : '100%';
                     }
+                }
 
-                    function validateStep(step) {
-                        let isValid = true;
-                        const requiredInputs = document.querySelectorAll(`.step${step}-required`);
+                function validateStep(step) {
+                    let isValid = true;
+                    const requiredInputs = document.querySelectorAll(`.step${step}-required`);
 
-                        requiredInputs.forEach(input => {
-                            if (!input.value.trim()) {
-                                isValid = false;
-                                input.classList.add('error');
+                    requiredInputs.forEach(input => {
+                        if (!input.value.trim()) {
+                            isValid = false;
+                            input.classList.add('error');
 
-                                // Show validation message
-                                const wrapper = input.closest('.form-group');
-                                let errorMsg = wrapper.querySelector('.validation-message.error');
-                                if (!errorMsg) {
-                                    errorMsg = document.createElement('div');
-                                    errorMsg.className = 'validation-message error';
-                                    errorMsg.innerHTML =
-                                        '<i class="bi bi-exclamation-circle-fill"></i><span>Ce champ est obligatoire</span>';
-                                    wrapper.appendChild(errorMsg);
-                                }
-                                errorMsg.style.display = 'flex';
-                            } else {
-                                input.classList.remove('error');
-                                const wrapper = input.closest('.form-group');
-                                const errorMsg = wrapper.querySelector('.validation-message.error');
-                                if (errorMsg) {
-                                    errorMsg.style.display = 'none';
-                                }
+                            const wrapper = input.closest('.form-group');
+                            let errorMsg = wrapper.querySelector('.validation-message.error');
+                            if (!errorMsg) {
+                                errorMsg = document.createElement('div');
+                                errorMsg.className = 'validation-message error';
+                                errorMsg.innerHTML =
+                                    '<i class="bi bi-exclamation-circle-fill"></i><span>Ce champ est obligatoire</span>';
+                                wrapper.appendChild(errorMsg);
                             }
-                        });
-
-                        if (!isValid) {
-                            showToast('⚠️ Veuillez remplir tous les champs obligatoires', 'error');
+                            errorMsg.style.display = 'flex';
+                        } else {
+                            input.classList.remove('error');
+                            const wrapper = input.closest('.form-group');
+                            const errorMsg = wrapper.querySelector('.validation-message.error');
+                            if (errorMsg) errorMsg.style.display = 'none';
                         }
+                    });
 
-                        return isValid;
+                    if (!isValid) {
+                        showToast('⚠️ Veuillez remplir tous les champs obligatoires', 'error');
                     }
 
-                    // Add error class handling for inputs
-                    document.querySelectorAll('.form-input').forEach(input => {
-                        input.addEventListener('input', function() {
-                            if (this.value.trim()) {
-                                this.classList.remove('error');
-                                const wrapper = this.closest('.form-group');
-                                const errorMsg = wrapper.querySelector('.validation-message.error');
-                                if (errorMsg) {
-                                    errorMsg.style.display = 'none';
-                                }
-                            }
-                        });
+                    return isValid;
+                }
+
+                // Clear error on input
+                document.querySelectorAll('.form-input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        if (this.value.trim()) {
+                            this.classList.remove('error');
+                            const wrapper = this.closest('.form-group');
+                            const errorMsg = wrapper.querySelector('.validation-message.error');
+                            if (errorMsg) errorMsg.style.display = 'none';
+                        }
                     });
-    </script>
+                });
+
+                // Toast notification helper
+                function showToast(message, type = 'info') {
+                    const toast = document.createElement('div');
+                    toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-left: 4px solid ${type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)'};
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+        `;
+
+                    const icon = type === 'success' ? 'check-circle-fill' : 'x-circle-fill';
+                    const color = type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)';
+
+                    toast.innerHTML = `
+            <i class="bi bi-${icon}" style="color: ${color}; font-size: 20px;"></i>
+            <span style="color: var(--text-primary); font-size: 14px; font-weight: 500;">${message}</span>
+        `;
+
+                    document.body.appendChild(toast);
+                    setTimeout(() => {
+                        toast.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+
+                // Add animation styles
+                if (!document.getElementById('cuniapp-animations-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'cuniapp-animations-style';
+                    style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+                    document.head.appendChild(style);
+                }
+            });
+        </script>
+    @endpush
 </body>
 
 </html>
