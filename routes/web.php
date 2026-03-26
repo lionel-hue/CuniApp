@@ -296,6 +296,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/employee', [FirmController::class, 'storeEmployee'])->name('employee.store');
             Route::patch('/employee/{userId}', [FirmController::class, 'updateEmployee'])->name('employee.update');
             Route::patch('/employee/{userId}/deactivate', [FirmController::class, 'deactivateEmployee'])->name('employee.deactivate');
+            Route::patch('/update', [FirmController::class, 'updateFirm'])->name('update'); 
         });
 
         // ========================================================================
@@ -304,6 +305,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['verified', 'check.super.admin'])->prefix('super-admin')->name('super.admin.')->group(function () {
             Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
             Route::get('/firms', [SuperAdminController::class, 'firms'])->name('firms');
+            Route::get('/firms/{id}', [SuperAdminController::class, 'showFirm'])->name('firms.show'); 
             Route::post('/firms/{id}/ban', [SuperAdminController::class, 'banFirm'])->name('firms.ban');
             Route::post('/firms/{id}/activate', [SuperAdminController::class, 'activateFirm'])->name('firms.activate');
         });
