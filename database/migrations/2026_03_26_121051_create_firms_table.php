@@ -13,9 +13,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('owner_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->enum('status', ['active', 'banned', 'suspended'])->default('active');
-            $table->timestamps();
+            $table->timestamps();   
 
             // Indexes for performance
             $table->index('status');
