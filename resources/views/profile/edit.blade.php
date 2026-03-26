@@ -58,45 +58,86 @@
                     <div class="settings-grid">
                         <div class="form-group">
                             <label class="form-label">Nom complet *</label>
-                            <input type="text" name="name" class="form-control" value="{{ auth()->user()->name }}" required>
+                            <input type="text" name="name" class="form-control" value="{{ auth()->user()->name }}"
+                                required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-control" value="{{ auth()->user()->email }}" required {{ auth()->user()->google_id ? 'readonly' : '' }}>
-                            @if(auth()->user()->google_id)
+                            <input type="email" name="email" class="form-control" value="{{ auth()->user()->email }}"
+                                required {{ auth()->user()->google_id ? 'readonly' : '' }}>
+                            @if (auth()->user()->google_id)
                                 <small style="color: var(--primary); font-size: 11px; margin-top: 4px; display: block;">
-                                    <i class="bi bi-info-circle"></i> L'email est lié à votre compte Google et ne peut pas être modifié.
+                                    <i class="bi bi-info-circle"></i> L'email est lié à votre compte Google et ne peut pas
+                                    être modifié.
                                 </small>
                             @endif
                         </div>
-                        @if(!auth()->user()->google_id)
-                        <div class="form-group">
-                            <label class="form-label">Mot de passe actuel</label>
-                            <input type="password" name="current_password" class="form-control" placeholder="••••••••">
-                            @error('current_password')
-                                <div class="field-error"><i class="bi bi-x-circle"></i> {{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Nouveau mot de passe</label>
-                            <input type="password" name="new_password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Confirmer mot de passe</label>
-                            <input type="password" name="new_password_confirmation" class="form-control" placeholder="••••••••">
-                        </div>
+                        @if (!auth()->user()->google_id)
+                            <div class="form-group">
+                                <label class="form-label">Mot de passe actuel</label>
+                                <input type="password" name="current_password" class="form-control" placeholder="••••••••">
+                                @error('current_password')
+                                    <div class="field-error"><i class="bi bi-x-circle"></i> {{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nouveau mot de passe</label>
+                                <input type="password" name="new_password" class="form-control" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirmer mot de passe</label>
+                                <input type="password" name="new_password_confirmation" class="form-control"
+                                    placeholder="••••••••">
+                            </div>
                         @else
-                        <div class="form-group" style="grid-column: span 2;">
-                            <div class="alert-custom alert-custom-info" style="margin-bottom: 0;">
-                                <i class="bi bi-google alert-icon"></i>
-                                <div>
-                                    Vous êtes connecté via <strong>Google</strong>. La gestion du mot de passe se fait directement sur votre compte Google.
+                            <div class="form-group" style="grid-column: span 2;">
+                                <div class="alert-custom alert-custom-info" style="margin-bottom: 0;">
+                                    <i class="bi bi-google alert-icon"></i>
+                                    <div>
+                                        Vous êtes connecté via <strong>Google</strong>. La gestion du mot de passe se fait
+                                        directement sur votre compte Google.
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         @endif
                     </div>
-                    
+
+
+                    {{-- ADD THIS BEFORE the "Mettre à jour le profil" button --}}
+                    <div class="cuni-card" style="margin-top: 24px;">
+                        <div class="card-header-custom">
+                            <h3 class="card-title">
+                                <i class="bi bi-building"></i> Informations de l'Entreprise
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            @if (auth()->user()->firm)
+                                <div class="settings-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Entreprise</label>
+                                        <p class="fw-semibold">{{ auth()->user()->firm->name }}</p>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Votre Rôle</label>
+                                        <p>
+                                            <span class="badge"
+                                                style="background: {{ auth()->user()->isFirmAdmin() ? 'rgba(139, 92, 246, 0.1); color: #8B5CF6;' : 'rgba(59, 130, 246, 0.1); color: #3B82F6;' }}">
+                                                {{ auth()->user()->isFirmAdmin() ? 'Administrateur' : 'Employé' }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Utilisateurs dans l'entreprise</label>
+                                        <p>{{ auth()->user()->firm->active_users_count }} /
+                                            {{ auth()->user()->firm->subscription_limit }}</p>
+                                    </div>
+                                </div>
+                            @else
+                                <p class="text-muted">Aucune entreprise associée à votre compte</p>
+                            @endif
+                        </div>
+                    </div>
+
                     <div style="margin-top: 24px;">
                         <button type="submit" class="btn-cuni primary">
                             <i class="bi bi-save"></i>
@@ -118,23 +159,27 @@
             align-items: center;
             padding: 1rem 1.5rem;
             margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
+
         .alert-custom-success {
             background-color: #f0fdf4;
             color: #166534;
             border-color: #22c55e;
         }
+
         .alert-custom-danger {
             background-color: #fef2f2;
             color: #991b1b;
             border-color: #ef4444;
         }
+
         .alert-custom-info {
             background-color: #eff6ff;
             color: #1e40af;
             border-color: #3b82f6;
         }
+
         .alert-icon {
             font-size: 1.4rem;
             margin-right: 15px;
@@ -184,7 +229,9 @@
                     successAlert.style.transition = "opacity 0.6s ease, transform 0.6s ease";
                     successAlert.style.opacity = "0";
                     successAlert.style.transform = "translateY(-10px)";
-                    setTimeout(() => { successAlert.remove(); }, 600);
+                    setTimeout(() => {
+                        successAlert.remove();
+                    }, 600);
                 }, 5000);
             }
         });

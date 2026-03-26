@@ -90,6 +90,25 @@ class SettingsController extends Controller
         Setting::set('fedapay_environment', $request->fedapay_environment ?? 'sandbox', 'string', 'payments', 'Environnement FedaPay');
 
 
+        // In SettingsController@update method, ADD THIS after the existing Setting::set() calls:
+
+        // ✅ NEW: Handle Firm Settings for Firm Admins
+        if ($user->isFirmAdmin() && $user->firm) {
+            if ($request->has('firm_name') || $request->has('firm_description')) {
+                $firmData = [];
+                if ($request->has('firm_name')) {
+                    $firmData['name'] = $request->firm_name;
+                }
+                if ($request->has('firm_description')) {
+                    $firmData['description'] = $request->firm_description;
+                }
+                if (!empty($firmData)) {
+                    $user->firm->update($firmData);
+                }
+            }
+        }
+
+
 
         return redirect()->route('settings.index')
             ->with('success', 'Paramètres enregistrés avec succès !')

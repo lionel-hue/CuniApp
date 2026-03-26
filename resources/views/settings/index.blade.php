@@ -90,6 +90,28 @@
                         </button>
                     </div>
                 </form>
+
+                {{-- Add this section in the "general-tab" content, after the farm settings form --}}
+
+                @if (auth()->check() && auth()->user()->isFirmAdmin() && auth()->user()->firm)
+                    <hr style="border-color: var(--surface-border); margin: 32px 0;">
+                    <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">
+                        <i class="bi bi-building" style="color: var(--primary);"></i>
+                        Informations de Votre Entreprise
+                    </h4>
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nom de l'entreprise</label>
+                            <input type="text" name="firm_name" class="form-control"
+                                value="{{ old('firm_name', auth()->user()->firm->name) }}"
+                                placeholder="Ex: Ferme Lapin d'Or">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="firm_description" class="form-control" rows="3" placeholder="Décrivez votre entreprise...">{{ old('firm_description', auth()->user()->firm->description) }}</textarea>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -107,15 +129,19 @@
                         <div class="form-group">
                             <label class="form-label">Jours de gestation (lapine)</label>
                             <input type="number" name="gestation_days" class="form-control"
-                                value="{{ \App\Models\Setting::get('gestation_days', 31) }}" min="28" max="35">
-                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 6px; display: block;"><i
+                                value="{{ \App\Models\Setting::get('gestation_days', 31) }}" min="28"
+                                max="35">
+                            <small
+                                style="color: var(--text-tertiary); font-size: 12px; margin-top: 6px; display: block;"><i
                                     class="bi bi-info-circle"></i> Moyenne: 31 jours</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Semaines de sevrage</label>
                             <input type="number" name="weaning_weeks" class="form-control"
-                                value="{{ \App\Models\Setting::get('weaning_weeks', 6) }}" min="4" max="8">
-                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 6px; display: block;"><i
+                                value="{{ \App\Models\Setting::get('weaning_weeks', 6) }}" min="4"
+                                max="8">
+                            <small
+                                style="color: var(--text-tertiary); font-size: 12px; margin-top: 6px; display: block;"><i
                                     class="bi bi-info-circle"></i> Recommandé: 6 semaines</small>
                         </div>
                         <div class="form-group">

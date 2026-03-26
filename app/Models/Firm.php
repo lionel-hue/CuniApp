@@ -94,12 +94,13 @@ class Firm extends Model
     {
         return $this->users()
             ->where('role', '!=', 'super_admin')
+            ->where('status', 'active')
             ->count();
     }
 
     public function getSubscriptionLimitAttribute(): int
     {
-        $subscription = $this->activeSubscription()->first(); 
+        $subscription = $this->activeSubscription()->first();
         if (!$subscription || !$subscription->plan) {
             return 5; // Default limit
         }
