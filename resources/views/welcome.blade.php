@@ -1165,6 +1165,51 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ============================================
+✅ REGISTRATION STEP STYLES - ADD THIS
+============================================ */
+        .form-step {
+            animation: fadeInStep 0.4s ease;
+        }
+
+        @keyframes fadeInStep {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-indicator {
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+        }
+
+        .step-circle {
+            transition: all 0.3s ease;
+        }
+
+        .step-progress {
+            transition: width 0.3s ease;
+        }
+
+        .form-input.error {
+            border-color: var(--accent-red) !important;
+            background-color: rgba(239, 68, 68, 0.05) !important;
+        }
+
+        /* Hide social login on step 2 for cleaner look */
+        .form-step[data-step="2"] .divider,
+        .form-step[data-step="2"] .social-login {
+            display: none;
+        }
     </style>
 </head>
 
@@ -1350,7 +1395,7 @@
                             </div>
                         </form>
 
-                        <!-- Register Form -->
+                        <!-- Register Form (2-Step Process) -->
                         <form method="POST" action="{{ route('register') }}" class="auth-form" id="form-register">
                             @csrf
 
@@ -1388,153 +1433,127 @@
                                 </div>
                             @endif
 
-                            <h2 class="form-title">Créer un compte</h2>
-                            <p class="form-subtitle">Rejoignez CuniApp dès aujourd'hui</p>
-
-                            <div class="form-group">
-                                <label class="form-label">Nom complet</label>
-                                <div class="form-input-wrapper">
-                                    <input type="text" name="name"
-                                        class="form-input @error('name') error @enderror" placeholder="Jean Dupont"
-                                        required autofocus value="{{ old('name') }}" id="registerName"
-                                        minlength="2" maxlength="50">
-                                    <i class="bi bi-person"></i>
+                            <!-- ✅ STEP INDICATOR -->
+                            <div class="step-indicator"
+                                style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px;">
+                                <div class="step" data-step="1"
+                                    style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="step-circle active"
+                                        style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                                        1</div>
+                                    <span
+                                        style="font-size: 13px; font-weight: 500; color: var(--text-primary);">Compte</span>
                                 </div>
-                                <div class="char-counter" id="nameCharCounter">0/50</div>
-                                @error('name')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>
-                                            @if (str_contains($message, 'validation.'))
-                                                {{ str_replace('validation.', '', $message) }}
-                                            @else
-                                                {{ $message }}
-                                            @endif
-                                        </span>
+                                <div style="flex: 1; height: 2px; background: var(--gray-200);">
+                                    <div class="step-progress"
+                                        style="height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease;">
                                     </div>
-                                @enderror
-                                <div class="validation-message" id="nameValidation" style="display: none;"></div>
+                                </div>
+                                <div class="step" data-step="2"
+                                    style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="step-circle"
+                                        style="width: 32px; height: 32px; border-radius: 50%; background: var(--gray-200); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                                        2</div>
+                                    <span
+                                        style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">Entreprise</span>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Adresse email</label>
-                                <div class="form-input-wrapper">
-                                    <input type="email" name="email"
-                                        class="form-input @error('email') error @enderror"
-                                        placeholder="votre@email.com" required value="{{ old('email') }}"
-                                        id="registerEmail" autocomplete="off">
-                                    <i class="bi bi-envelope"></i>
-                                </div>
-                                @error('email')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>
-                                            @if (str_contains($message, 'validation.unique'))
-                                                Cette adresse email est déjà utilisée. Veuillez en choisir une autre.
-                                            @elseif(str_contains($message, 'validation.email'))
-                                                Format d'email invalide.
-                                            @elseif(str_contains($message, 'validation.'))
-                                                {{ str_replace('validation.', '', $message) }}
-                                            @else
-                                                {{ $message }}
-                                            @endif
-                                        </span>
+                            <!-- ✅ STEP 1: USER BIO DATA -->
+                            <div class="form-step" data-step="1" style="display: block;">
+                                <h2 class="form-title">Créer votre compte</h2>
+                                <p class="form-subtitle">Commençons par vos informations personnelles</p>
+
+                                <div class="form-group">
+                                    <label class="form-label">Nom complet *</label>
+                                    <div class="form-input-wrapper">
+                                        <input type="text" name="name" class="form-input step1-required"
+                                            placeholder="Jean Dupont" required autofocus value="{{ old('name') }}"
+                                            id="registerName" minlength="2" maxlength="50">
+                                        <i class="bi bi-person"></i>
                                     </div>
-                                @enderror
-                                <div class="validation-message" id="emailValidation" style="display: none;"></div>
+                                    <div class="char-counter" id="nameCharCounter">0/50</div>
+                                    @error('name')
+                                        <div class="validation-message error">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                            <span>{{ $message }}</span>
+                                        </div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Adresse email *</label>
+                                    <div class="form-input-wrapper">
+                                        <input type="email" name="email" class="form-input step1-required"
+                                            placeholder="votre@email.com" required value="{{ old('email') }}"
+                                            id="registerEmail" autocomplete="off">
+                                        <i class="bi bi-envelope"></i>
+                                    </div>
+                                    @error('email')
+                                        <div class="validation-message error">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                            <span>{{ $message }}</span>
+                                        </div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Mot de passe *</label>
+                                    <div class="form-input-wrapper">
+                                        <input type="password" name="password" class="form-input step1-required"
+                                            placeholder="••••••••" required id="registerPassword" minlength="8"
+                                            autocomplete="new-password">
+                                        <i class="bi bi-lock"></i>
+                                    </div>
+                                    <div class="password-strength-container">
+                                        <div class="password-strength-bar">
+                                            <div class="password-strength-fill" id="passwordStrengthFill"></div>
+                                        </div>
+                                        <div class="password-strength-text" id="passwordStrengthText">Faible</div>
+                                    </div>
+                                    @error('password')
+                                        <div class="validation-message error">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                            <span>{{ $message }}</span>
+                                        </div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Confirmer le mot de passe *</label>
+                                    <div class="form-input-wrapper">
+                                        <input type="password" name="password_confirmation"
+                                            class="form-input step1-required" placeholder="••••••••" required
+                                            id="passwordConfirmation">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </div>
+                                    @error('password_confirmation')
+                                        <div class="validation-message error">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                            <span>{{ $message }}</span>
+                                        </div>
+                                    @enderror
+                                </div>
+
+                                <!-- Step 1 Navigation -->
+                                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                                    <button type="button" class="btn-submit" onclick="nextStep(2)"
+                                        style="flex: 1;">
+                                        <span>Suivant</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Mot de passe</label>
-                                <div class="form-input-wrapper">
-                                    <input type="password" name="password"
-                                        class="form-input @error('password') error @enderror" placeholder="••••••••"
-                                        required id="registerPassword" minlength="8" autocomplete="new-password">
-                                    <i class="bi bi-lock"></i>
-                                </div>
-                                <div class="password-strength-container">
-                                    <div class="password-strength-bar">
-                                        <div class="password-strength-fill" id="passwordStrengthFill"></div>
-                                    </div>
-                                    <div class="password-strength-text" id="passwordStrengthText">Faible</div>
-                                </div>
-                                <div class="password-requirements">
-                                    <div class="password-requirements-title">
-                                        <i class="bi bi-shield-check"></i>
-                                        <span>Le mot de passe doit contenir :</span>
-                                    </div>
-                                    <div class="password-requirement" id="req-length">
-                                        <i class="bi bi-circle"></i>
-                                        <span>Au moins 8 caractères</span>
-                                    </div>
-                                    <div class="password-requirement" id="req-uppercase">
-                                        <i class="bi bi-circle"></i>
-                                        <span>Une majuscule</span>
-                                    </div>
-                                    <div class="password-requirement" id="req-lowercase">
-                                        <i class="bi bi-circle"></i>
-                                        <span>Une minuscule</span>
-                                    </div>
-                                    <div class="password-requirement" id="req-number">
-                                        <i class="bi bi-circle"></i>
-                                        <span>Un chiffre</span>
-                                    </div>
-                                    <div class="password-requirement" id="req-special">
-                                        <i class="bi bi-circle"></i>
-                                        <span>Un caractère spécial (!@#$%^&*)</span>
-                                    </div>
-                                </div>
-                                @error('password')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>
-                                            @if (str_contains($message, 'validation.'))
-                                                {{ str_replace('validation.', '', $message) }}
-                                            @else
-                                                {{ $message }}
-                                            @endif
-                                        </span>
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Confirmer le mot de passe</label>
-                                <div class="form-input-wrapper">
-                                    <input type="password" name="password_confirmation"
-                                        class="form-input @error('password_confirmation') error @enderror"
-                                        placeholder="••••••••" required id="passwordConfirmation">
-                                    <i class="bi bi-lock-fill"></i>
-                                </div>
-                                <div class="validation-message" id="passwordMatchValidation" style="display: none;">
-                                </div>
-                                @error('password_confirmation')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>
-                                            @if (str_contains($message, 'validation.'))
-                                                {{ str_replace('validation.', '', $message) }}
-                                            @else
-                                                {{ $message }}
-                                            @endif
-                                        </span>
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <!-- ✅ NEW: Firm Information Section -->
-                            <div class="form-section"
-                                style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--surface-border);">
-                                <h4 class="form-title" style="font-size: 18px; margin-bottom: 16px;">
-                                    <i class="bi bi-building" style="color: var(--primary);"></i>
-                                    Informations de l'Entreprise
-                                </h4>
+                            <!-- ✅ STEP 2: FIRM DATA -->
+                            <div class="form-step" data-step="2" style="display: none;">
+                                <h2 class="form-title">Informations de l'Entreprise</h2>
+                                <p class="form-subtitle">Configurez votre espace de travail</p>
 
                                 <div class="form-group">
                                     <label class="form-label">Nom de l'entreprise *</label>
                                     <div class="form-input-wrapper">
-                                        <input type="text" name="firm_name"
-                                            class="form-input @error('firm_name') error @enderror"
+                                        <input type="text" name="firm_name" class="form-input step2-required"
                                             placeholder="Ex: Ferme Lapin d'Or" required
                                             value="{{ old('firm_name') }}">
                                         <i class="bi bi-building"></i>
@@ -1550,45 +1569,51 @@
                                 <div class="form-group">
                                     <label class="form-label">Description (optionnel)</label>
                                     <div class="form-input-wrapper">
-                                        <textarea name="firm_description" class="form-input @error('firm_description') error @enderror"
-                                            placeholder="Décrivez votre entreprise..." rows="3">{{ old('firm_description') }}</textarea>
+                                        <textarea name="firm_description" class="form-input" placeholder="Décrivez votre entreprise..." rows="3">{{ old('firm_description') }}</textarea>
                                         <i class="bi bi-card-text"></i>
                                     </div>
+                                    <div class="char-counter" id="descriptionCharCounter">0/1000</div>
                                     @error('firm_description')
                                         <div class="validation-message error">
                                             <i class="bi bi-exclamation-circle-fill"></i>
                                             <span>{{ $message }}</span>
                                         </div>
                                     @enderror
-                                    <div class="char-counter" id="descriptionCharCounter">0/1000</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" name="terms" required
+                                            style="width: 16px; height: 16px; accent-color: var(--primary); margin-top: 2px;">
+                                        <span style="font-size: 13px; color: var(--gray-600);">
+                                            J'accepte les <a href="#" style="color: var(--primary);">Conditions
+                                                d'utilisation</a> et la <a href="#"
+                                                style="color: var(--primary);">Politique de confidentialité</a>
+                                        </span>
+                                    </label>
+                                    @error('terms')
+                                        <div class="validation-message error">
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+                                            <span>{{ $message }}</span>
+                                        </div>
+                                    @enderror
+                                </div>
+
+                                <!-- Step 2 Navigation -->
+                                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                                    <button type="button" class="btn-submit" onclick="previousStep(1)"
+                                        style="flex: 1; background: var(--gray-200); color: var(--text-primary);">
+                                        <i class="bi bi-arrow-left"></i>
+                                        <span>Retour</span>
+                                    </button>
+                                    <button type="submit" class="btn-submit" style="flex: 1;">
+                                        <span>Créer mon compte</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
-                                    <input type="checkbox" name="terms" required
-                                        style="width: 16px; height: 16px; accent-color: var(--primary); margin-top: 2px;">
-                                    <span style="font-size: 13px; color: var(--gray-600);">
-                                        J'accepte les <a href="#" style="color: var(--primary);">Conditions
-                                            d'utilisation</a> et la <a href="#"
-                                            style="color: var(--primary);">Politique de confidentialité</a>
-                                    </span>
-                                </label>
-                                @error('terms')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>{{ $message }}</span>
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <button type="submit" class="btn-submit">
-                                <span>Créer mon compte</span>
-                                <i class="bi bi-arrow-right"></i>
-                            </button>
-
                             <div class="divider"><span>ou s'inscrire avec</span></div>
-
                             <div class="social-login">
                                 <button type="button"
                                     onclick="window.location='{{ route('social-login.google.redirect') }}'"
@@ -2042,6 +2067,128 @@
                 }
             });
         }
+
+        // ============================================
+        // ✅ REGISTRATION FORM STEP NAVIGATION
+        // ============================================
+        let currentStep = 1;
+
+        function nextStep(step) {
+            // Validate current step before proceeding
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            // Hide current step
+            document.querySelector(`.form-step[data-step="${currentStep}"]`).style.display = 'none';
+
+            // Show next step
+            document.querySelector(`.form-step[data-step="${step}"]`).style.display = 'block';
+
+            // Update step indicator
+            updateStepIndicator(step);
+
+            currentStep = step;
+
+            // Scroll to top of form
+            document.getElementById('form-register').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        function previousStep(step) {
+            // Hide current step
+            document.querySelector(`.form-step[data-step="${currentStep}"]`).style.display = 'none';
+
+            // Show previous step
+            document.querySelector(`.form-step[data-step="${step}"]`).style.display = 'block';
+
+            // Update step indicator
+            updateStepIndicator(step);
+
+            currentStep = step;
+        }
+
+        function updateStepIndicator(step) {
+            const circles = document.querySelectorAll('.step-circle');
+            const progress = document.querySelector('.step-progress');
+            const stepTexts = document.querySelectorAll('.step span');
+
+            circles.forEach((circle, index) => {
+                if (index < step) {
+                    circle.style.background = 'var(--primary)';
+                    circle.style.color = 'white';
+                } else {
+                    circle.style.background = 'var(--gray-200)';
+                    circle.style.color = 'var(--text-secondary)';
+                }
+            });
+
+            stepTexts.forEach((text, index) => {
+                if (index < step) {
+                    text.style.color = 'var(--text-primary)';
+                    text.style.fontWeight = '600';
+                } else {
+                    text.style.color = 'var(--text-secondary)';
+                    text.style.fontWeight = '500';
+                }
+            });
+
+            // Update progress bar
+            progress.style.width = step === 1 ? '0%' : '100%';
+        }
+
+        function validateStep(step) {
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll(`.step${step}-required`);
+
+            requiredInputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('error');
+
+                    // Show validation message
+                    const wrapper = input.closest('.form-group');
+                    let errorMsg = wrapper.querySelector('.validation-message.error');
+                    if (!errorMsg) {
+                        errorMsg = document.createElement('div');
+                        errorMsg.className = 'validation-message error';
+                        errorMsg.innerHTML =
+                            '<i class="bi bi-exclamation-circle-fill"></i><span>Ce champ est obligatoire</span>';
+                        wrapper.appendChild(errorMsg);
+                    }
+                    errorMsg.style.display = 'flex';
+                } else {
+                    input.classList.remove('error');
+                    const wrapper = input.closest('.form-group');
+                    const errorMsg = wrapper.querySelector('.validation-message.error');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
+                }
+            });
+
+            if (!isValid) {
+                showToast('⚠️ Veuillez remplir tous les champs obligatoires', 'error');
+            }
+
+            return isValid;
+        }
+
+        // Add error class handling for inputs
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('error');
+                    const wrapper = this.closest('.form-group');
+                    const errorMsg = wrapper.querySelector('.validation-message.error');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
+                }
+            });
+        });
     </script>
 </body>
 
