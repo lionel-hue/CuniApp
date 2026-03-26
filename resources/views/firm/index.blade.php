@@ -183,9 +183,28 @@
                                     <td class="ps-4 fw-semibold text-dark">{{ $employee->name }}</td>
                                     <td class="text-muted">{{ $employee->email }}</td>
                                     <td>
+                                        @php
+                                            $status = $employee->status ?? 'active'; // Default to active if null
+                                            $statusLabels = [
+                                                'active' => ['Actif', 'rgba(16, 185, 129, 0.1)', '#10B981'],
+                                                'inactive' => ['Inactif', 'rgba(107, 114, 128, 0.1)', '#6B7280'],
+                                            ];
+                                            $label = $statusLabels[$status] ?? [
+                                                'Non spécifié',
+                                                'rgba(245, 158, 11, 0.1)',
+                                                '#F59E0B',
+                                            ];
+                                        @endphp
                                         <span class="badge"
-                                            style="background: {{ $employee->status === 'active' ? 'rgba(16, 185, 129, 0.1); color: #10B981;' : 'rgba(107, 114, 128, 0.1); color: #6B7280;' }}">
-                                            {{ ucfirst($employee->status) }}
+                                            style="background: {{ $label[1] }}; color: {{ $label[2] }}; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+                                            @if ($status === 'active')
+                                                <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>
+                                            @elseif($status === 'inactive')
+                                                <i class="bi bi-pause-circle-fill" style="margin-right: 4px;"></i>
+                                            @else
+                                                <i class="bi bi-question-circle-fill" style="margin-right: 4px;"></i>
+                                            @endif
+                                            {{ $label[0] }}
                                         </span>
                                     </td>
                                     <td class="text-muted">{{ $employee->created_at->format('d/m/Y') }}</td>
@@ -435,8 +454,8 @@
                 <div style="margin-bottom: 24px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px;">Statut</label>
                     <select name="status" id="editEmployeeStatus" class="form-select" required>
-                        <option value="active">Actif</option>
-                        <option value="inactive">Inactif</option>
+                        <option value="active" {{ $employee->status === 'active' ? 'selected' : '' }}>Actif</option>
+                        <option value="inactive" {{ $employee->status === 'inactive' ? 'selected' : '' }}>Inactif</option>
                     </select>
                 </div>
 

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'subscription_ends_at',      // ✅ Ensure this exists
         'firm_id',  // ✅ ADD THIS
         'role',     // ✅ Ensure this includes new roles
+        'status',
     ];
 
     protected $hidden = [

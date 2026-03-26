@@ -168,7 +168,7 @@ class FirmController extends Controller
         $employee->update([
             'name' => $request->name,
             'email' => $request->email,
-            'status' => $request->status,
+             'status' => $request->status ?? 'active',  // ✅ Default to active
         ]);
 
         return back()->with('success', 'Employé mis à jour avec succès !');
