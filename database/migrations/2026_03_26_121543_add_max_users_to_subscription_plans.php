@@ -1,4 +1,3 @@
-// database/migrations/2026_03_24_000004_add_max_users_to_subscription_plans.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;

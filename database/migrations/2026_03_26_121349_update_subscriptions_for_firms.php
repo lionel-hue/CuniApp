@@ -1,4 +1,3 @@
-// database/migrations/2026_03_24_000003_update_subscriptions_for_firms.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;

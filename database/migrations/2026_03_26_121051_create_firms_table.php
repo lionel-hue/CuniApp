@@ -1,4 +1,3 @@
-// database/migrations/2026_03_24_000001_create_firms_table.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
