@@ -471,7 +471,10 @@
             }
 
             function showEditEmployeeModal(id, name, email, status) {
-                document.getElementById('editEmployeeForm').action = "{{ route('firm.employee.update', '') }}/" + id;
+                // ✅ Use placeholder and replace
+                document.getElementById('editEmployeeForm').action =
+                    "{{ route('firm.employee.update', ['userId' => ':id']) }}".replace(':id', id);
+
                 document.getElementById('editEmployeeName').value = name;
                 document.getElementById('editEmployeeEmail').value = email;
                 document.getElementById('editEmployeeStatus').value = status;
