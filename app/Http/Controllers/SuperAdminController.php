@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/SuperAdminController.php
+// app/Http/Controllers/SuperAdminController.php - UPDATED
 namespace App\Http\Controllers;
 
 use App\Models\Firm;
@@ -88,6 +88,7 @@ class SuperAdminController extends Controller
     public function banFirm($id)
     {
         $firm = Firm::findOrFail($id);
+
         $firm->update(['status' => 'banned']);
 
         // Logout all users from this firm
@@ -99,10 +100,28 @@ class SuperAdminController extends Controller
     public function activateFirm($id)
     {
         $firm = Firm::findOrFail($id);
+
         $firm->update(['status' => 'active']);
 
         User::where('firm_id', $firm->id)->update(['status' => 'active']);
 
         return back()->with('success', "L'entreprise {$firm->name} a été activée.");
+    }
+
+    // ✅ NEW: View Firm Details
+    public function showFirm($id)
+    {
+        $firm = Firm::with(['owner', 'activeSubscription.plan', 'users'])->findOrFail($id);
+
+        $stats = [
+            'total_males' => $firm->total_males,
+            'total_femelles' => $firm->total_femelles,
+            'total_sales' => $firm->sales()->count(),
+            'total_revenue' => $firm->total_revenue,
+            'user_count' => $firm->users()->count(),
+            'subscription_limit' => $firm->subscription_limit,
+        ];
+
+        return view('super-admin.firms.show', compact('firm', 'stats'));
     }
 }
