@@ -1522,24 +1522,6 @@
                                 @enderror
                             </div>
 
-                            <div class="form-group">
-                                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
-                                    <input type="checkbox" name="terms" required
-                                        style="width: 16px; height: 16px; accent-color: var(--primary); margin-top: 2px;">
-                                    <span style="font-size: 13px; color: var(--gray-600);">
-                                        J'accepte les <a href="#" style="color: var(--primary);">Conditions
-                                            d'utilisation</a> et la <a href="#"
-                                            style="color: var(--primary);">Politique de confidentialité</a>
-                                    </span>
-                                </label>
-                                @error('terms')
-                                    <div class="validation-message error">
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                        <span>{{ $message }}</span>
-                                    </div>
-                                @enderror
-                            </div>
-
                             <!-- ✅ NEW: Firm Information Section -->
                             <div class="form-section"
                                 style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--surface-border);">
@@ -1580,6 +1562,24 @@
                                     @enderror
                                     <div class="char-counter" id="descriptionCharCounter">0/1000</div>
                                 </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" name="terms" required
+                                        style="width: 16px; height: 16px; accent-color: var(--primary); margin-top: 2px;">
+                                    <span style="font-size: 13px; color: var(--gray-600);">
+                                        J'accepte les <a href="#" style="color: var(--primary);">Conditions
+                                            d'utilisation</a> et la <a href="#"
+                                            style="color: var(--primary);">Politique de confidentialité</a>
+                                    </span>
+                                </label>
+                                @error('terms')
+                                    <div class="validation-message error">
+                                        <i class="bi bi-exclamation-circle-fill"></i>
+                                        <span>{{ $message }}</span>
+                                    </div>
+                                @enderror
                             </div>
 
                             <button type="submit" class="btn-submit">
