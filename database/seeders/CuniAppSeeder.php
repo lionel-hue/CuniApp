@@ -1,4 +1,5 @@
 <?php
+// database/seeders/CuniAppSeeder.php
 
 namespace Database\Seeders;
 
@@ -9,6 +10,7 @@ use App\Models\MiseBas;
 use App\Models\Naissance;
 use App\Models\Lapereau;
 use App\Models\User;
+use App\Models\Firm;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
 use App\Models\PaymentTransaction;
@@ -16,6 +18,8 @@ use App\Models\Setting;
 use App\Models\Sale;
 use App\Models\SaleRabbit;
 use App\Models\Notification;
+use App\Models\Expense;
+use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -28,23 +32,28 @@ class CuniAppSeeder extends Seeder
     /** Invoice counter — ensures globally unique invoice numbers */
     private int $invoiceCounter = 1;
 
+    /** Store created users for credential display */
+    private array $credentials = [];
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
         $this->printHeader();
-
         $this->command->info('🧹 Cleaning existing data...');
         $this->cleanTables();
 
-        $this->command->info("🚀 Starting CuniApp Database Seeding...\n");
+        $this->command->info("🚀 Starting CuniApp Multi-Tenancy Database Seeding...\n");
 
         // Seed in correct order (respecting foreign keys)
         $this->seedSettings();
         $this->seedSubscriptionPlans();
-        $this->seedUsers();
-        $this->seedUserData();
+        $this->seedSuperAdmin();
+        $this->seedFirmsAndUsers();
+        $this->seedBreedingData();
+        $this->seedSalesAndExpenses();
+        $this->seedNotifications();
 
         $this->printFooter();
         $this->printLoginCredentials();
@@ -59,9 +68,9 @@ class CuniAppSeeder extends Seeder
         $this->command->line('');
         $this->command->line('╔══════════════════════════════════════════════════════════════╗');
         $this->command->line('║                                                              ║');
-        $this->command->line('║       🐰  CUNIAPP ÉLEVAGE - DATABASE SEEDER  🐰             ║');
+        $this->command->line('║       🐰  CUNIAPP MULTI-TENANCY SEEDER  🐰                  ║');
         $this->command->line('║                                                              ║');
-        $this->command->line('║     Gestion Intelligente de Votre Élevage de Lapins          ║');
+        $this->command->line('║     1 Super Admin • 10 Firms • Bulk Breeding Data           ║');
         $this->command->line('║                                                              ║');
         $this->command->line('╚══════════════════════════════════════════════════════════════╝');
         $this->command->line('');
@@ -70,34 +79,37 @@ class CuniAppSeeder extends Seeder
     private function printFooter(): void
     {
         $this->command->line('');
-        $this->command->line('✅ Seeding completed successfully!');
-        $this->command->line('🔑 See login credentials below');
+        $this->command->info('✅ Multi-tenancy seeding completed successfully!');
+        $this->command->info('🔑 See login credentials below for all accounts');
         $this->command->line('');
     }
 
     private function cleanTables(): void
     {
-        // Truncate in REVERSE dependency order (children first, then parents)
-        $tables = [
-            // Level 1: Tables that reference others (truncate FIRST)
-            'sale_rabbits',         // → sales, males/femelles/lapereaux
-            'payment_transactions', // → users, subscriptions
-            'invoices',             // → payment_transactions, subscriptions, users
-            'subscriptions',        // → users, subscription_plans
-            'lapereaux',            // → naissances, mises_bas
-            'naissances',           // → mises_bas, saillies, users
-            'mises_bas',            // → saillies, femelles
-            'saillies',             // → femelles, males
-            'notifications',        // → users
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-            // Level 2: Parent tables (truncate LAST)
+        $tables = [
+            // Child tables first
+            'sale_rabbits',
+            'payment_transactions',
+            'invoices',
+            'subscriptions',
+            'lapereaux',
+            'naissances',
+            'mises_bas',
+            'saillies',
+            'notifications',
+            'expenses',
+            'pending_payments',
+            'firm_audit_logs',
+            // Parent tables
             'sales',
             'femelles',
             'males',
             'subscription_plans',
             'settings',
             'users',
-
+            'firms',
             // Laravel system tables
             'sessions',
             'password_reset_tokens',
@@ -108,14 +120,14 @@ class CuniAppSeeder extends Seeder
             'failed_jobs',
         ];
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
             if (Schema::hasTable($table)) {
                 DB::table($table)->truncate();
-                $this->command->info("  ✓ Table {$table} cleared");
             }
         }
+
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->command->info("  ✓ All tables cleaned");
     }
 
     // ========================================================================
@@ -128,33 +140,29 @@ class CuniAppSeeder extends Seeder
 
         $settings = [
             // Farm Info
-            ['key' => 'farm_name',    'value' => 'Ferme CuniApp Test',        'type' => 'string',  'group' => 'general',       'label' => 'Nom de la ferme'],
-            ['key' => 'farm_address', 'value' => 'Houéyiho, Cotonou, Bénin',  'type' => 'string',  'group' => 'general',       'label' => 'Adresse'],
-            ['key' => 'farm_phone',   'value' => '+2290152415241',             'type' => 'string',  'group' => 'general',       'label' => 'Téléphone'],
-            ['key' => 'farm_email',   'value' => 'contact@cuniapp.bj',        'type' => 'string',  'group' => 'general',       'label' => 'Email'],
-
+            ['key' => 'farm_name', 'value' => 'Ferme CuniApp Test', 'type' => 'string', 'group' => 'general', 'label' => 'Nom de la ferme'],
+            ['key' => 'farm_address', 'value' => 'Houéyiho, Cotonou, Bénin', 'type' => 'string', 'group' => 'general', 'label' => 'Adresse'],
+            ['key' => 'farm_phone', 'value' => '+2290152415241', 'type' => 'string', 'group' => 'general', 'label' => 'Téléphone'],
+            ['key' => 'farm_email', 'value' => 'contact@cuniapp.bj', 'type' => 'string', 'group' => 'general', 'label' => 'Email'],
             // Breeding Settings
-            ['key' => 'gestation_days',             'value' => '31', 'type' => 'number',  'group' => 'breeding', 'label' => 'Jours de gestation'],
-            ['key' => 'weaning_weeks',              'value' => '6',  'type' => 'number',  'group' => 'breeding', 'label' => 'Semaines de sevrage'],
-            ['key' => 'alert_threshold',            'value' => '80', 'type' => 'number',  'group' => 'breeding', 'label' => "Seuil d'alerte (%)"],
-            ['key' => 'verification_initial_days',  'value' => '10', 'type' => 'number',  'group' => 'breeding', 'label' => 'Délai initial vérification (jours)'],
-            ['key' => 'verification_reminder_days', 'value' => '15', 'type' => 'number',  'group' => 'breeding', 'label' => 'Délai premier rappel (jours)'],
-            ['key' => 'verification_interval_days', 'value' => '5',  'type' => 'number',  'group' => 'breeding', 'label' => 'Intervalle rappels (jours)'],
-
+            ['key' => 'gestation_days', 'value' => '31', 'type' => 'number', 'group' => 'breeding', 'label' => 'Jours de gestation'],
+            ['key' => 'weaning_weeks', 'value' => '6', 'type' => 'number', 'group' => 'breeding', 'label' => 'Semaines de sevrage'],
+            ['key' => 'alert_threshold', 'value' => '80', 'type' => 'number', 'group' => 'breeding', 'label' => "Seuil d'alerte (%)"],
+            ['key' => 'verification_initial_days', 'value' => '10', 'type' => 'number', 'group' => 'breeding', 'label' => 'Délai initial vérification (jours)'],
+            ['key' => 'verification_reminder_days', 'value' => '15', 'type' => 'number', 'group' => 'breeding', 'label' => 'Délai premier rappel (jours)'],
+            ['key' => 'verification_interval_days', 'value' => '5', 'type' => 'number', 'group' => 'breeding', 'label' => 'Intervalle rappels (jours)'],
             // Default Prices
-            ['key' => 'default_price_male',      'value' => '25000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Mâles'],
-            ['key' => 'default_price_female',    'value' => '30000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Femelles'],
-            ['key' => 'default_price_lapereau',  'value' => '15000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Lapereaux'],
-
+            ['key' => 'default_price_male', 'value' => '25000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Mâles'],
+            ['key' => 'default_price_female', 'value' => '30000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Femelles'],
+            ['key' => 'default_price_lapereau', 'value' => '15000', 'type' => 'number', 'group' => 'sales', 'label' => 'Prix défaut - Lapereaux'],
             // FedaPay Settings
-            ['key' => 'fedapay_public_key',      'value' => env('FEDAPAY_PUBLIC_KEY', ''),        'type' => 'string', 'group' => 'payments', 'label' => 'Clé Publique FedaPay'],
-            ['key' => 'fedapay_secret_key',      'value' => env('FEDAPAY_SECRET_KEY', ''),        'type' => 'string', 'group' => 'payments', 'label' => 'Clé Secrète FedaPay'],
-            ['key' => 'fedapay_environment',     'value' => env('FEDAPAY_ENVIRONMENT', 'sandbox'), 'type' => 'string', 'group' => 'payments', 'label' => 'Environnement FedaPay'],
-            ['key' => 'fedapay_webhook_secret',  'value' => env('FEDAPAY_WEBHOOK_SECRET', ''),    'type' => 'string', 'group' => 'payments', 'label' => 'Secret Webhook FedaPay'],
-
+            ['key' => 'fedapay_public_key', 'value' => env('FEDAPAY_PUBLIC_KEY', ''), 'type' => 'string', 'group' => 'payments', 'label' => 'Clé Publique FedaPay'],
+            ['key' => 'fedapay_secret_key', 'value' => env('FEDAPAY_SECRET_KEY', ''), 'type' => 'string', 'group' => 'payments', 'label' => 'Clé Secrète FedaPay'],
+            ['key' => 'fedapay_environment', 'value' => env('FEDAPAY_ENVIRONMENT', 'sandbox'), 'type' => 'string', 'group' => 'payments', 'label' => 'Environnement FedaPay'],
+            ['key' => 'fedapay_webhook_secret', 'value' => env('FEDAPAY_WEBHOOK_SECRET', ''), 'type' => 'string', 'group' => 'payments', 'label' => 'Secret Webhook FedaPay'],
             // Subscription Settings
-            ['key' => 'grace_period_days',   'value' => '3', 'type' => 'number',  'group' => 'subscriptions', 'label' => 'Période de grâce (jours)'],
-            ['key' => 'enable_auto_renew',   'value' => '1', 'type' => 'boolean', 'group' => 'subscriptions', 'label' => 'Renouvellement auto'],
+            ['key' => 'grace_period_days', 'value' => '3', 'type' => 'number', 'group' => 'subscriptions', 'label' => 'Période de grâce (jours)'],
+            ['key' => 'enable_auto_renew', 'value' => '1', 'type' => 'boolean', 'group' => 'subscriptions', 'label' => 'Renouvellement auto'],
         ];
 
         foreach ($settings as $setting) {
@@ -170,32 +178,36 @@ class CuniAppSeeder extends Seeder
 
         $plans = [
             [
-                'name'           => 'Mensuel',
+                'name' => 'Mensuel',
                 'duration_months' => 1,
-                'price'          => 2500,
-                'is_active'      => true,
-                'features'       => ['Accès complet', 'Support email', 'Sauvegarde journalière'],
+                'price' => 2500,
+                'max_users' => 5,
+                'is_active' => true,
+                'features' => ['Accès complet', 'Support email', 'Sauvegarde journalière'],
             ],
             [
-                'name'           => 'Trimestriel',
+                'name' => 'Trimestriel',
                 'duration_months' => 3,
-                'price'          => 7500,
-                'is_active'      => true,
-                'features'       => ['Accès complet', 'Support prioritaire', 'Sauvegarde automatique', 'Rapports mensuels'],
+                'price' => 7500,
+                'max_users' => 5,
+                'is_active' => true,
+                'features' => ['Accès complet', 'Support prioritaire', 'Sauvegarde automatique', 'Rapports mensuels'],
             ],
             [
-                'name'           => 'Semestriel',
+                'name' => 'Semestriel',
                 'duration_months' => 6,
-                'price'          => 15000,
-                'is_active'      => true,
-                'features'       => ['Accès complet', 'Support prioritaire 24/7', 'Sauvegarde automatique', 'Rapports avancés', 'Export données'],
+                'price' => 15000,
+                'max_users' => 8,
+                'is_active' => true,
+                'features' => ['Accès complet', 'Support prioritaire 24/7', 'Sauvegarde automatique', 'Rapports avancés', 'Export données'],
             ],
             [
-                'name'           => 'Annuel',
+                'name' => 'Annuel',
                 'duration_months' => 12,
-                'price'          => 30000,
-                'is_active'      => true,
-                'features'       => ['Accès complet', 'Support VIP', 'Sauvegarde automatique', 'Rapports personnalisés', 'Export illimité', 'Formation incluse'],
+                'price' => 30000,
+                'max_users' => 10,
+                'is_active' => true,
+                'features' => ['Accès complet', 'Support VIP', 'Sauvegarde automatique', 'Rapports personnalisés', 'Export illimité', 'Formation incluse'],
             ],
         ];
 
@@ -203,623 +215,593 @@ class CuniAppSeeder extends Seeder
             SubscriptionPlan::create($plan);
         }
 
-        $this->command->info("  ✓ 4 subscription plans created");
+        $this->command->info("  ✓ 4 subscription plans created with user limits");
     }
 
-    private function seedUsers(): void
+    private function seedSuperAdmin(): void
     {
-        $this->command->info("👥 Seeding Users...");
+        $this->command->info("👑 Seeding Super Admin...");
 
-        // ─────────────────────────────────────────────────────────────────────
-        // ADMIN — full access, active subscription, huge dataset
-        // ─────────────────────────────────────────────────────────────────────
-        User::create([
-            'name'                    => 'Admin CuniApp',
-            'email'                   => 'admin@cuniapp.bj',
-            'password'                => Hash::make('Admin123!'),
-            'email_verified_at'       => now(),
-            'role'                    => 'admin',
-            'subscription_status'     => 'active',
-            'subscription_ends_at'    => now()->addYear(),
-            'last_subscription_at'    => now()->subDays(10),
-            'theme'                   => 'light',
-            'language'                => 'fr',
-            'notifications_email'     => true,
+        $superAdmin = User::create([
+            'name' => 'Super Admin CuniApp',
+            'email' => 'superadmin@cuniapp.bj',
+            'password' => Hash::make('SuperAdmin123!'),
+            'email_verified_at' => now(),
+            'role' => 'super_admin',
+            'status' => 'active',
+            'theme' => 'dark',
+            'language' => 'fr',
+            'notifications_email' => true,
             'notifications_dashboard' => true,
+            'subscription_status' => 'active',
+            'subscription_ends_at' => now()->addYears(5),
         ]);
 
-        // ─────────────────────────────────────────────────────────────────────
-        // TEST USERS — each with a different subscription plan
-        // ─────────────────────────────────────────────────────────────────────
-        $testUsers = [
-            [
-                'name'                    => 'Test User 1',
-                'email'                   => 'user1@cuniapp.bj',
-                'password'                => 'User123!',
-                'subscription_months'     => 1,
-                'subscription_offset_days' => 5,   // started 5 days ago, ~25 days left
-            ],
-            [
-                'name'                    => 'Test User 2',
-                'email'                   => 'user2@cuniapp.bj',
-                'password'                => 'User123!',
-                'subscription_months'     => 3,
-                'subscription_offset_days' => 15,
-            ],
-            [
-                'name'                    => 'Test User 3',
-                'email'                   => 'user3@cuniapp.bj',
-                'password'                => 'User123!',
-                'subscription_months'     => 6,
-                'subscription_offset_days' => 30,
-            ],
-            [
-                'name'                    => 'Test User 4',
-                'email'                   => 'user4@cuniapp.bj',
-                'password'                => 'User123!',
-                'subscription_months'     => 12,
-                'subscription_offset_days' => 50,
-            ],
-            [
-                // No subscription, no data
-                'name'                    => 'Test User 5',
-                'email'                   => 'user5@cuniapp.bj',
-                'password'                => 'User123!',
-                'subscription_months'     => 0,
-            ],
+        $this->credentials['super_admin'] = [
+            'email' => $superAdmin->email,
+            'password' => 'SuperAdmin123!',
+            'role' => 'Super Administrator',
+            'description' => 'Accès global à toutes les firmes et statistiques',
         ];
 
-        foreach ($testUsers as $userData) {
-            $user = User::create([
-                'name'                    => $userData['name'],
-                'email'                   => $userData['email'],
-                'password'                => Hash::make($userData['password']),
-                'email_verified_at'       => now(),
-                'role'                    => 'user',
-                'theme'                   => 'system',
-                'language'               => 'fr',
-                'subscription_status'     => 'inactive',
-                'notifications_email'     => true,
+        $this->command->info("  ✓ Super Admin created: {$superAdmin->email}");
+    }
+
+    private function seedFirmsAndUsers(): void
+    {
+        $this->command->info("🏢 Seeding 10 Firms with Admins & Employees...");
+
+        $firmNames = [
+            'Élevage du Nord',
+            'Ferme Lapin Doré',
+            'Cuniculture Moderne',
+            'Élevage Familial Akpakpa',
+            'Ferme Bio Lapins',
+            'CuniPro Bénin',
+            'Élevage de la Vallée',
+            'Ferme des Collines',
+            'Lapins Premium',
+            'Élevage Communautaire'
+        ];
+
+        $races = ['Californien', 'Géant des Flandres', 'Blanc de Vienne', 'Rex', 'Nouvelle-Zélande'];
+        $planDurations = [1, 3, 6, 12];
+        $subscriptionStatuses = ['active', 'active', 'active', 'expired', 'grace_period']; // Weighted towards active
+
+        for ($i = 1; $i <= 10; $i++) {
+            // ── Create Firm ─────────────────────────────────────────────
+            $firm = Firm::create([
+                'name' => $firmNames[$i - 1],
+                'description' => "Entreprise d'élevage de lapins - Zone " . chr(64 + $i),
+                'owner_id' => null, // Will be set after firm admin creation
+                'status' => 'active',
+            ]);
+
+            // ── Create Firm Admin ────────────────────────────────────────
+            $firmAdmin = User::create([
+                'name' => "Admin {$firmNames[$i - 1]}",
+                'email' => "admin{$i}@cuniapp.bj",
+                'password' => Hash::make("Firm{$i}123!"),
+                'email_verified_at' => now(),
+                'role' => 'firm_admin',
+                'firm_id' => $firm->id,
+                'status' => 'active',
+                'theme' => rand(0, 1) ? 'light' : 'dark',
+                'language' => 'fr',
+                'notifications_email' => true,
                 'notifications_dashboard' => true,
             ]);
 
-            if ($userData['subscription_months'] > 0) {
-                $plan = SubscriptionPlan::where('duration_months', $userData['subscription_months'])->first();
-                if ($plan) {
-                    $startDate = now()->subDays($userData['subscription_offset_days'] ?? 0);
-                    $endDate   = $startDate->copy()->addMonths($userData['subscription_months']);
-                    $status    = $endDate->isPast() ? 'expired' : 'active';
+            // Link firm to its admin (owner)
+            $firm->update(['owner_id' => $firmAdmin->id]);
 
-                    $subscription = Subscription::create([
-                        'user_id'              => $user->id,
-                        'subscription_plan_id' => $plan->id,
-                        'status'               => $status,
-                        'start_date'           => $startDate,
-                        'end_date'             => $endDate,
-                        'price'                => $plan->price,
-                        'payment_method'       => 'manual',
-                        'payment_reference'    => 'SEED-' . strtoupper(Str::random(8)),
-                        'auto_renew'           => false,
-                    ]);
+            // Store credentials
+            $this->credentials["firm_{$i}_admin"] = [
+                'email' => $firmAdmin->email,
+                'password' => "Firm{$i}123!",
+                'role' => 'Firm Administrator',
+                'firm' => $firm->name,
+                'description' => "Gère l'entreprise et ses employés",
+            ];
 
-                    $transaction = PaymentTransaction::create([
-                        'user_id'         => $user->id,
-                        'subscription_id' => $subscription->id,
-                        'amount'          => $plan->price,
-                        'payment_method'  => 'manual',
-                        'transaction_id'  => 'TXN-SEED-' . strtoupper(Str::random(8)),
-                        'status'          => 'completed',
-                        'provider'        => 'manual',
-                        'paid_at'         => $startDate,
-                    ]);
+            // ── Create Subscription for Firm ────────────────────────────
+            $planDuration = $planDurations[array_rand($planDurations)];
+            $plan = SubscriptionPlan::where('duration_months', $planDuration)->first();
+            $status = $subscriptionStatuses[array_rand($subscriptionStatuses)];
 
-                    // ── Generate invoice for this subscription ─────────────
-                    $this->createInvoice($user, $subscription, $transaction, $startDate, $plan->price, $status, $plan->name);
+            $startDate = now()->subDays(rand(0, 30));
+            $endDate = $startDate->copy()->addMonths($planDuration);
+            if ($status === 'expired') $endDate = now()->subDays(rand(1, 30));
+            if ($status === 'grace_period') $endDate = now()->subDays(rand(1, 3));
 
-                    $user->update([
-                        'subscription_status'  => $status,
-                        'subscription_ends_at' => $endDate,
-                        'last_subscription_at' => $startDate,
+            $subscription = Subscription::create([
+                'user_id' => $firmAdmin->id,
+                'firm_id' => $firm->id,
+                'subscription_plan_id' => $plan->id,
+                'status' => $status,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'price' => $plan->price,
+                'payment_method' => 'manual',
+                'payment_reference' => 'FIRM' . $i . '-' . strtoupper(Str::random(8)),
+                'auto_renew' => rand(0, 1),
+            ]);
+
+            // Payment Transaction
+            PaymentTransaction::create([
+                'user_id' => $firmAdmin->id,
+                'subscription_id' => $subscription->id,
+                'amount' => $plan->price,
+                'payment_method' => 'manual',
+                'transaction_id' => 'TXN-FIRM' . $i . '-' . strtoupper(Str::random(8)),
+                'status' => 'completed',
+                'provider' => 'manual',
+                'paid_at' => $startDate,
+            ]);
+
+            // Invoice
+            $this->createInvoice(
+                $firmAdmin,
+                $subscription,
+                $firm->id,
+                $startDate,
+                $plan->price,
+                $status === 'active' ? 'paid' : 'pending',
+                $plan->name
+            );
+
+            // Update user subscription fields
+            $firmAdmin->update([
+                'subscription_status' => $status,
+                'subscription_ends_at' => $endDate,
+                'last_subscription_at' => $startDate,
+            ]);
+
+            // ── Create Employees (varies by plan) ───────────────────────
+            $maxUsers = $plan->max_users;
+            $numEmployees = rand(1, $maxUsers - 1); // Leave room for admin
+
+            for ($e = 1; $e <= $numEmployees; $e++) {
+                $employee = User::create([
+                    'name' => "Employé {$e} - {$firm->name}",
+                    'email' => "emp{$i}_{$e}@cuniapp.bj",
+                    'password' => Hash::make("Emp{$i}{$e}123!"),
+                    'email_verified_at' => now(),
+                    'role' => 'employee',
+                    'firm_id' => $firm->id,
+                    'status' => 'active',
+                    'theme' => 'system',
+                    'language' => 'fr',
+                    'notifications_email' => rand(0, 1),
+                    'notifications_dashboard' => true,
+                    'subscription_status' => 'inactive', // Employees don't have individual subs
+                ]);
+
+                $this->credentials["firm_{$i}_emp_{$e}"] = [
+                    'email' => $employee->email,
+                    'password' => "Emp{$i}{$e}123!",
+                    'role' => 'Employee',
+                    'firm' => $firm->name,
+                    'description' => "Accès limité aux données de l'entreprise",
+                ];
+            }
+
+            $this->command->info("  ✓ Firm #{$i}: {$firm->name} | Admin + {$numEmployees} employés | Plan: {$plan->name} | Statut: {$status}");
+        }
+
+        $this->command->info("  ✓ 10 firms created with admins and employees");
+    }
+
+    private function seedBreedingData(): void
+    {
+        $this->command->info("🐇 Seeding bulk breeding data per firm...");
+
+        $firms = Firm::all();
+        $races = ['Californien', 'Géant des Flandres', 'Blanc de Vienne', 'Rex', 'Nouvelle-Zélande'];
+        $etatsMales = ['Active', 'Inactive', 'Malade', 'vendu'];
+        $etatsFemelles = ['Active', 'Gestante', 'Allaitante', 'Vide', 'vendu'];
+        $etatsLaps = ['vivant', 'vendu', 'mort', 'archivé'];
+        $etatsSante = ['Excellent', 'Bon', 'Moyen', 'Faible'];
+        $categories = ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'];
+        $origines = ['Interne', 'Achat'];
+
+        foreach ($firms as $firm) {
+            // Get firm admin for user_id references
+            $firmAdmin = $firm->owner;
+            if (!$firmAdmin) continue;
+
+            // Config per firm (varies by subscription status for realism)
+            $isActive = $firm->subscriptions()->where('status', 'active')->exists();
+            $baseCount = $isActive ? 50 : 10;
+
+            $config = [
+                'males' => $baseCount + rand(0, 20),
+                'females' => $baseCount * 3 + rand(0, 50),
+                'saillies' => $baseCount * 4 + rand(0, 80),
+                'mises_bas' => $baseCount * 3 + rand(0, 60),
+                'naissances' => $baseCount * 2 + rand(0, 40),
+                'lapereaux_per_birth' => rand(4, 8),
+                'sales' => rand(5, 30),
+            ];
+
+            // ── 1. MALES ───────────────────────────────────────────────
+            for ($i = 1; $i <= $config['males']; $i++) {
+                Male::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'code' => 'MAL-F' . $firm->id . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                    'nom' => "Mâle-F{$firm->id}-{$i}",
+                    'race' => $races[array_rand($races)],
+                    'origine' => $origines[array_rand($origines)],
+                    'date_naissance' => now()->subMonths(rand(6, 36))->subDays(rand(0, 30)),
+                    'etat' => $etatsMales[array_rand($etatsMales)],
+                ]);
+            }
+
+            // ── 2. FEMELLES ────────────────────────────────────────────
+            for ($i = 1; $i <= $config['females']; $i++) {
+                Femelle::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'code' => 'FEM-F' . $firm->id . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                    'nom' => "Femelle-F{$firm->id}-{$i}",
+                    'race' => $races[array_rand($races)],
+                    'origine' => $origines[array_rand($origines)],
+                    'date_naissance' => now()->subMonths(rand(6, 36))->subDays(rand(0, 30)),
+                    'etat' => $etatsFemelles[array_rand($etatsFemelles)],
+                ]);
+            }
+
+            // ── 3. SAILLIES ────────────────────────────────────────────
+            $femelles = Femelle::where('firm_id', $firm->id)->inRandomOrder()->limit($config['saillies'])->get();
+            $males = Male::where('firm_id', $firm->id)->get();
+
+            foreach ($femelles as $femelle) {
+                if ($males->isEmpty()) break;
+                $male = $males->random();
+                $dateSaillie = now()->subDays(rand(10, 180));
+
+                Saillie::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'femelle_id' => $femelle->id,
+                    'male_id' => $male->id,
+                    'date_saillie' => $dateSaillie->format('Y-m-d'),
+                    'date_palpage' => rand(0, 1) ? $dateSaillie->copy()->addDays(rand(10, 14))->format('Y-m-d') : null,
+                    'palpation_resultat' => rand(0, 1) ? ['+', '-'][array_rand([0, 1])] : null,
+                    'date_mise_bas_theorique' => $dateSaillie->copy()->addDays(31)->format('Y-m-d'),
+                ]);
+            }
+
+            // ── 4. MISES BAS ───────────────────────────────────────────
+            $sailliesPos = Saillie::where('firm_id', $firm->id)
+                ->whereNotNull('date_palpage')
+                ->where('palpation_resultat', '+')
+                ->inRandomOrder()
+                ->limit($config['mises_bas'])
+                ->get();
+
+            if ($sailliesPos->count() < $config['mises_bas']) {
+                $remaining = $config['mises_bas'] - $sailliesPos->count();
+                $extra = Saillie::where('firm_id', $firm->id)
+                    ->whereNotIn('id', $sailliesPos->pluck('id'))
+                    ->inRandomOrder()
+                    ->limit($remaining)
+                    ->get();
+                $sailliesPos = $sailliesPos->merge($extra);
+            }
+
+            foreach ($sailliesPos as $saillie) {
+                $dateMiseBas = Carbon::parse($saillie->date_saillie)->addDays(31);
+                MiseBas::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'femelle_id' => $saillie->femelle_id,
+                    'saillie_id' => $saillie->id,
+                    'date_mise_bas' => $dateMiseBas->format('Y-m-d'),
+                    'date_sevrage' => $dateMiseBas->copy()->addWeeks(6)->format('Y-m-d'),
+                    'poids_moyen_sevrage' => rand(500, 1500) / 1000,
+                ]);
+            }
+
+            // ── 5. NAISSANCES ──────────────────────────────────────────
+            $misesBas = MiseBas::where('firm_id', $firm->id)
+                ->inRandomOrder()
+                ->limit($config['naissances'])
+                ->get();
+
+            foreach ($misesBas as $miseBas) {
+                $dateMiseBas = Carbon::parse($miseBas->date_mise_bas);
+                Naissance::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'mise_bas_id' => $miseBas->id,
+                    'saillie_id' => $miseBas->saillie_id,
+                    'poids_moyen_naissance' => rand(40, 80),
+                    'etat_sante' => $etatsSante[array_rand($etatsSante)],
+                    'observations' => 'Portée en bonne santé – ' . Str::random(20),
+                    'date_sevrage_prevue' => $dateMiseBas->copy()->addWeeks(6)->format('Y-m-d'),
+                    'date_vaccination_prevue' => $dateMiseBas->copy()->addWeeks(4)->format('Y-m-d'),
+                    'sex_verified' => rand(0, 10) > 6,
+                    'sex_verified_at' => rand(0, 10) > 6 ? now()->subDays(rand(1, 10)) : null,
+                    'reminder_count' => rand(0, 3),
+                ]);
+            }
+
+            // ── 6. LAPEREAUX ───────────────────────────────────────────
+            $naissances = Naissance::where('firm_id', $firm->id)->get();
+            $lapCount = 0;
+
+            foreach ($naissances as $naissance) {
+                $nb = rand(
+                    max(1, $config['lapereaux_per_birth'] - 1),
+                    $config['lapereaux_per_birth'] + 2
+                );
+                for ($j = 1; $j <= $nb; $j++) {
+                    $lapCount++;
+                    $code = "LAP-F{$firm->id}-" . str_pad($lapCount, 5, '0', STR_PAD_LEFT);
+
+                    Lapereau::create([
+                        'user_id' => $firmAdmin->id,
+                        'firm_id' => $firm->id,
+                        'naissance_id' => $naissance->id,
+                        'code' => $code,
+                        'nom' => "Lapereau-F{$firm->id}-{$lapCount}",
+                        'sex' => rand(0, 1) ? 'male' : 'female',
+                        'etat' => $etatsLaps[array_rand($etatsLaps)],
+                        'poids_naissance' => rand(40, 90),
+                        'etat_sante' => $etatsSante[array_rand($etatsSante)],
+                        'observations' => 'Lapereau en bonne santé – ' . Str::random(15),
+                        'categorie' => $categories[array_rand($categories)],
+                        'alimentation_jour' => rand(50, 200) / 100,
+                        'alimentation_semaine' => rand(300, 1200) / 100,
                     ]);
                 }
             }
+
+            $this->command->info("  ✓ Firm #{$firm->id}: {$config['males']}♂ | {$config['females']}♀ | ~{$lapCount} lapereaux");
         }
 
-        $this->command->info("  ✓ 6 users created (Admin + User1→User5)");
+        $this->command->info("✅ All breeding data seeded across 10 firms");
+    }
+
+    private function seedSalesAndExpenses(): void
+    {
+        $this->command->info("💰 Seeding Sales & Expenses per firm...");
+
+        $firms = Firm::all();
+        $etatsSante = ['Excellent', 'Bon', 'Moyen', 'Faible'];
+
+        foreach ($firms as $firm) {
+            $firmAdmin = $firm->owner;
+            if (!$firmAdmin) continue;
+
+            $isActive = $firm->subscriptions()->where('status', 'active')->exists();
+            $numSales = $isActive ? rand(10, 30) : rand(1, 5);
+
+            for ($s = 1; $s <= $numSales; $s++) {
+                $type = ['male', 'female', 'lapereau'][array_rand(['male', 'female', 'lapereau'])];
+                $price = $type === 'male' ? 25000 : ($type === 'female' ? 30000 : 15000);
+                $amountPaid = rand(0, 1) ? $price : rand(0, $price);
+
+                $sale = Sale::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'date_sale' => now()->subDays(rand(1, 120)),
+                    'quantity' => 1,
+                    'type' => $type,
+                    'unit_price' => $price,
+                    'total_amount' => $price,
+                    'buyer_name' => 'Acheteur-' . strtoupper(Str::random(6)),
+                    'buyer_contact' => '+229' . rand(90000000, 99999999),
+                    'payment_status' => $amountPaid >= $price ? 'paid' : ($amountPaid > 0 ? 'partial' : 'pending'),
+                    'amount_paid' => $amountPaid,
+                    'notes' => 'Vente générée automatiquement',
+                ]);
+
+                // Link to actual rabbit (polymorphic)
+                $rabbit = match ($type) {
+                    'male' => Male::where('firm_id', $firm->id)->where('etat', 'vendu')->inRandomOrder()->first(),
+                    'female' => Femelle::where('firm_id', $firm->id)->where('etat', 'vendu')->inRandomOrder()->first(),
+                    'lapereau' => Lapereau::where('firm_id', $firm->id)->where('etat', 'vendu')->inRandomOrder()->first(),
+                };
+
+                if ($rabbit) {
+                    SaleRabbit::create([
+                        'sale_id' => $sale->id,
+                        'rabbit_type' => $type,
+                        'rabbit_id' => $rabbit->id,
+                        'sale_price' => $price,
+                    ]);
+                }
+            }
+
+            // Expenses
+            $categories = ['Alimentation', 'Vétérinaire', 'Équipement', 'Autre'];
+            for ($e = 1; $e <= rand(3, 10); $e++) {
+                Expense::create([
+                    'user_id' => $firmAdmin->id,
+                    'firm_id' => $firm->id,
+                    'category' => $categories[array_rand($categories)],
+                    'amount' => rand(1000, 50000),
+                    'expense_date' => now()->subDays(rand(1, 90)),
+                    'description' => 'Dépense aléatoire pour testing',
+                ]);
+            }
+
+            $this->command->info("  ✓ Firm #{$firm->id}: {$numSales} ventes | " . rand(3, 10) . " dépenses");
+        }
+    }
+
+    private function seedNotifications(): void
+    {
+        $this->command->info("🔔 Seeding Notifications...");
+
+        $users = User::whereIn('role', ['firm_admin', 'employee'])->get();
+        $types = ['success', 'info', 'warning', 'error'];
+        $icons = [
+            'success' => 'bi-check-circle-fill',
+            'info' => 'bi-info-circle-fill',
+            'warning' => 'bi-exclamation-triangle-fill',
+            'error' => 'bi-x-circle-fill',
+        ];
+
+        $messages = [
+            'success' => ['Saillie enregistrée avec succès', 'Mise-bas confirmée', 'Vente clôturée'],
+            'info' => ['Rappel: palpation prévue', 'Nouvel employé ajouté', 'Rapport mensuel disponible'],
+            'warning' => ['Abonnement expirant bientôt', 'Stock mâles faible', 'Poids sevrage inférieur'],
+            'error' => ['Erreur de synchronisation', 'Paiement refusé', 'Données manquantes'],
+        ];
+
+        foreach ($users as $user) {
+            for ($i = 1; $i <= rand(2, 8); $i++) {
+                $type = $types[array_rand($types)];
+                $msg = $messages[$type][array_rand($messages[$type])];
+
+                Notification::create([
+                    'user_id' => $user->id,
+                    'firm_id' => $user->firm_id,
+                    'notifiable_type' => User::class,
+                    'notifiable_id' => $user->id,
+                    'type' => $type,
+                    'title' => match ($type) {
+                        'success' => '✅ Succès',
+                        'info' => 'ℹ️ Information',
+                        'warning' => '⚠️ Attention',
+                        'error' => '❌ Erreur',
+                    },
+                    'message' => $msg . ' #' . rand(100, 999),
+                    'action_url' => route('dashboard'),
+                    'icon' => $icons[$type],
+                    'is_read' => (bool) rand(0, 1),
+                    'emailed' => (bool) rand(0, 1),
+                    'read_at' => rand(0, 1) ? now()->subHours(rand(1, 48)) : null,
+                ]);
+            }
+        }
+
+        $this->command->info("  ✓ Notifications created for firm users");
     }
 
     // ========================================================================
     // INVOICE HELPER
     // ========================================================================
 
-    /**
-     * Create a single invoice record and return it.
-     */
     private function createInvoice(
-        User               $user,
-        Subscription       $subscription,
-        PaymentTransaction $transaction,
-        Carbon             $invoiceDate,
-        float              $amount,
-        string             $subStatus = 'active',
-        string             $planName  = 'Plan'
+        User $user,
+        Subscription $subscription,
+        int $firmId,
+        Carbon $invoiceDate,
+        float $amount,
+        string $status,
+        string $planName
     ): void {
         $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad($this->invoiceCounter++, 5, '0', STR_PAD_LEFT);
-        $invoiceStatus = ($subStatus === 'active' || $subStatus === 'expired') ? 'paid' : 'pending';
 
         DB::table('invoices')->insert([
-            'user_id'                 => $user->id,
-            'subscription_id'         => $subscription->id,
-            'payment_transaction_id'  => $transaction->id,
-            'invoice_number'          => $invoiceNumber,
-            'invoice_type'            => 'subscription',
-            'amount'                  => $amount,
-            'tax_amount'              => 0,
-            'total_amount'            => $amount,
-            'currency'                => 'XOF',
-            'status'                  => $invoiceStatus,
-            'invoice_date'            => $invoiceDate->toDateString(),
-            'due_date'                => $invoiceDate->copy()->addDays(3)->toDateString(),
-            'paid_at'                 => $invoiceStatus === 'paid' ? $invoiceDate->toDateTimeString() : null,
-            'pdf_generated'           => false,
-            'billing_details'         => json_encode([
-                'name'    => $user->name,
-                'email'   => $user->email,
+            'user_id' => $user->id,
+            'firm_id' => $firmId,
+            'subscription_id' => $subscription->id,
+            'invoice_number' => $invoiceNumber,
+            'invoice_type' => 'subscription',
+            'amount' => $amount,
+            'tax_amount' => 0,
+            'total_amount' => $amount,
+            'currency' => 'XOF',
+            'status' => $status,
+            'invoice_date' => $invoiceDate->toDateString(),
+            'due_date' => $invoiceDate->copy()->addDays(3)->toDateString(),
+            'paid_at' => $status === 'paid' ? $invoiceDate->toDateTimeString() : null,
+            'pdf_generated' => false,
+            'billing_details' => json_encode([
+                'name' => $user->firm->name ?? $user->name,
+                'email' => $user->email,
                 'address' => 'Cotonou, Bénin',
             ]),
-            'line_items' => json_encode([
-                [
-                    'description' => 'Abonnement CuniApp – ' . $planName,
-                    'quantity'    => 1,
-                    'unit_price'  => $amount,
-                    'total'       => $amount,
-                ],
-            ]),
-            'payment_method'         => 'manual',
-            'transaction_reference'  => $transaction->transaction_id,
-            'notes'                  => 'Facture générée automatiquement lors du seeding.',
-            'created_at'             => now(),
-            'updated_at'             => now(),
+            'line_items' => json_encode([[
+                'description' => 'Abonnement CuniApp – ' . $planName,
+                'quantity' => 1,
+                'unit_price' => $amount,
+                'total' => $amount,
+            ]]),
+            'payment_method' => 'manual',
+            'transaction_reference' => $subscription->payment_reference,
+            'notes' => 'Facture générée automatiquement lors du seeding.',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
     // ========================================================================
-    // ANIMAL DATA SEEDING
-    // ========================================================================
-
-    private function seedUserData(): void
-    {
-        $this->command->info("📊 Seeding animal data for each user...\n");
-
-        /**
-         * Dataset sizes per account
-         * ─────────────────────────────────────────────────────────────────────
-         * Key           │ Admin │ User1 │ User2 │ User3 │ User4 │ User5
-         * ─────────────────────────────────────────────────────────────────────
-         * males         │  60   │  60   │  60   │  60   │  10   │   0
-         * females       │ 200   │ 200   │ 200   │ 200   │  20   │   0
-         * saillies      │ 300   │ 300   │ 300   │ 300   │  25   │   0
-         * mises_bas     │ 250   │ 250   │ 250   │ 250   │  20   │   0
-         * naissances    │ 200   │ 200   │ 200   │ 200   │  15   │   0
-         * lapereaux_per │   5   │   5   │   5   │   5   │   3   │   0
-         * → ~lapereaux  │~1000  │~1000  │~1000  │~1000  │  ~45  │   0
-         * sales         │  80   │  80   │  80   │  80   │   5   │   0
-         * notifs        │  20   │  20   │  20   │  20   │   5   │   0
-         * invoices      │   0*  │   1   │   1   │   1   │   1   │   0
-         * ─────────────────────────────────────────────────────────────────────
-         * * Admin invoice seeded separately in seedUsers() via admin sub logic
-         *   (admin has no sub plan row here; sub created inline below)
-         */
-        $userConfigs = [
-            // user_id => config
-            1 => ['males' => 60,  'females' => 200, 'saillies' => 300, 'mises_bas' => 250, 'naissances' => 200, 'lapereaux_per' => 5, 'sales' => 80, 'notifs' => 20], // Admin
-            2 => ['males' => 60,  'females' => 200, 'saillies' => 300, 'mises_bas' => 250, 'naissances' => 200, 'lapereaux_per' => 5, 'sales' => 80, 'notifs' => 20], // User1 – 1-month sub
-            3 => ['males' => 60,  'females' => 200, 'saillies' => 300, 'mises_bas' => 250, 'naissances' => 200, 'lapereaux_per' => 5, 'sales' => 80, 'notifs' => 20], // User2 – 3-month sub
-            4 => ['males' => 60,  'females' => 200, 'saillies' => 300, 'mises_bas' => 250, 'naissances' => 200, 'lapereaux_per' => 5, 'sales' => 80, 'notifs' => 20], // User3 – 6-month sub
-            5 => ['males' => 10,  'females' =>  20, 'saillies' =>  25, 'mises_bas' =>  20, 'naissances' =>  15, 'lapereaux_per' => 3, 'sales' =>  5, 'notifs' =>  5], // User4 – 1-year sub, small
-            6 => ['males' =>  0,  'females' =>   0, 'saillies' =>   0, 'mises_bas' =>   0, 'naissances' =>   0, 'lapereaux_per' => 0, 'sales' =>  0, 'notifs' =>  0], // User5 – no sub, empty
-        ];
-
-        $races         = ['Californien', 'Géant des Flandres', 'Blanc de Vienne', 'Rex', 'Nouvelle-Zélande'];
-        $etatsMales    = ['Active', 'Inactive', 'Malade'];
-        $etatsFemelles = ['Active', 'Gestante', 'Allaitante', 'Vide'];
-        $etatsLaps     = ['vivant', 'vendu', 'mort'];
-        $etatsSante    = ['Excellent', 'Bon', 'Moyen', 'Faible'];
-        $categories    = ['<5 semaines', '5-8 semaines', '8-12 semaines', '+12 semaines'];
-        $origines      = ['Interne', 'Achat'];
-        $year          = date('Y');
-
-        foreach ($userConfigs as $userId => $cfg) {
-            $user = User::find($userId);
-            if (!$user) {
-                $this->command->warn("  ⚠  User ID {$userId} not found, skipping.");
-                continue;
-            }
-
-            $this->command->info("  ──────────────────────────────────────────────────────");
-            $this->command->info("  👤 Seeding data for [{$user->email}] (ID: {$userId})...");
-
-            // ── Skip empty accounts ───────────────────────────────────────────
-            if ($cfg['males'] === 0 && $cfg['females'] === 0) {
-                $this->command->info("     (empty account – skipping)");
-                continue;
-            }
-
-            // ── Seed admin subscription + invoice (admin has no plan row above) ──
-            if ($userId === 1) {
-                $adminPlan = SubscriptionPlan::where('duration_months', 12)->first();
-                if ($adminPlan) {
-                    $adminStart = now()->subDays(10);
-                    $adminEnd   = $adminStart->copy()->addYear();
-
-                    $adminSub = Subscription::create([
-                        'user_id'              => $userId,
-                        'subscription_plan_id' => $adminPlan->id,
-                        'status'               => 'active',
-                        'start_date'           => $adminStart,
-                        'end_date'             => $adminEnd,
-                        'price'                => $adminPlan->price,
-                        'payment_method'       => 'manual',
-                        'payment_reference'    => 'SEED-ADMIN-' . strtoupper(Str::random(6)),
-                        'auto_renew'           => true,
-                    ]);
-
-                    $adminTxn = PaymentTransaction::create([
-                        'user_id'         => $userId,
-                        'subscription_id' => $adminSub->id,
-                        'amount'          => $adminPlan->price,
-                        'payment_method'  => 'manual',
-                        'transaction_id'  => 'TXN-ADMIN-' . strtoupper(Str::random(8)),
-                        'status'          => 'completed',
-                        'provider'        => 'manual',
-                        'paid_at'         => $adminStart,
-                    ]);
-
-                    $this->createInvoice($user, $adminSub, $adminTxn, $adminStart, $adminPlan->price, 'active', $adminPlan->name);
-                    $this->command->info("     ✓ Admin subscription + invoice created");
-                }
-            }
-
-            // ── 1. MALES ─────────────────────────────────────────────────────
-            for ($i = 1; $i <= $cfg['males']; $i++) {
-                Male::create([
-                    'user_id'        => $userId,
-                    'code'           => 'MAL-' . $userId . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
-                    'nom'            => "Mâle-U{$userId}-{$i}",
-                    'race'           => $races[array_rand($races)],
-                    'origine'        => $origines[array_rand($origines)],
-                    'date_naissance' => now()->subMonths(rand(6, 36))->subDays(rand(0, 30)),
-                    'etat'           => $etatsMales[array_rand($etatsMales)],
-                ]);
-            }
-            $this->command->info("     ✓ {$cfg['males']} mâles créés");
-
-            // ── 2. FEMELLES ──────────────────────────────────────────────────
-            for ($i = 1; $i <= $cfg['females']; $i++) {
-                Femelle::create([
-                    'user_id'        => $userId,
-                    'code'           => 'FEM-' . $userId . '-' . str_pad($i, 4, '0', STR_PAD_LEFT),
-                    'nom'            => "Femelle-U{$userId}-{$i}",
-                    'race'           => $races[array_rand($races)],
-                    'origine'        => $origines[array_rand($origines)],
-                    'date_naissance' => now()->subMonths(rand(6, 36))->subDays(rand(0, 30)),
-                    'etat'           => $etatsFemelles[array_rand($etatsFemelles)],
-                ]);
-            }
-            $this->command->info("     ✓ {$cfg['females']} femelles créées");
-
-            // ── 3. SAILLIES ──────────────────────────────────────────────────
-            $femelles = Femelle::where('user_id', $userId)->inRandomOrder()->limit($cfg['saillies'])->get();
-            $males    = Male::where('user_id', $userId)->get();
-
-            foreach ($femelles as $femelle) {
-                if ($males->isEmpty()) break;
-                $male        = $males->random();
-                $dateSaillie = now()->subDays(rand(10, 180));
-
-                Saillie::create([
-                    'user_id'                  => $userId,
-                    'femelle_id'               => $femelle->id,
-                    'male_id'                  => $male->id,
-                    'date_saillie'             => $dateSaillie->format('Y-m-d'),
-                    'date_palpage'             => rand(0, 1) ? $dateSaillie->copy()->addDays(rand(10, 14))->format('Y-m-d') : null,
-                    'palpation_resultat'       => rand(0, 1) ? ['+', '-'][array_rand([0, 1])] : null,
-                    'date_mise_bas_theorique'  => $dateSaillie->copy()->addDays(31)->format('Y-m-d'),
-                ]);
-            }
-            $this->command->info("     ✓ {$cfg['saillies']} saillies créées");
-
-            // ── 4. MISES BAS ─────────────────────────────────────────────────
-            // Prefer saillies with a positive palpation result
-            $sailliesPositives = Saillie::where('user_id', $userId)
-                ->whereNotNull('date_palpage')
-                ->where('palpation_resultat', '+')
-                ->inRandomOrder()
-                ->limit($cfg['mises_bas'])
-                ->get();
-
-            // Fill up from any saillies if not enough positives
-            if ($sailliesPositives->count() < $cfg['mises_bas']) {
-                $remaining = $cfg['mises_bas'] - $sailliesPositives->count();
-                $extra     = Saillie::where('user_id', $userId)
-                    ->whereNotIn('id', $sailliesPositives->pluck('id'))
-                    ->inRandomOrder()
-                    ->limit($remaining)
-                    ->get();
-                $sailliesPositives = $sailliesPositives->merge($extra);
-            }
-
-            foreach ($sailliesPositives as $saillie) {
-                $dateMiseBas = Carbon::parse($saillie->date_saillie)->addDays(31);
-                MiseBas::create([
-                    'user_id'             => $userId,
-                    'femelle_id'          => $saillie->femelle_id,
-                    'saillie_id'          => $saillie->id,
-                    'date_mise_bas'       => $dateMiseBas->format('Y-m-d'),
-                    'date_sevrage'        => $dateMiseBas->copy()->addWeeks(6)->format('Y-m-d'),
-                    'poids_moyen_sevrage' => rand(500, 1500) / 1000,
-                ]);
-            }
-            $this->command->info("     ✓ " . $sailliesPositives->count() . " mises-bas créées");
-
-            // ── 5. NAISSANCES ────────────────────────────────────────────────
-            $misesBas = MiseBas::where('user_id', $userId)
-                ->inRandomOrder()
-                ->limit($cfg['naissances'])
-                ->get();
-
-            foreach ($misesBas as $miseBas) {
-                $dateMiseBas = Carbon::parse($miseBas->date_mise_bas);
-                Naissance::create([
-                    'user_id'                  => $userId,
-                    'mise_bas_id'              => $miseBas->id,
-                    'saillie_id'               => $miseBas->saillie_id,
-                    'poids_moyen_naissance'    => rand(40, 80),
-                    'etat_sante'               => $etatsSante[array_rand($etatsSante)],
-                    'observations'             => 'Portée en bonne santé – ' . Str::random(20),
-                    'date_sevrage_prevue'      => $dateMiseBas->copy()->addWeeks(6)->format('Y-m-d'),
-                    'date_vaccination_prevue'  => $dateMiseBas->copy()->addWeeks(4)->format('Y-m-d'),
-                    'sex_verified'             => rand(0, 10) > 6,
-                    'sex_verified_at'          => rand(0, 10) > 6 ? now()->subDays(rand(1, 10)) : null,
-                    'reminder_count'           => rand(0, 3),
-                ]);
-            }
-            $this->command->info("     ✓ " . $misesBas->count() . " naissances créées");
-
-            // ── 6. LAPEREAUX ─────────────────────────────────────────────────
-            if ($cfg['lapereaux_per'] > 0) {
-                $naissances   = Naissance::where('user_id', $userId)->get();
-                $lapereauCount = 0;
-
-                foreach ($naissances as $naissance) {
-                    $nb = rand(
-                        max(1, $cfg['lapereaux_per'] - 1),
-                        $cfg['lapereaux_per'] + 2
-                    );
-
-                    for ($j = 1; $j <= $nb; $j++) {
-                        $lapereauCount++;
-                        $code = "LAP-{$year}-U{$userId}-" . str_pad($lapereauCount, 5, '0', STR_PAD_LEFT);
-
-                        Lapereau::create([
-                            'user_id'           => $userId,
-                            'naissance_id'      => $naissance->id,
-                            'code'              => $code,
-                            'nom'               => "Lapereau-U{$userId}-{$lapereauCount}",
-                            'sex'               => rand(0, 1) ? 'male' : 'female',
-                            'etat'              => $etatsLaps[array_rand($etatsLaps)],
-                            'poids_naissance'   => rand(40, 90),
-                            'etat_sante'        => $etatsSante[array_rand($etatsSante)],
-                            'observations'      => 'Lapereau en bonne santé – ' . Str::random(15),
-                            'categorie'         => $categories[array_rand($categories)],
-                            'alimentation_jour' => rand(50, 200) / 100,
-                            'alimentation_semaine' => rand(300, 1200) / 100,
-                        ]);
-                    }
-                }
-                $this->command->info("     ✓ {$lapereauCount} lapereaux créés");
-            }
-
-            // ── 7. SALES ─────────────────────────────────────────────────────
-            if ($cfg['sales'] > 0) {
-                $limitPerType  = max(1, intval($cfg['sales'] / 3));
-
-                $malesForSale    = Male::where('user_id', $userId)->where('etat', 'Inactive')->limit($limitPerType)->get();
-                $femellesForSale = Femelle::where('user_id', $userId)->where('etat', 'Vide')->limit($limitPerType)->get();
-                $lapereauxForSale = Lapereau::where('user_id', $userId)->where('etat', 'vendu')->limit($limitPerType)->get();
-
-                $totalSales = 0;
-
-                foreach ($malesForSale as $male) {
-                    $amountPaid = rand(0, 1) ? 25000 : rand(5000, 20000);
-                    $sale = Sale::create([
-                        'user_id'        => $userId,
-                        'date_sale'      => now()->subDays(rand(1, 120)),
-                        'quantity'       => 1,
-                        'type'           => 'male',
-                        'total_amount'   => 25000,
-                        'buyer_name'     => 'Acheteur-' . strtoupper(Str::random(6)),
-                        'buyer_contact'  => '+229' . rand(90000000, 99999999),
-                        'payment_status' => $amountPaid >= 25000 ? 'paid' : ($amountPaid > 0 ? 'partial' : 'pending'),
-                        'amount_paid'    => $amountPaid,
-                    ]);
-                    SaleRabbit::create([
-                        'sale_id'     => $sale->id,
-                        'rabbit_type' => 'male',
-                        'rabbit_id'   => $male->id,
-                        'sale_price'  => 25000,
-                    ]);
-                    $totalSales++;
-                }
-
-                foreach ($femellesForSale as $femelle) {
-                    $amountPaid = rand(0, 1) ? 30000 : rand(5000, 25000);
-                    $sale = Sale::create([
-                        'user_id'        => $userId,
-                        'date_sale'      => now()->subDays(rand(1, 120)),
-                        'quantity'       => 1,
-                        'type'           => 'female',
-                        'total_amount'   => 30000,
-                        'buyer_name'     => 'Acheteur-' . strtoupper(Str::random(6)),
-                        'buyer_contact'  => '+229' . rand(90000000, 99999999),
-                        'payment_status' => $amountPaid >= 30000 ? 'paid' : ($amountPaid > 0 ? 'partial' : 'pending'),
-                        'amount_paid'    => $amountPaid,
-                    ]);
-                    SaleRabbit::create([
-                        'sale_id'     => $sale->id,
-                        'rabbit_type' => 'female',
-                        'rabbit_id'   => $femelle->id,
-                        'sale_price'  => 30000,
-                    ]);
-                    $totalSales++;
-                }
-
-                foreach ($lapereauxForSale as $lapereau) {
-                    $amountPaid = rand(0, 1) ? 15000 : rand(3000, 12000);
-                    $sale = Sale::create([
-                        'user_id'        => $userId,
-                        'date_sale'      => now()->subDays(rand(1, 120)),
-                        'quantity'       => 1,
-                        'type'           => 'lapereau',
-                        'total_amount'   => 15000,
-                        'buyer_name'     => 'Acheteur-' . strtoupper(Str::random(6)),
-                        'buyer_contact'  => '+229' . rand(90000000, 99999999),
-                        'payment_status' => $amountPaid >= 15000 ? 'paid' : ($amountPaid > 0 ? 'partial' : 'pending'),
-                        'amount_paid'    => $amountPaid,
-                    ]);
-                    SaleRabbit::create([
-                        'sale_id'     => $sale->id,
-                        'rabbit_type' => 'lapereau',
-                        'rabbit_id'   => $lapereau->id,
-                        'sale_price'  => 15000,
-                    ]);
-                    $totalSales++;
-                }
-
-                $this->command->info("     ✓ {$totalSales} ventes créées");
-            }
-
-            // ── 8. NOTIFICATIONS ─────────────────────────────────────────────
-            if ($cfg['notifs'] > 0) {
-                $types = ['success', 'info', 'warning', 'error'];
-                $icons = [
-                    'success' => 'bi-check-circle-fill',
-                    'info'    => 'bi-info-circle-fill',
-                    'warning' => 'bi-exclamation-triangle-fill',
-                    'error'   => 'bi-x-circle-fill',
-                ];
-                $notifMessages = [
-                    'success' => [
-                        'Saillie enregistrée avec succès pour la femelle #%s.',
-                        'Mise-bas confirmée – %s lapereaux nés en bonne santé.',
-                        'Vente clôturée avec paiement complet.',
-                        'Données de la portée mises à jour.',
-                        'Sevrage programmé créé pour la portée.',
-                    ],
-                    'info' => [
-                        'Rappel : palpation prévue dans 2 jours pour femelle #%s.',
-                        'Le mâle #%s a été utilisé pour 3 saillies ce mois-ci.',
-                        'Mise-bas théorique dans 5 jours pour la femelle #%s.',
-                        'Sevrage prévu dans 3 jours.',
-                        'Vérification de sexe en attente pour la portée #%s.',
-                    ],
-                    'warning' => [
-                        'Abonnement expirant dans %s jours – pensez à renouveler.',
-                        "Femelle #%s n'a pas été saillie depuis plus de 60 jours.",
-                        'Poids moyen au sevrage inférieur à la norme pour la portée #%s.',
-                        'Lapereaux en état "Faible" détectés dans la portée #%s.',
-                        'Stock mâles faible – seulement %s disponibles.',
-                    ],
-                    'error' => [
-                        "Erreur lors de l'enregistrement de la saillie.",
-                        'Paiement refusé pour la vente #%s.',
-                        'Impossible de générer le rapport – données manquantes.',
-                        'Connexion à FedaPay échouée, réessayez.',
-                        'Mise-bas #%s introuvable dans la base de données.',
-                    ],
-                ];
-
-                for ($i = 1; $i <= $cfg['notifs']; $i++) {
-                    $type    = $types[array_rand($types)];
-                    $msgPool = $notifMessages[$type];
-                    $message = sprintf($msgPool[array_rand($msgPool)], rand(1, 999));
-
-                    Notification::create([
-                        'user_id'    => $userId,
-                        'type'       => $type,
-                        'title'      => match ($type) {
-                            'success' => '✅ Succès',
-                            'info'    => 'ℹ️ Information',
-                            'warning' => '⚠️ Attention',
-                            'error'   => '❌ Erreur',
-                        },
-                        'message'    => $message,
-                        'action_url' => route('dashboard'),
-                        'icon'       => $icons[$type],
-                        'is_read'    => (bool) rand(0, 1),
-                        'emailed'    => (bool) rand(0, 1),
-                        'read_at'    => rand(0, 1) ? now()->subHours(rand(1, 48)) : null,
-                    ]);
-                }
-
-                $this->command->info("     ✓ {$cfg['notifs']} notifications créées");
-            }
-        }
-
-        $this->command->line('');
-        $this->command->info("✅ All user data seeded successfully.");
-    }
-
-    // ========================================================================
-    // CREDENTIALS DISPLAY
+    // CREDENTIALS DISPLAY — PRETTIFIED
     // ========================================================================
 
     private function printLoginCredentials(): void
     {
         $this->command->line('');
         $this->command->line('╔══════════════════════════════════════════════════════════════════════╗');
-        $this->command->line('║                     🔑  LOGIN CREDENTIALS  🔑                       ║');
+        $this->command->line('║                     🔑  LOGIN CREDENTIALS  🔑                        ║');
         $this->command->line('╠══════════════════════════════════════════════════════════════════════╣');
+
+        // ── Super Admin ─────────────────────────────────────────────────
+        $sa = $this->credentials['super_admin'];
         $this->command->line('║                                                                      ║');
-        $this->command->line('║  👑  ADMIN ACCOUNT                                                   ║');
+        $this->command->line('║  👑  SUPER ADMIN                                                     ║');
         $this->command->line('║  ──────────────────────────────────────────────────────────────────  ║');
-        $this->command->line('║  Email    : admin@cuniapp.bj                                         ║');
-        $this->command->line('║  Password : Admin123!                                                ║');
-        $this->command->line('║  Role     : Administrator                                            ║');
-        $this->command->line('║  Sub      : Active (1 an – plan Annuel)                              ║');
-        $this->command->line('║  Dataset  : 60 mâles │ 200 femelles │ ~1 000 lapereaux               ║');
-        $this->command->line('║             300 saillies │ 250 mises-bas │ 200 naissances             ║');
-        $this->command->line('║             80 ventes │ 20 notifs │ 1 facture                        ║');
+        $this->command->line(sprintf('║  %-10s : %-50s  ║', 'Email', $sa['email']));
+        $this->command->line(sprintf('║  %-10s : %-50s  ║', 'Password', $sa['password']));
+        $this->command->line(sprintf('║  %-10s : %-50s  ║', 'Role', $sa['role']));
+        $this->command->line(sprintf('║  %-10s : %-50s  ║', 'Accès', $sa['description']));
+        $this->command->line('║                                                                      ║');
         $this->command->line('╠══════════════════════════════════════════════════════════════════════╣');
+
+        // ── Firm Admins ─────────────────────────────────────────────────
         $this->command->line('║                                                                      ║');
-        $this->command->line('║  👤  USER 1 – user1@cuniapp.bj  /  User123!                         ║');
-        $this->command->line('║  Subscription : 1 mois · actif · ~25 jours restants                 ║');
-        $this->command->line('║  Dataset  : 60 mâles │ 200 femelles │ ~1 000 lapereaux               ║');
-        $this->command->line('║             300 saillies │ 250 mises-bas │ 200 naissances             ║');
-        $this->command->line('║             80 ventes │ 20 notifs │ 1 facture                        ║');
+        $this->command->line('║  🏢  FIRM ADMINISTRATORS (10 firms)                                  ║');
+        $this->command->line('║  ──────────────────────────────────────────────────────────────────  ║');
+
+        $firmAdmins = array_filter($this->credentials, fn($k) => str_starts_with($k, 'firm_') && str_ends_with($k, '_admin'), ARRAY_FILTER_USE_KEY);
+
+        foreach ($firmAdmins as $key => $cred) {
+            $firmNum = explode('_', $key)[1];
+            $this->command->line('║                                                                      ║');
+            $this->command->line(sprintf('║  📋  FIRM #%-2s — %-30s                          ║', $firmNum, $cred['firm']));
+            $this->command->line(sprintf('║  Email    : %-50s  ║', $cred['email']));
+            $this->command->line(sprintf('║  Password : %-50s  ║', $cred['password']));
+            $this->command->line(sprintf('║  Role     : %-50s  ║', $cred['role']));
+            $this->command->line(sprintf('║  Note     : %-50s  ║', $cred['description']));
+        }
+
         $this->command->line('║                                                                      ║');
-        $this->command->line('║  👤  USER 2 – user2@cuniapp.bj  /  User123!                         ║');
-        $this->command->line('║  Subscription : 3 mois · actif                                      ║');
-        $this->command->line('║  Dataset  : 60 mâles │ 200 femelles │ ~1 000 lapereaux               ║');
-        $this->command->line('║             300 saillies │ 250 mises-bas │ 200 naissances             ║');
-        $this->command->line('║             80 ventes │ 20 notifs │ 1 facture                        ║');
+        $this->command->line('╠══════════════════════════════════════════════════════════════════════╣');
+
+        // ── Sample Employees (show first 2 per firm for brevity) ─────────
         $this->command->line('║                                                                      ║');
-        $this->command->line('║  👤  USER 3 – user3@cuniapp.bj  /  User123!                         ║');
-        $this->command->line('║  Subscription : 6 mois · actif                                      ║');
-        $this->command->line('║  Dataset  : 60 mâles │ 200 femelles │ ~1 000 lapereaux               ║');
-        $this->command->line('║             300 saillies │ 250 mises-bas │ 200 naissances             ║');
-        $this->command->line('║             80 ventes │ 20 notifs │ 1 facture                        ║');
+        $this->command->line('║  👥  SAMPLE EMPLOYEES (2 per firm shown)                            ║');
+        $this->command->line('║  ──────────────────────────────────────────────────────────────────  ║');
+
+        $sampleEmps = array_filter($this->credentials, fn($k) => preg_match('/firm_\d+_emp_[12]$/', $k), ARRAY_FILTER_USE_KEY);
+
+        foreach ($sampleEmps as $key => $cred) {
+            preg_match('/firm_(\d+)_emp_(\d+)/', $key, $matches);
+            $firmNum = $matches[1];
+            $empNum = $matches[2];
+            $this->command->line(sprintf(
+                '║  🧑‍💼  Firm #%-2s • Employé %-1s : %-45s  ║',
+                $firmNum,
+                $empNum,
+                $cred['email']
+            ));
+            $this->command->line(sprintf('║       Pass: %-50s  ║', $cred['password']));
+        }
+
         $this->command->line('║                                                                      ║');
-        $this->command->line('║  👤  USER 4 – user4@cuniapp.bj  /  User123!                         ║');
-        $this->command->line('║  Subscription : 1 an · actif (petite ferme)                         ║');
-        $this->command->line('║  Dataset  : 10 mâles │ 20 femelles │ ~45 lapereaux                   ║');
-        $this->command->line('║             25 saillies │ 20 mises-bas │ 15 naissances               ║');
-        $this->command->line('║             5 ventes │ 5 notifs │ 1 facture                          ║');
-        $this->command->line('║                                                                      ║');
-        $this->command->line('║  👤  USER 5 – user5@cuniapp.bj  /  User123!                         ║');
-        $this->command->line('║  Subscription : ❌ Aucune                                            ║');
-        $this->command->line('║  Dataset  : 🫙 EMPTY – aucune donnée                                 ║');
-        $this->command->line('║                                                                      ║');
+        $this->command->line('╠══════════════════════════════════════════════════════════════════════╣');
+        $this->command->line('║  💡  TIPS:                                                            ║');
+        $this->command->line('║  • All passwords end with "123!" for easy testing                   ║');
+        $this->command->line('║  • Firm admins can add/manage employees within their plan limit     ║');
+        $this->command->line('║  • Super admin can view/impersonate any firm                        ║');
+        $this->command->line('║  • Employees see only data scoped to their firm_id                  ║');
         $this->command->line('╚══════════════════════════════════════════════════════════════════════╝');
         $this->command->line('');
     }
