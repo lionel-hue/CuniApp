@@ -3777,9 +3777,10 @@
                 const brandWidth = document.querySelector('.brand-identity')?.offsetWidth || 0;
                 const userSideWidth = document.querySelector('.nav-user-side')?.offsetWidth || 0;
                 const mobileTriggerWidth = document.querySelector('.mobile-menu-trigger')?.offsetWidth || 0;
-                const padding = 100; // Safety margin
+                const moreDropdownWidth = document.querySelector('.dropdown-container')?.offsetWidth || 0;
+                const padding = 50; // Safety margin
 
-                const availableWidth = containerWidth - brandWidth - userSideWidth - mobileTriggerWidth - padding;
+                const availableWidth = containerWidth - brandWidth - userSideWidth - mobileTriggerWidth - moreDropdownWidth - padding;
 
                 // Calculate total width of all nav items
                 let totalWidth = 0;
@@ -3796,32 +3797,34 @@
 
                 // If overflow detected, move items to dropdown
                 if (totalWidth > availableWidth && visibleItems.length > this.minVisibleItems) {
-                    this.moveItemsToDropdown(visibleItems, availableWidth);
-                } else if (totalWidth < availableWidth * 0.8 && this.overflowItems.size > 0) {
-                    // If there's plenty of space, move items back
-                    this.moveItemsBackFromDropdown();
+                    this.moveItemsToDropdown(visibleItems, totalWidth, availableWidth);
+                } else if (totalWidth < availableWidth && this.overflowItems.size > 0) {
+                    // Try to move items back if there's space
+                    this.moveItemsBackFromDropdown(totalWidth, availableWidth);
                 }
 
                 this.updateOverflowBadge();
             }
 
-            moveItemsToDropdown(items, availableWidth) {
+            moveItemsToDropdown(items, totalWidth, availableWidth) {
                 // Sort by priority (higher number = lower priority = move first)
                 const sortedItems = [...items].sort((a, b) => {
                     const priorityA = parseInt(a.dataset.priority) || 999;
                     const priorityB = parseInt(b.dataset.priority) || 999;
-                    return priorityB - priorityA; // Higher priority number = move first
+                    if (priorityB !== priorityA) {
+                        return priorityB - priorityA; // Higher priority number = move first
+                    }
+                    return items.indexOf(b) - items.indexOf(a);
                 });
 
-                let currentWidth = 0;
+                let currentTotalWidth = totalWidth;
                 let itemsToMove = [];
 
                 // Calculate which items need to move
                 sortedItems.forEach(item => {
-                    currentWidth += item.offsetWidth;
-                    if (currentWidth > availableWidth && items.length - itemsToMove.length > this
-                        .minVisibleItems) {
+                    if (currentTotalWidth > availableWidth && items.length - itemsToMove.length > this.minVisibleItems) {
                         itemsToMove.push(item);
+                        currentTotalWidth -= item.offsetWidth;
                     }
                 });
 
@@ -3833,6 +3836,11 @@
 
             moveToDropdown(item) {
                 if (!item || this.overflowItems.has(item)) return;
+
+                // Store original width before hiding
+                if (!item.dataset.originalWidth) {
+                    item.dataset.originalWidth = item.offsetWidth;
+                }
 
                 // Add animation class
                 item.classList.add('moving-out');
@@ -3881,20 +3889,25 @@
                 }, 300);
             }
 
-            moveItemsBackFromDropdown() {
+            moveItemsBackFromDropdown(totalWidth, availableWidth) {
                 if (this.overflowItems.size === 0) return;
 
-                // Get items to move back (lowest priority first)
+                // Get items to move back (lowest priority number = higher priority = move back first)
                 const itemsToMoveBack = Array.from(this.overflowItems.entries())
                     .sort((a, b) => {
                         const priorityA = parseInt(a[0].dataset.priority) || 0;
                         const priorityB = parseInt(b[0].dataset.priority) || 0;
                         return priorityA - priorityB; // Lower priority number = move back first
-                    })
-                    .slice(0, 2); // Move back 2 items at a time
+                    });
+
+                let currentTotalWidth = totalWidth;
 
                 itemsToMoveBack.forEach(([originalItem, dropdownItem]) => {
-                    this.moveBackFromDropdown(originalItem, dropdownItem);
+                    const itemWidth = parseFloat(originalItem.dataset.originalWidth) || 120;
+                    if (currentTotalWidth + itemWidth + 10 < availableWidth) { // 10px buffer
+                        this.moveBackFromDropdown(originalItem, dropdownItem);
+                        currentTotalWidth += itemWidth;
+                    }
                 });
             }
 
