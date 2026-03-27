@@ -16,6 +16,7 @@ trait BelongsToUser
 {
     protected static function bootBelongsToUser()
     {
+        // Auto-assign user_id et firm_id à la création
         static::creating(function ($model) {
             if (auth()->check()) {
                 $user = auth()->user();
@@ -28,30 +29,26 @@ trait BelongsToUser
             }
         });
 
-        // ✅ Add safety check for global scope
+        // ✅ Global Scope OPTIMISÉ (sans Schema::hasColumn à chaque requête)
         static::addGlobalScope('firm', function ($builder) {
-            if (auth()->check()) {
-                $user = auth()->user();
+            if (!auth()->check()) {
+                return;
+            }
 
-                // Super Admin sees all data
-                if ($user->isSuperAdmin()) {
-                    return;
-                }
+            $user = auth()->user();
 
-                // ✅ Check if firm_id exists before applying scope
-                if ($user->firm_id && in_array($user->role, ['firm_admin', 'employee'])) {
-                    $table = $builder->getModel()->getTable();
-                    if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'firm_id')) {
-                        $builder->where("{$table}.firm_id", $user->firm_id);
-                    }
-                }
-                // ✅ Fallback to user_id
-                elseif (auth()->id()) {
-                    $table = $builder->getModel()->getTable();
-                    if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'user_id')) {
-                        $builder->where("{$table}.user_id", auth()->id());
-                    }
-                }
+            // Super Admin voit tout
+            if ($user->isSuperAdmin()) {
+                return;
+            }
+
+            // Employer/Firm Admin : scope par firm_id
+            if ($user->firm_id && in_array($user->role, ['firm_admin', 'employee'])) {
+                $builder->where('firm_id', $user->firm_id);
+            }
+            // Fallback : scope par user_id
+            elseif (auth()->id()) {
+                $builder->where('user_id', auth()->id());
             }
         });
     }

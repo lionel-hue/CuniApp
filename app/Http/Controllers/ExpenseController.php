@@ -18,8 +18,9 @@ class ExpenseController extends Controller
             return redirect()->route('login');
         }
 
-        $query = Expense::query()
-            ->where('user_id', auth()->id())
+        $userId = auth()->id();
+
+        $query = Expense::where('user_id', $userId)
             ->latest('expense_date');
 
         if ($request->filled('month')) {
@@ -30,19 +31,17 @@ class ExpenseController extends Controller
             $query->where('category', $request->category);
         }
 
-        // ✅ IMPORTANT : paginate() retourne un Paginator
-        $expenses = $query->paginate(15);
+        $expenses = $query->paginate(15)->withQueryString();
 
-        // ✅ Debug temporaire (à supprimer après)
-        \Log::info('Expenses type:', [
-            'type' => gettype($expenses),
-            'class' => get_class($expenses),
-            'count' => $expenses->count()
+        Log::info('Expenses Query Result', [
+            'type' => get_class($expenses),
+            'count' => $expenses->count(),
+            'total' => $expenses->total(),
         ]);
 
         $stats = [
-            'total' => Expense::where('user_id', auth()->id())->sum('amount'),
-            'this_month' => Expense::where('user_id', auth()->id())
+            'total' => Expense::where('user_id', $userId)->sum('amount'),
+            'this_month' => Expense::where('user_id', $userId)
                 ->whereMonth('expense_date', now()->month)
                 ->sum('amount'),
         ];
