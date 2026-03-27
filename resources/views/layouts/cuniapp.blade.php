@@ -3778,7 +3778,7 @@
                 const userSideWidth = document.querySelector('.nav-user-side')?.offsetWidth || 0;
                 const mobileTriggerWidth = document.querySelector('.mobile-menu-trigger')?.offsetWidth || 0;
                 const moreDropdownWidth = document.querySelector('.dropdown-container')?.offsetWidth || 0;
-                const padding = 50; // Safety margin
+                const padding = 150; // Safety margin for gaps and dropdown
 
                 const availableWidth = containerWidth - brandWidth - userSideWidth - mobileTriggerWidth - moreDropdownWidth - padding;
 
