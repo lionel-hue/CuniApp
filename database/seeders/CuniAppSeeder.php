@@ -225,7 +225,7 @@ class CuniAppSeeder extends Seeder
         // ─────────────────────────────────────────────────────────────────────
         // ADMIN — full access, active subscription, huge dataset
         // ─────────────────────────────────────────────────────────────────────
-        User::create([
+        $superAdmin =    User::create([
             'name'                    => 'Admin CuniApp',
             'email'                   => 'admin@cuniapp.bj',
             'password'                => Hash::make('Admin123!'),
