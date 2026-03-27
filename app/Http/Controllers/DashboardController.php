@@ -260,6 +260,7 @@ class DashboardController extends Controller
 
         $financialData = $this->getFinancialChartData();
         $activityData = $this->getActivityChartData();
+        $survieData = $this->getSurvieChartData();
 
         // ====================================================================
         // RETURN VIEW
@@ -284,7 +285,8 @@ class DashboardController extends Controller
             'timelineActivities',
             'salesStats',
             'financialData',
-            'activityData'
+            'activityData',
+            'survieData'
         ));
     }
 
@@ -304,17 +306,38 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->pluck('total', 'month');
 
-        // Expenses data
-        $expenses = \App\Models\Expense::where('user_id', $userId)
-            ->whereYear('expense_date', now()->year)
-            ->selectRaw('MONTH(expense_date) as month, SUM(amount) as total')
-            ->groupBy('month')
-            ->pluck('total', 'month');
-
         return [
             'labels' => $months,
             'sales' => $months->map(fn($m, $i) => $sales->get($i + 1) ?? 0)->toArray(),
-            'expenses' => $months->map(fn($m, $i) => $expenses->get($i + 1) ?? 0)->toArray(),
+        ];
+    }
+
+    /**
+     * Prepare survival data for charts
+     */
+    private function getSurvieChartData()
+    {
+        $userId = auth()->id();
+        $months = collect(range(1, 12))->map(fn($m) => \Carbon\Carbon::create()->month($m)->format('M'));
+
+        $misesBas = \App\Models\MiseBas::where('user_id', $userId)
+            ->whereYear('date_mise_bas', now()->year)
+            ->with('lapereaux')
+            ->get();
+
+        $vivantsPerMonth = array_fill(1, 12, 0);
+        $mortsNesPerMonth = array_fill(1, 12, 0);
+
+        foreach ($misesBas as $mb) {
+            $month = \Carbon\Carbon::parse($mb->date_mise_bas)->month;
+            $vivantsPerMonth[$month] += $mb->nb_vivant;
+            $mortsNesPerMonth[$month] += $mb->nb_mort_ne;
+        }
+
+        return [
+            'labels' => $months,
+            'vivants' => array_values($vivantsPerMonth),
+            'morts_nes' => array_values($mortsNesPerMonth),
         ];
     }
 

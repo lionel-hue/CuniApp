@@ -34,7 +34,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Http\Controllers\ExpenseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -313,15 +312,7 @@ Route::middleware('auth')->group(function () {
         });
 
 
-        // ====================================================================
-        // EXPENSE ROUTES (Require active subscription)
-        // ====================================================================
-        Route::middleware('check.subscription')->prefix('expenses')->name('expenses.')->group(function () {
-            Route::get('/', [ExpenseController::class, 'index'])->name('index');
-            Route::get('/create', [ExpenseController::class, 'create'])->name('create');
-            Route::post('/', [ExpenseController::class, 'store'])->name('store');
-            Route::delete('/{expense}', [ExpenseController::class, 'destroy'])->name('destroy');
-        });
+
     }); // <--- FIN DU GROUPE VERIFIED
 
     // ========================================================================

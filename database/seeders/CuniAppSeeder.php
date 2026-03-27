@@ -18,7 +18,6 @@ use App\Models\Setting;
 use App\Models\Sale;
 use App\Models\SaleRabbit;
 use App\Models\Notification;
-use App\Models\Expense;
 use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -52,7 +51,7 @@ class CuniAppSeeder extends Seeder
         $this->seedSuperAdmin();
         $this->seedFirmsAndUsers();
         $this->seedBreedingData();
-        $this->seedSalesAndExpenses();
+        $this->seedSales();
         $this->seedNotifications();
 
         $this->printFooter();
@@ -99,7 +98,6 @@ class CuniAppSeeder extends Seeder
             'mises_bas',
             'saillies',
             'notifications',
-            'expenses',
             'pending_payments',
             'firm_audit_logs',
             // Parent tables
@@ -570,9 +568,9 @@ class CuniAppSeeder extends Seeder
         $this->command->info("✅ All breeding data seeded across 10 firms");
     }
 
-    private function seedSalesAndExpenses(): void
+    private function seedSales(): void
     {
-        $this->command->info("💰 Seeding Sales & Expenses per firm...");
+        $this->command->info("💰 Seeding Sales per firm...");
 
         $firms = Firm::all();
         $etatsSante = ['Excellent', 'Bon', 'Moyen', 'Faible'];
@@ -621,20 +619,7 @@ class CuniAppSeeder extends Seeder
                 }
             }
 
-            // Expenses
-            $categories = ['Alimentation', 'Vétérinaire', 'Équipement', 'Autre'];
-            for ($e = 1; $e <= rand(3, 10); $e++) {
-                Expense::create([
-                    'user_id' => $firmAdmin->id,
-                    'firm_id' => $firm->id,
-                    'category' => $categories[array_rand($categories)],
-                    'amount' => rand(1000, 50000),
-                    'expense_date' => now()->subDays(rand(1, 90)),
-                    'description' => 'Dépense aléatoire pour testing',
-                ]);
-            }
-
-            $this->command->info("  ✓ Firm #{$firm->id}: {$numSales} ventes | " . rand(3, 10) . " dépenses");
+            $this->command->info("  ✓ Firm #{$firm->id}: {$numSales} ventes");
         }
     }
 

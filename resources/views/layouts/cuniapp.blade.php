@@ -2968,12 +2968,6 @@
                     <i class="bi bi-egg"></i>
                     <span>Mises Bas</span>
                 </a>
-                {{-- Dépenses --}}
-                <a href="{{ route('expenses.index') }}" class="nav-link nav-item" data-priority="6"
-                    data-route="expenses.*" title="Gestion des dépenses">
-                    <i class="bi bi-wallet2"></i>
-                    <span>Dépenses</span>
-                </a>
                 {{-- ✅ ENTREPRISE LINK (Firm Admins Only) --}}
                 @if (auth()->check() && auth()->user()->isFirmAdmin())
                     <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
