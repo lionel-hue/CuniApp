@@ -218,7 +218,7 @@ class CuniAppSeeder extends Seeder
             'email'                   => 'admin@cuniapp.bj',
             'password'                => Hash::make('Admin123!'),
             'email_verified_at'       => now(),
-            'role'                    => 'admin',
+            'role'                    => 'super_admin',
             'subscription_status'     => 'active',
             'subscription_ends_at'    => now()->addYear(),
             'last_subscription_at'    => now()->subDays(10),
