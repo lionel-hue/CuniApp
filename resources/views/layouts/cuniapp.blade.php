@@ -2735,6 +2735,209 @@
         .theme-dark .theme-status-badge {
             background: rgba(255, 255, 255, 0.1);
         }
+
+        /* ============================================
+✅ DYNAMIC HEADER OVERFLOW MANAGEMENT
+============================================ */
+        .nav-main-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+            overflow: visible;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: relative;
+        }
+
+        .nav-main-links::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 15px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            flex-shrink: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            background: var(--primary-subtle);
+            color: var(--primary);
+        }
+
+        .nav-link i {
+            font-size: 16px;
+        }
+
+        /* ✅ Overflow Badge on Plus Button */
+        .overflow-count-badge {
+            background: var(--accent-red);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* ✅ Overflow Item in Dropdown */
+        .overflow-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .overflow-nav-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .overflow-nav-item.active {
+            background: var(--primary-subtle);
+            color: var(--primary);
+        }
+
+        .overflow-nav-item i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ✅ Hidden State for Moved Items */
+        .nav-link.moved-to-dropdown {
+            display: none !important;
+        }
+
+        /* ✅ Animation for Moving Items */
+        @keyframes moveToDropdown {
+            0% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: translateX(20px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+        }
+
+        @keyframes moveFromDropdown {
+            0% {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: translateX(-20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .nav-link.moving-out {
+            animation: moveToDropdown 0.3s ease forwards;
+        }
+
+        .nav-link.moving-in {
+            animation: moveFromDropdown 0.3s ease forwards;
+        }
+
+        /* ✅ Dropdown Separator for Overflow Items */
+        .overflow-separator {
+            border-top: 1px solid var(--surface-border);
+            margin: 8px 0;
+            padding-top: 8px;
+        }
+
+        .overflow-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 16px;
+            margin-bottom: 4px;
+        }
+
+        /* ✅ Responsive Adjustments */
+        @media (max-width: 1400px) {
+
+            .nav-main-links .nav-item[data-priority="7"],
+            .nav-main-links .nav-item[data-priority="8"] {
+                /* Lower priority items may overflow first */
+            }
+        }
+
+        @media (max-width: 1280px) {
+
+            .nav-main-links .nav-item[data-priority="6"],
+            .nav-main-links .nav-item[data-priority="7"] {
+                /* Medium priority items */
+            }
+        }
+
+        @media (max-width: 1100px) {
+            /* Most items will move to dropdown on smaller screens */
+        }
     </style>
 </head>
 
@@ -2768,106 +2971,95 @@
                 </div>
             </div>
 
-            {{-- ✅ MAIN NAVIGATION --}}
+            {{-- ✅ MAIN NAVIGATION WITH OVERFLOW CONTAINER --}}
             <nav class="nav-main-links" id="navMainLinks" style="overflow: visible !important;">
-                <a href="{{ route('dashboard') }}"
-                    class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                {{-- Navigation items will be managed by JavaScript --}}
+                <a href="{{ route('dashboard') }}" class="nav-link nav-item" data-priority="1" data-route="dashboard">
                     <i class="bi bi-speedometer2"></i>
                     <span>Tableau de bord</span>
                 </a>
-                <a href="{{ route('males.index') }}"
-                    class="nav-link {{ request()->routeIs('males.*') ? 'active' : '' }}">
+                <a href="{{ route('males.index') }}" class="nav-link nav-item" data-priority="2" data-route="males.*">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span>Mâles</span>
                 </a>
-                <a href="{{ route('femelles.index') }}"
-                    class="nav-link {{ request()->routeIs('femelles.*') ? 'active' : '' }}">
+                <a href="{{ route('femelles.index') }}" class="nav-link nav-item" data-priority="3"
+                    data-route="femelles.*">
                     <i class="bi bi-arrow-down-right-square"></i>
                     <span>Femelles</span>
                 </a>
-                <a href="{{ route('lapins.index') }}"
-                    class="nav-link {{ request()->routeIs('lapins.*') ? 'active' : '' }}">
+                <a href="{{ route('lapins.index') }}" class="nav-link nav-item" data-priority="4" data-route="lapins.*">
                     <i class="bi bi-collection"></i>
                     <span>Tous les Lapins</span>
                 </a>
-                <a href="{{ route('mises-bas.index') }}"
-                    class="nav-link {{ request()->routeIs('mises-bas.*') ? 'active' : '' }}">
+                <a href="{{ route('mises-bas.index') }}" class="nav-link nav-item" data-priority="5"
+                    data-route="mises-bas.*">
                     <i class="bi bi-egg"></i>
                     <span>Mises Bas</span>
                 </a>
-
                 {{-- Dépenses --}}
-                <a href="{{ route('expenses.index') }}"
-                    class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }}"
-                    title="Gestion des dépenses">
+                <a href="{{ route('expenses.index') }}" class="nav-link nav-item" data-priority="6"
+                    data-route="expenses.*" title="Gestion des dépenses">
                     <i class="bi bi-wallet2"></i>
                     <span>Dépenses</span>
                 </a>
-
                 {{-- ✅ ENTREPRISE LINK (Firm Admins Only) --}}
                 @if (auth()->check() && auth()->user()->isFirmAdmin())
-                    <a href="{{ route('firm.index') }}"
-                        class="nav-link {{ request()->routeIs('firm.*') ? 'active' : '' }}">
+                    <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
+                        data-route="firm.*">
                         <i class="bi bi-building"></i>
                         <span>Entreprise</span>
                     </a>
                 @endif
-
                 {{-- ✅ SUPER ADMIN LINK (Super Admins Only) --}}
                 @if (auth()->check() && auth()->user()->isSuperAdmin())
-                    <a href="{{ route('super.admin.dashboard') }}"
-                        class="nav-link {{ request()->routeIs('super.admin.*') ? 'active' : '' }}"
-                        style="color: var(--accent-orange);">
+                    <a href="{{ route('super.admin.dashboard') }}" class="nav-link nav-item" data-priority="8"
+                        data-route="super.admin.*" style="color: var(--accent-orange);">
                         <i class="bi bi-star-fill"></i>
                         <span>Super Admin</span>
                     </a>
                 @endif
 
-
-                {{-- ✅ MORE DROPDOWN - FIXED POSITIONING --}}
+                {{-- ✅ MORE DROPDOWN - Will receive overflow items --}}
                 <div class="dropdown-container" style="position: relative; display: inline-block;">
                     <button class="nav-link" type="button" onclick="toggleMoreDropdown(event)" id="moreButton"
                         style="position: relative;">
                         <i class="bi bi-three-dots"></i>
                         <span>Plus</span>
                         <i class="bi bi-chevron-down" style="font-size: 10px;"></i>
+                        <span class="overflow-count-badge" id="overflowCountBadge"
+                            style="display: none; position: absolute; top: -5px; right: -5px; background: var(--accent-red); color: white; font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">0</span>
                     </button>
-                    {{-- ✅ DROPDOWN MENU - FIXED Z-INDEX & POSITIONING --}}
+                    {{-- ✅ DROPDOWN MENU --}}
                     <div class="dropdown-menu-custom" id="moreDropdown"
-                        style="
-                    position: absolute;
-                    top: calc(100% + 8px);
-                    right: 0;
-                    min-width: 240px;
-                    z-index: 9999 !important;
-                    display: none;
-                ">
-                        <a href="{{ route('saillies.index') }}" class="dropdown-item-custom">
+                        style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; z-index: 9999 !important; display: none;">
+                        {{-- Static items always in dropdown --}}
+                        <a href="{{ route('saillies.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-heart"></i> Saillies
                         </a>
-                        <a href="{{ route('naissances.index') }}" class="dropdown-item-custom">
+                        <a href="{{ route('naissances.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-egg-fill"></i> Naissances
                         </a>
-                        <a href="{{ route('sales.index') }}" class="dropdown-item-custom">
+                        <a href="{{ route('sales.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-cart"></i> Ventes
                         </a>
-                        <a href="{{ route('activites.index') }}" class="dropdown-item-custom">
+                        <a href="{{ route('activites.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-clock-history"></i> Activités
                         </a>
-
-                        <a href="{{ route('invoices.index') }}" class="dropdown-item-custom">
+                        <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-receipt"></i>
                             <span>Mes Factures</span>
                         </a>
-
-
-
-                        <a href="{{ route('settings.index') }}" class="dropdown-item-custom">
+                        <a href="{{ route('settings.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-gear"></i> Paramètres
                         </a>
 
-                        {{-- ✅ SUBSCRIPTION IN MORE DROPDOWN ONLY (Non-admin users) --}}
-                        {{-- ✅ SUBSCRIPTION IN MORE DROPDOWN ONLY (Non-admin users) --}}
+                        {{-- ✅ OVERFLOW ITEMS CONTAINER --}}
+                        <div id="overflowItemsContainer"
+                            style="border-top: 1px solid var(--surface-border); margin: 8px 0; padding-top: 8px;">
+                            {{-- Dynamic overflow items will be injected here --}}
+                        </div>
+
+                        {{-- Subscription in dropdown (Non-admin users) --}}
                         @if (auth()->check() && auth()->user()->role !== 'admin')
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
@@ -2879,44 +3071,20 @@
                                         style="background: var(--accent-orange); position: absolute; top: 8px; right: 12px; min-width: 18px; height: 18px; font-size: 10px;">!</span>
                                 @endif
                             </a>
-                        @endif
-
-                        {{-- In the MORE dropdown, after the Abonnement link --}}
-                        @if (auth()->check() && auth()->user()->role !== 'admin')
-                            <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
-
-                            {{-- View Plans --}}
-                            <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom">
-                                <i class="bi bi-credit-card"></i>
-                                <span>Nos Offres</span>
-                            </a>
-
-                            {{-- ✅ VIEW STATUS (NEW) --}}
                             <a href="{{ route('subscription.status') }}" class="dropdown-item-custom">
                                 <i class="bi bi-pie-chart"></i>
                                 <span>Mon Abonnement</span>
                                 @if (auth()->user()->hasActiveSubscription())
                                     <span class="badge"
-                                        style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-size: 10px; margin-left: auto;">
-                                        Actif
-                                    </span>
+                                        style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-size: 10px; margin-left: auto;">Actif</span>
                                 @else
                                     <span class="badge"
-                                        style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">
-                                        Inactif
-                                    </span>
+                                        style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">Inactif</span>
                                 @endif
                             </a>
                         @endif
                     </div>
                 </div>
-
-                {{-- ❌ REMOVED: Duplicate subscription link from main nav (was causing duplicate badges) --}}
-                {{-- @if (auth()->check() && auth()->user()->role !== 'admin')
-                <a href="{{ route('subscription.plans') }}" class="nav-link subscription-nav-link...">
-                    ...
-                </a>
-            @endif --}}
             </nav>
 
             {{-- ✅ MOBILE MENU TRIGGER --}}
@@ -2924,7 +3092,7 @@
                 <i class="bi bi-list"></i>
             </button>
 
-            {{-- ✅ USER SIDE NAV - FIXED (NO DUPLICATE BADGES) --}}
+            {{-- ✅ USER SIDE NAV --}}
             @auth
                 <div class="nav-user-side d-none d-md-flex" style="overflow: visible !important;">
                     {{-- Notifications --}}
@@ -2938,43 +3106,19 @@
                         @endphp
                         @if ($unread > 0)
                             <span class="notification-badge"
-                                style="
-                            position: absolute;
-                            top: -5px;
-                            right: -5px;
-                            background: var(--accent-red);
-                            color: white;
-                            font-size: 10px;
-                            font-weight: 700;
-                            min-width: 19px;
-                            height: 19px;
-                            border-radius: 10px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            border: 2px solid var(--surface);
-                            z-index: 10000;
-                        ">{{ $unread > 99 ? '99+' : $unread }}</span>
+                                style="position: absolute; top: -5px; right: -5px; background: var(--accent-red); color: white; font-size: 10px; font-weight: 700; min-width: 19px; height: 19px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); z-index: 10000;">{{ $unread > 99 ? '99+' : $unread }}</span>
                         @endif
                     </a>
-
-                    {{-- ✅ USER PROFILE DROPDOWN - NO SUBSCRIPTION BADGE HERE --}}
+                    {{-- User Profile Dropdown --}}
                     <div class="user-profile-dropdown" style="position: relative; display: inline-block;">
                         <div class="user-trigger" onclick="toggleUserDropdown(event)" style="position: relative;">
                             <div class="user-avatar">{{ substr(auth()->user()->name, 0, 1) }}</div>
                             <span>{{ auth()->user()->name }}</span>
                             <i class="bi bi-chevron-down"></i>
                         </div>
-                        {{-- ✅ USER DROPDOWN MENU --}}
+                        {{-- User Dropdown Menu --}}
                         <div class="dropdown-menu-custom" id="userDropdown"
-                            style="
-                        position: absolute;
-                        top: calc(100% + 8px);
-                        right: 0;
-                        min-width: 280px;
-                        z-index: 9999 !important;
-                        display: none;
-                    ">
+                            style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 280px; z-index: 9999 !important; display: none;">
                             <div class="dropdown-header">
                                 <span>{{ auth()->user()->name }}</span>
                                 <small>{{ auth()->user()->email }}</small>
@@ -2985,7 +3129,6 @@
                             <a href="{{ route('settings.index') }}" class="dropdown-item-custom">
                                 <i class="bi bi-gear"></i> Paramètres
                             </a>
-
                             {{-- Theme Selector --}}
                             <a href="{{ route('settings.index') }}#system-tab"
                                 class="dropdown-item-custom theme-switch-row" id="theme-selector">
@@ -3006,8 +3149,7 @@
                                     <span id="theme-text">{{ $themeLabel }}</span>
                                 </div>
                             </a>
-
-                            {{-- 👑 ADMIN SUBSCRIPTION MANAGEMENT (Admin only) --}}
+                            {{-- Admin Subscription Management --}}
                             @if (auth()->check() && auth()->user()->role === 'admin')
                                 <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                                 <div class="dropdown-header" style="background: var(--surface-alt);">
@@ -3020,7 +3162,6 @@
                                     <i class="bi bi-receipt"></i> Transactions
                                 </a>
                             @endif
-
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -3033,219 +3174,6 @@
                 </div>
             @endauth
         </div>
-
-        {{-- ✅ MOBILE NAV OVERLAY --}}
-        @auth
-            <div class="mobile-nav-overlay" id="mobileNavOverlay">
-                <div class="mobile-nav-links">
-                    {{-- Dashboard --}}
-                    <a href="{{ route('dashboard') }}"
-                        class="mobile-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-speedometer2"></i>
-                        <span>Tableau de bord</span>
-                    </a>
-
-                    {{-- Mâles --}}
-                    <a href="{{ route('males.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('males.*') ? 'active' : '' }}">
-                        <i class="bi bi-arrow-up-right-square"></i>
-                        <span>Mâles</span>
-                    </a>
-
-                    {{-- Femelles --}}
-                    <a href="{{ route('femelles.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('femelles.*') ? 'active' : '' }}">
-                        <i class="bi bi-arrow-down-right-square"></i>
-                        <span>Femelles</span>
-                    </a>
-
-                    {{-- Tous les Lapins --}}
-                    <a href="{{ route('lapins.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('lapins.*') ? 'active' : '' }}">
-                        <i class="bi bi-collection"></i>
-                        <span>Tous les Lapins</span>
-                    </a>
-
-                    {{-- Mises Bas --}}
-                    <a href="{{ route('mises-bas.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('mises-bas.*') ? 'active' : '' }}">
-                        <i class="bi bi-egg"></i>
-                        <span>Mises Bas</span>
-                    </a>
-
-
-                    {{-- ✅ MOBILE: ENTREPRISE LINK (Firm Admins Only) --}}
-                    @if (auth()->check() && auth()->user()->isFirmAdmin())
-                        <div class="mobile-nav-divider"></div>
-                        <div
-                            style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase;">
-                            🏢 Entreprise
-                        </div>
-                        <a href="{{ route('firm.index') }}"
-                            class="mobile-nav-link {{ request()->routeIs('firm.*') ? 'active' : '' }}">
-                            <i class="bi bi-building"></i>
-                            <span>Gérer l'Entreprise</span>
-                        </a>
-                    @endif
-
-                    {{-- ✅ MOBILE: SUPER ADMIN LINK (Super Admins Only) --}}
-                    @if (auth()->check() && auth()->user()->isSuperAdmin())
-                        <div class="mobile-nav-divider"></div>
-                        <div
-                            style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--accent-orange); text-transform: uppercase;">
-                            👑 Super Admin
-                        </div>
-                        <a href="{{ route('super.admin.dashboard') }}"
-                            class="mobile-nav-link {{ request()->routeIs('super.admin.*') ? 'active' : '' }}">
-                            <i class="bi bi-star-fill"></i>
-                            <span>Tableau de Bord</span>
-                        </a>
-                    @endif
-
-                    {{-- ✅ MOBILE DIVIDER --}}
-                    <div class="mobile-nav-divider"></div>
-
-                    {{-- ✅ MORE SECTION (Saillies, Naissances, Ventes, Activités, Paramètres) --}}
-                    <div
-                        style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">
-                        Plus
-                    </div>
-
-                    <a href="{{ route('saillies.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('saillies.*') ? 'active' : '' }}">
-                        <i class="bi bi-heart"></i>
-                        <span>Saillies</span>
-                    </a>
-
-                    <a href="{{ route('naissances.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('naissances.*') ? 'active' : '' }}">
-                        <i class="bi bi-egg-fill"></i>
-                        <span>Naissances</span>
-                    </a>
-
-                    <a href="{{ route('sales.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('sales.*') ? 'active' : '' }}">
-                        <i class="bi bi-cart"></i>
-                        <span>Ventes</span>
-                    </a>
-
-                    <a href="{{ route('activites.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('activites.*') ? 'active' : '' }}">
-                        <i class="bi bi-clock-history"></i>
-                        <span>Activités</span>
-                    </a>
-
-                    <a href="{{ route('settings.index') }}"
-                        class="mobile-nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                        <i class="bi bi-gear"></i>
-                        <span>Paramètres</span>
-                    </a>
-
-                    {{-- ✅ SUBSCRIPTION LINKS (Non-admin users only) --}}
-                    @if (auth()->check() && auth()->user()->role !== 'admin')
-                        <div class="mobile-nav-divider"></div>
-
-                        <div
-                            style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--accent-orange); text-transform: uppercase; letter-spacing: 0.5px;">
-                            💳 Abonnement
-                        </div>
-
-                        <a href="{{ route('subscription.plans') }}"
-                            class="mobile-nav-link {{ request()->routeIs('subscription.*') ? 'active' : '' }}"
-                            style="{{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
-                            <i class="bi bi-credit-card"></i>
-                            <span>Nos Offres</span>
-                            @if (!auth()->user()->hasActiveSubscription())
-                                <span class="notification-badge"
-                                    style="position: static; margin-left: auto; min-width: 18px; height: 18px; font-size: 10px;">!</span>
-                            @endif
-                        </a>
-
-                        <a href="{{ route('subscription.status') }}" class="mobile-nav-link">
-                            <i class="bi bi-pie-chart"></i>
-                            <span>Mon Abonnement</span>
-                            @if (auth()->user()->hasActiveSubscription())
-                                <span class="badge"
-                                    style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-size: 10px; margin-left: auto;">Actif</span>
-                            @else
-                                <span class="badge"
-                                    style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">Inactif</span>
-                            @endif
-                        </a>
-                    @endif
-
-                    {{-- ✅ ADMIN LINKS (Admin users only) --}}
-                    @if (auth()->check() && auth()->user()->role === 'admin')
-                        <div class="mobile-nav-divider"></div>
-
-                        <div
-                            style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 0.5px;">
-                            👑 Administration
-                        </div>
-
-                        <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link">
-                            <i class="bi bi-shield-lock"></i>
-                            <span>Gestion Abonnements</span>
-                        </a>
-
-                        <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link">
-                            <i class="bi bi-receipt"></i>
-                            <span>Transactions</span>
-                        </a>
-                    @endif
-
-                    {{-- ✅ USER PROFILE SECTION --}}
-                    <div class="mobile-nav-divider"></div>
-
-                    <div
-                        style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">
-                        Compte
-                    </div>
-
-                    {{-- Notifications --}}
-                    <a href="{{ route('notifications.index') }}" class="mobile-nav-link">
-                        <i class="bi bi-bell"></i>
-                        <span>Notifications</span>
-                        @php
-                            $unread = \App\Models\Notification::where('user_id', auth()->id())
-                                ->where('is_read', false)
-                                ->count();
-                        @endphp
-                        @if ($unread > 0)
-                            <span class="notification-badge"
-                                style="position: static; margin-left: auto; min-width: 18px; height: 18px; font-size: 10px;">{{ $unread > 99 ? '99+' : $unread }}</span>
-                        @endif
-                    </a>
-
-                    {{-- Profile --}}
-                    <a href="{{ route('profile.edit') }}" class="mobile-nav-link">
-                        <i class="bi bi-person"></i>
-                        <span>Mon Profil</span>
-                    </a>
-
-                    {{-- Theme Selector --}}
-                    <a href="{{ route('settings.index') }}#system-tab" class="mobile-nav-link">
-                        <i class="bi bi-palette"></i>
-                        <span>Thème</span>
-                        <span class="theme-status-badge" style="font-size: 10px; padding: 2px 6px; margin-left: auto;">
-                            {{ auth()->user()->theme ?? 'system' }}
-                        </span>
-                    </a>
-
-                    {{-- Logout --}}
-                    <div class="mobile-nav-divider"></div>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="mobile-nav-link"
-                            style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
-                            <i class="bi bi-box-arrow-right" style="color: var(--accent-red);"></i>
-                            <span style="color: var(--accent-red);">Déconnexion</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @endauth
     </header>
 
     <main class="cuni-main">
@@ -3631,6 +3559,7 @@
     `;
         document.head.appendChild(style);
 
+
         function toggleMoreDropdown(event) {
             if (event) {
                 event.stopPropagation();
@@ -3653,6 +3582,67 @@
                 }
             }
         }
+
+        function toggleUserDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            const userDropdown = document.getElementById('userDropdown');
+            const moreDropdown = document.getElementById('moreDropdown');
+            const mobileNav = document.getElementById('mobileNavOverlay');
+
+            if (moreDropdown) moreDropdown.classList.remove('show');
+            if (mobileNav) mobileNav.classList.remove('active');
+
+            if (userDropdown) {
+                const isShowing = userDropdown.classList.contains('show');
+                document.querySelectorAll('.dropdown-menu-custom').forEach(d => d.classList.remove('show'));
+                if (!isShowing) {
+                    userDropdown.classList.add('show');
+                }
+            }
+        }
+
+        function toggleMobileNav() {
+            const mobileNav = document.getElementById('mobileNavOverlay');
+            const userDropdown = document.getElementById('userDropdown');
+            const moreDropdown = document.getElementById('moreDropdown');
+
+            if (userDropdown) userDropdown.classList.remove('show');
+            if (moreDropdown) moreDropdown.classList.remove('show');
+
+            if (mobileNav) {
+                mobileNav.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            const userDropdown = document.getElementById('userDropdown');
+            const moreDropdown = document.getElementById('moreDropdown');
+            const mobileNav = document.getElementById('mobileNavOverlay');
+            const mobileTrigger = document.querySelector('.mobile-menu-trigger');
+
+            // Close user dropdown if clicking outside
+            if (userDropdown && !e.target.closest('.user-profile-dropdown')) {
+                userDropdown.classList.remove('show');
+            }
+
+            // Close more dropdown if clicking outside
+            if (moreDropdown && !e.target.closest('.dropdown-container')) {
+                moreDropdown.classList.remove('show');
+            }
+
+            // Close mobile nav if clicking outside
+            if (mobileNav && mobileTrigger &&
+                !e.target.closest('.mobile-menu-trigger') &&
+                !e.target.closest('.mobile-nav-overlay')) {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
 
         function toggleUserDropdown(event) {
             if (event) {
@@ -3727,6 +3717,233 @@
                 mobileNav.classList.remove('active');
                 document.body.style.overflow = '';
             }
+        });
+
+
+        // ============================================
+        // ✅ DYNAMIC HEADER OVERFLOW MANAGEMENT
+        // ============================================
+        class HeaderOverflowManager {
+            constructor() {
+                this.navContainer = document.getElementById('navMainLinks');
+                this.moreDropdown = document.getElementById('moreDropdown');
+                this.overflowContainer = document.getElementById('overflowItemsContainer');
+                this.overflowBadge = document.getElementById('overflowCountBadge');
+                this.moreButton = document.getElementById('moreButton');
+                this.headerWrapper = document.querySelector('.header-wrapper');
+                this.overflowItems = new Map(); // Store moved items
+                this.resizeTimeout = null;
+                this.minVisibleItems = 3; // Always keep at least 3 items visible
+
+                this.init();
+            }
+
+            init() {
+                if (!this.navContainer || !this.moreDropdown) {
+                    console.warn('Header overflow manager: Required elements not found');
+                    return;
+                }
+
+                // Initial check
+                this.checkOverflow();
+
+                // Listen for resize events with debounce
+                window.addEventListener('resize', () => {
+                    clearTimeout(this.resizeTimeout);
+                    this.resizeTimeout = setTimeout(() => this.checkOverflow(), 150);
+                });
+
+                // Listen for DOM changes (in case items are added dynamically)
+                const observer = new MutationObserver(() => {
+                    clearTimeout(this.resizeTimeout);
+                    this.resizeTimeout = setTimeout(() => this.checkOverflow(), 150);
+                });
+
+                observer.observe(this.navContainer, {
+                    childList: true,
+                    subtree: true
+                });
+
+                console.log('✅ Header overflow manager initialized');
+            }
+
+            checkOverflow() {
+                if (!this.navContainer || !this.headerWrapper) return;
+
+                const containerWidth = this.headerWrapper.offsetWidth;
+                const navItems = Array.from(this.navContainer.querySelectorAll('.nav-item'));
+
+                // Calculate available space (accounting for brand, user menu, and plus button)
+                const brandWidth = document.querySelector('.brand-identity')?.offsetWidth || 0;
+                const userSideWidth = document.querySelector('.nav-user-side')?.offsetWidth || 0;
+                const mobileTriggerWidth = document.querySelector('.mobile-menu-trigger')?.offsetWidth || 0;
+                const padding = 100; // Safety margin
+
+                const availableWidth = containerWidth - brandWidth - userSideWidth - mobileTriggerWidth - padding;
+
+                // Calculate total width of all nav items
+                let totalWidth = 0;
+                const visibleItems = [];
+                const overflowItems = [];
+
+                navItems.forEach(item => {
+                    if (item.classList.contains('moved-to-dropdown')) {
+                        return; // Skip already moved items
+                    }
+                    totalWidth += item.offsetWidth;
+                    visibleItems.push(item);
+                });
+
+                // If overflow detected, move items to dropdown
+                if (totalWidth > availableWidth && visibleItems.length > this.minVisibleItems) {
+                    this.moveItemsToDropdown(visibleItems, availableWidth);
+                } else if (totalWidth < availableWidth * 0.8 && this.overflowItems.size > 0) {
+                    // If there's plenty of space, move items back
+                    this.moveItemsBackFromDropdown();
+                }
+
+                this.updateOverflowBadge();
+            }
+
+            moveItemsToDropdown(items, availableWidth) {
+                // Sort by priority (higher number = lower priority = move first)
+                const sortedItems = [...items].sort((a, b) => {
+                    const priorityA = parseInt(a.dataset.priority) || 999;
+                    const priorityB = parseInt(b.dataset.priority) || 999;
+                    return priorityB - priorityA; // Higher priority number = move first
+                });
+
+                let currentWidth = 0;
+                let itemsToMove = [];
+
+                // Calculate which items need to move
+                sortedItems.forEach(item => {
+                    currentWidth += item.offsetWidth;
+                    if (currentWidth > availableWidth && items.length - itemsToMove.length > this
+                        .minVisibleItems) {
+                        itemsToMove.push(item);
+                    }
+                });
+
+                // Move items to dropdown
+                itemsToMove.forEach(item => {
+                    this.moveToDropdown(item);
+                });
+            }
+
+            moveToDropdown(item) {
+                if (!item || this.overflowItems.has(item)) return;
+
+                // Add animation class
+                item.classList.add('moving-out');
+
+                setTimeout(() => {
+                    // Hide the original item
+                    item.classList.add('moved-to-dropdown');
+                    item.classList.remove('moving-out');
+
+                    // Create dropdown item
+                    const dropdownItem = document.createElement('a');
+                    dropdownItem.href = item.href;
+                    dropdownItem.className = 'overflow-nav-item';
+                    if (item.classList.contains('active')) {
+                        dropdownItem.classList.add('active');
+                    }
+
+                    // Copy icon and text
+                    const icon = item.querySelector('i');
+                    const text = item.querySelector('span');
+
+                    if (icon) {
+                        const iconClone = icon.cloneNode(true);
+                        dropdownItem.appendChild(iconClone);
+                    }
+
+                    if (text) {
+                        const textClone = text.cloneNode(true);
+                        dropdownItem.appendChild(textClone);
+                    }
+
+                    // Store reference
+                    this.overflowItems.set(item, dropdownItem);
+
+                    // Add to overflow container
+                    if (!document.querySelector('.overflow-section-label')) {
+                        const label = document.createElement('div');
+                        label.className = 'overflow-section-label';
+                        label.textContent = 'Navigation';
+                        this.overflowContainer.prepend(label);
+                    }
+
+                    this.overflowContainer.appendChild(dropdownItem);
+
+                    console.log(`✅ Moved "${text?.textContent || 'item'}" to dropdown`);
+                }, 300);
+            }
+
+            moveItemsBackFromDropdown() {
+                if (this.overflowItems.size === 0) return;
+
+                // Get items to move back (lowest priority first)
+                const itemsToMoveBack = Array.from(this.overflowItems.entries())
+                    .sort((a, b) => {
+                        const priorityA = parseInt(a[0].dataset.priority) || 0;
+                        const priorityB = parseInt(b[0].dataset.priority) || 0;
+                        return priorityA - priorityB; // Lower priority number = move back first
+                    })
+                    .slice(0, 2); // Move back 2 items at a time
+
+                itemsToMoveBack.forEach(([originalItem, dropdownItem]) => {
+                    this.moveBackFromDropdown(originalItem, dropdownItem);
+                });
+            }
+
+            moveBackFromDropdown(originalItem, dropdownItem) {
+                if (!originalItem || !dropdownItem) return;
+
+                // Add animation to dropdown item
+                dropdownItem.style.opacity = '0';
+                dropdownItem.style.transform = 'translateX(-20px)';
+
+                setTimeout(() => {
+                    // Remove from dropdown
+                    dropdownItem.remove();
+
+                    // Show original item
+                    originalItem.classList.remove('moved-to-dropdown');
+                    originalItem.classList.add('moving-in');
+
+                    setTimeout(() => {
+                        originalItem.classList.remove('moving-in');
+                    }, 300);
+
+                    // Remove from map
+                    this.overflowItems.delete(originalItem);
+
+                    console.log(`✅ Moved item back to main nav`);
+                }, 300);
+            }
+
+            updateOverflowBadge() {
+                const count = this.overflowItems.size;
+                if (this.overflowBadge) {
+                    if (count > 0) {
+                        this.overflowBadge.textContent = count > 9 ? '9+' : count;
+                        this.overflowBadge.style.display = 'flex';
+                        this.moreButton.style.background = 'var(--primary-subtle)';
+                        this.moreButton.style.color = 'var(--primary)';
+                    } else {
+                        this.overflowBadge.style.display = 'none';
+                        this.moreButton.style.background = '';
+                        this.moreButton.style.color = '';
+                    }
+                }
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            window.headerOverflowManager = new HeaderOverflowManager();
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
