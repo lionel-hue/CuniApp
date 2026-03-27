@@ -99,7 +99,8 @@
                             <option value="Vétérinaire" {{ request('category') === 'Vétérinaire' ? 'selected' : '' }}>
                                 Vétérinaire</option>
                             <option value="Équipement" {{ request('category') === 'Équipement' ? 'selected' : '' }}>
-                                Équipement</option>
+                                Équipement
+                            </option>
                             <option value="Transport" {{ request('category') === 'Transport' ? 'selected' : '' }}>Transport
                             </option>
                             <option value="Autre" {{ request('category') === 'Autre' ? 'selected' : '' }}>Autre</option>
@@ -144,22 +145,64 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($expenses as $expense)
-                            <tr class="border-bottom border-light">
-                                <td class="ps-4 fw-semibold">{{ $expense->expense_date->format('d/m/Y') }}</td>
-                                <td>
-                                    <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
-                                        {{ $expense->category }}
-                                    </span>
+                        @if (isset($expenses) && is_object($expenses) && method_exists($expenses, 'count'))
+                            @forelse($expenses as $expense)
+                                <tr class="border-bottom border-light">
+                                    <td class="ps-4 fw-semibold">{{ $expense->expense_date->format('d/m/Y') }}</td>
+                                    <td>
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+                                            {{ $expense->category }}
+                                        </span>
+                                    </td>
+                                    <td>{{ Str::limit($expense->description, 50) }}</td>
+                                    <td class="text-danger fw-bold">- {{ $expense->formatted_amount }}</td>
+                                    <td class="pe-4">
+                                        <form action="{{ route('expenses.destroy', $expense) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-cuni sm danger"
+                                                onclick="return confirm('Supprimer cette dépense ?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-8">
+                                        <i class="bi bi-inbox" style="font-size: 48px; opacity: 0.5;"></i>
+                                        <p class="mt-4 text-gray-500">Aucune dépense enregistrée</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        @else
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-danger">
+                                    <i class="bi bi-exclamation-triangle" style="font-size: 48px;"></i>
+                                    <p class="mt-4">Erreur de chargement des données</p>
+                                    <small>Debug:
+                                        {{ is_object($expenses) ? get_class($expenses) : gettype($expenses) }}</small>
                                 </td>
-                                <td>{{ Str::limit($expense->description, 50) }}</td>
-                                <td class="text-danger fw-bold">- {{ $expense->formatted_amount }}</td>
-                                <td class="pe-4">
-                                    <form action="{{ route('expenses.destroy', $expense) }}" method="POST"
-                                        style="display:inline;">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn-cuni sm danger" title="Supprimer"
-                                            onclick="return confirm('Supprimer cette dépense ?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- ✅ AJOUTER UNE VÉRIFICATION DE TYPE --}}
+            @if (isset($expenses) && is_object($expenses) && method_exists($expenses, 'hasPages'))
+                @if ($expenses->hasPages())
+                    <div style="margin-top: 24px;">
+                        {{ $expenses->links('pagination.bootstrap-5-sm') }}
+                    </div>
+                @endif
+            @else
+                {{-- Debug temporaire --}}
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Erreur: $expenses n'est pas un paginateur (type: {{ gettype($expenses) ?? 'inconnu' }})</span>
+                </div>
+            @endif
+        </div>
+    </div>
+@endsection
