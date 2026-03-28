@@ -1504,12 +1504,40 @@
                                             placeholder="••••••••" required id="registerPassword" minlength="8"
                                             autocomplete="new-password">
                                         <i class="bi bi-lock"></i>
+                                        <i class="bi bi-eye toggle-password" data-target="registerPassword" style="left: auto; right: 14px; cursor: pointer; pointer-events: auto; z-index: 5;"></i>
                                     </div>
                                     <div class="password-strength-container">
                                         <div class="password-strength-bar">
                                             <div class="password-strength-fill" id="passwordStrengthFill"></div>
                                         </div>
                                         <div class="password-strength-text" id="passwordStrengthText">Faible</div>
+                                        
+                                        <div class="password-requirements">
+                                            <div class="password-requirements-title">
+                                                <i class="bi bi-shield-lock" style="font-size: 14px; position: static; transform: none; display: inline; color: inherit;"></i>
+                                                Critères du mot de passe
+                                            </div>
+                                            <div class="password-requirement" id="req-length">
+                                                <i class="bi bi-x-circle" style="position: static; transform: none; display: inline;"></i>
+                                                <span>Au moins 8 caractères</span>
+                                            </div>
+                                            <div class="password-requirement" id="req-upper">
+                                                <i class="bi bi-x-circle" style="position: static; transform: none; display: inline;"></i>
+                                                <span>Une majuscule</span>
+                                            </div>
+                                            <div class="password-requirement" id="req-lower">
+                                                <i class="bi bi-x-circle" style="position: static; transform: none; display: inline;"></i>
+                                                <span>Une minuscule</span>
+                                            </div>
+                                            <div class="password-requirement" id="req-number">
+                                                <i class="bi bi-x-circle" style="position: static; transform: none; display: inline;"></i>
+                                                <span>Un chiffre</span>
+                                            </div>
+                                            <div class="password-requirement" id="req-special">
+                                                <i class="bi bi-x-circle" style="position: static; transform: none; display: inline;"></i>
+                                                <span>Un caractère spécial (!@#$...)</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     @error('password')
                                         <div class="validation-message error">
@@ -1526,6 +1554,7 @@
                                             class="form-input step1-required" placeholder="••••••••" required
                                             id="passwordConfirmation">
                                         <i class="bi bi-lock-fill"></i>
+                                        <i class="bi bi-eye toggle-password" data-target="passwordConfirmation" style="left: auto; right: 14px; cursor: pointer; pointer-events: auto; z-index: 5;"></i>
                                     </div>
                                     @error('password_confirmation')
                                         <div class="validation-message error">
@@ -1773,6 +1802,7 @@
                     const password = this.value;
                     const strength = calculatePasswordStrength(password);
                     updatePasswordStrengthUI(strength);
+                    validatePasswordCriteria(password);
                 });
             }
 
@@ -1801,6 +1831,52 @@
                     passwordStrengthText.textContent = labels[index];
                 }
             }
+
+            function validatePasswordCriteria(password) {
+                const criteria = [
+                    { id: 'req-length', regex: /.{8,}/ },
+                    { id: 'req-upper', regex: /[A-Z]/ },
+                    { id: 'req-lower', regex: /[a-z]/ },
+                    { id: 'req-number', regex: /[0-9]/ },
+                    { id: 'req-special', regex: /[!@#$%^&*(),.?":{}|<>]/ }
+                ];
+
+                criteria.forEach(c => {
+                    const el = document.getElementById(c.id);
+                    if (el) {
+                        const isValid = c.regex.test(password);
+                        const icon = el.querySelector('i');
+                        if (isValid) {
+                            el.classList.add('met');
+                            icon.className = 'bi bi-check-circle-fill';
+                            icon.style.color = 'var(--accent-green)';
+                        } else {
+                            el.classList.remove('met');
+                            icon.className = 'bi bi-x-circle';
+                            icon.style.color = 'var(--gray-400)';
+                        }
+                    }
+                });
+            }
+
+            // ==================== TOGGLE PASSWORD VISIBILITY ====================
+            document.querySelectorAll('.toggle-password').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const inputId = this.getAttribute('data-target');
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            this.classList.remove('bi-eye');
+                            this.classList.add('bi-eye-slash');
+                        } else {
+                            input.type = 'password';
+                            this.classList.remove('bi-eye-slash');
+                            this.classList.add('bi-eye');
+                        }
+                    }
+                });
+            });
 
             // ==================== FORM LOADING STATE ====================
             document.querySelectorAll('form').forEach(form => {

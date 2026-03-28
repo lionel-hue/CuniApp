@@ -226,18 +226,17 @@ class CuniAppSeeder extends Seeder
         $superAdmin =    User::create([
             'name'                    => 'Admin CuniApp',
             'email'                   => 'admin@cuniapp.bj',
-            'password'                => Hash::make('Admin123!'),
+            'password'                => Hash::make('SuperAdmin123!'),
             'email_verified_at'       => now(),
             'role'                    => 'super_admin',
-            'subscription_status'     => 'active',
-            'subscription_ends_at'    => now()->addYear(),
-            'last_subscription_at'    => now()->subDays(10),
+            'status'                  => 'active',
             'theme'                   => 'light',
             'language'                => 'fr',
             'notifications_email'     => true,
             'notifications_dashboard' => true,
-            'subscription_status' => 'active',
-            'subscription_ends_at' => now()->addYears(5),
+            'subscription_status'     => 'active',
+            'subscription_ends_at'    => now()->addYears(5),
+            'last_subscription_at'    => now()->subDays(10),
         ]);
 
         $this->credentials['super_admin'] = [
