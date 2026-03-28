@@ -3189,6 +3189,14 @@
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-shield-lock"></i> Gestion Abonnements</a>
                 @endif
+
+                <div class="mobile-nav-divider"></div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="mobile-nav-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: var(--accent-red);">
+                        <i class="bi bi-box-arrow-right"></i> Déconnexion
+                    </button>
+                </form>
             </div>
         </div>
     </header>
