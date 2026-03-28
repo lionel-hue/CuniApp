@@ -3024,7 +3024,7 @@
                         </div>
 
                         {{-- Subscription in dropdown (Non-admin users) --}}
-                        @if (auth()->check() && auth()->user()->role !== 'admin')
+                        @if (auth()->check() && auth()->user()->role !== 'admin' && !auth()->user()->isSuperAdmin())
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
                                 style="position:relative; {{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
@@ -3138,6 +3138,55 @@
                 </div>
             @endauth
         </div>
+
+        {{-- ✅ MOBILE NAV OVERLAY --}}
+        <div class="mobile-nav-overlay" id="mobileNavOverlay">
+            <div class="mobile-nav-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--surface-border);">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Menu</h3>
+                <button class="mobile-nav-close" onclick="toggleMobileNav()" style="background: none; border: none; font-size: 24px; color: var(--text-primary); cursor: pointer;"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="mobile-nav-links" style="padding: 20px;">
+                <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
+                <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> Mâles</a>
+                <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> Femelles</a>
+                <a href="{{ route('lapins.index') }}" class="mobile-nav-link"><i class="bi bi-collection"></i> Tous les Lapins</a>
+                <a href="{{ route('mises-bas.index') }}" class="mobile-nav-link"><i class="bi bi-egg"></i> Mises Bas</a>
+                
+                <div class="mobile-nav-divider"></div>
+                
+                <a href="{{ route('saillies.index') }}" class="mobile-nav-link"><i class="bi bi-heart"></i> Saillies</a>
+                <a href="{{ route('naissances.index') }}" class="mobile-nav-link"><i class="bi bi-egg-fill"></i> Naissances</a>
+                <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> Ventes</a>
+                <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> Activités</a>
+                <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
+                
+                @if (auth()->check() && auth()->user()->isFirmAdmin())
+                    <div class="mobile-nav-divider"></div>
+                    <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> Entreprise</a>
+                @endif
+
+                @if (auth()->check() && auth()->user()->isSuperAdmin())
+                    <div class="mobile-nav-divider"></div>
+                    <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange);"><i class="bi bi-star-fill"></i> Super Admin</a>
+                @endif
+
+                <div class="mobile-nav-divider"></div>
+                <a href="{{ route('profile.edit') }}" class="mobile-nav-link"><i class="bi bi-person"></i> Profil</a>
+                <a href="{{ route('settings.index') }}" class="mobile-nav-link"><i class="bi bi-gear"></i> Paramètres</a>
+
+                @if (auth()->check() && auth()->user()->role !== 'admin' && !auth()->user()->isSuperAdmin())
+                    <div class="mobile-nav-divider"></div>
+                    <a href="{{ route('subscription.plans') }}" class="mobile-nav-link" style="{{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
+                        <i class="bi bi-credit-card"></i> Abonnement
+                    </a>
+                @endif
+                
+                @if (auth()->check() && auth()->user()->role === 'admin')
+                    <div class="mobile-nav-divider"></div>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-shield-lock"></i> Gestion Abonnements</a>
+                @endif
+            </div>
+        </div>
     </header>
 
     <main class="cuni-main">
@@ -3212,7 +3261,7 @@
                             </a>
                         </li>
                         {{-- 💳 SUBSCRIPTION LINK - Footer --}}
-                        @if (auth()->check() && auth()->user()->role !== 'admin')
+                        @if (auth()->check() && auth()->user()->role !== 'admin' && !auth()->user()->isSuperAdmin())
                             <li>
                                 <a href="{{ route('subscription.plans') }}">
                                     <i class="bi bi-chevron-right"></i>
