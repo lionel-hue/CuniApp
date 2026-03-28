@@ -1592,6 +1592,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Finance Chart
     const ctxFinance = document.getElementById('financeChart');
     if (ctxFinance) {
+        let existingFinanceChart = Chart.getChart(ctxFinance);
+        if (existingFinanceChart) existingFinanceChart.destroy();
         new Chart(ctxFinance.getContext('2d'), {
             type: 'line',
             data: {
@@ -1630,6 +1632,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Activity Chart
     const ctxActivity = document.getElementById('activityChart');
     if (ctxActivity) {
+        let existingActivityChart = Chart.getChart(ctxActivity);
+        if (existingActivityChart) existingActivityChart.destroy();
         new Chart(ctxActivity.getContext('2d'), {
             type: 'bar',
             data: {
@@ -1667,6 +1671,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Survie Chart
     const ctxSurvie = document.getElementById('survieChart');
     if (ctxSurvie) {
+        let existingSurvieChart = Chart.getChart(ctxSurvie);
+        if (existingSurvieChart) existingSurvieChart.destroy();
         new Chart(ctxSurvie.getContext('2d'), {
             type: 'bar',
             data: {
