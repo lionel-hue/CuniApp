@@ -1070,7 +1070,7 @@ if (auth()->check() && auth()->user()->firm_id) {
                             'type' => 'orange',
                             'change' => '0%',
                             'trend' => 'neutral',
-                            'route' => '',
+                            'route' => 'notifications.index',
                         ],
                         [
                             'icon' => 'sales',
@@ -1671,19 +1671,6 @@ if (auth()->check() && auth()->user()->firm_id) {
     @endpush
 
     @push('scripts')
-        <style>
-            .chart-placeholder {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                color: #94a3b8;
-                padding: 20px;
-                text-align: center;
-            }
-            .chart-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; }
-        </style>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Reusable placeholder function
@@ -1691,6 +1678,7 @@ if (auth()->check() && auth()->user()->firm_id) {
                     const canvas = document.getElementById(canvasId);
                     if (!canvas) return;
                     const container = canvas.parentElement;
+                    if (container.querySelector('.chart-placeholder')) return; // Avoid duplication
                     canvas.style.display = 'none';
                     const placeholder = document.createElement('div');
                     placeholder.className = 'chart-placeholder';

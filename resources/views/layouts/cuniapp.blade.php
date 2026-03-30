@@ -2730,14 +2730,14 @@
         <div class="header-wrapper" style="overflow: visible !important;">
             <div class="brand-identity">
                 {{-- Logo and Brand --}}
-                <a href="{{ route('dashboard') }}" class="cuniapp-logo">
+                <a href="{{ auth()->check() && auth()->user()->isFirmAdmin() ? route('firm.index') : route('dashboard') }}" class="cuniapp-logo">
                     <svg viewBox="0 0 40 40" fill="none" style="width: 40px; height: 40px;">
                         <path d="M20 5L35 15V25L20 35L5 25V15L20 5Z" fill="white" />
                         <path d="M20 12L28 17V23L20 28L12 23V17L20 12Z" fill="rgba(255,255,255,0.8)" />
                     </svg>
                 </a>
                 <div class="brand-info">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ auth()->check() && auth()->user()->isFirmAdmin() ? route('firm.index') : route('dashboard') }}">
                         <h1 class="brand-title">
                             CuniApp <span>Élevage</span>
                             @if (auth()->check() && auth()->user()->firm)
@@ -2818,10 +2818,12 @@
                         <a href="{{ route('activites.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-clock-history"></i> Activités
                         </a>
-                        <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-receipt"></i>
-                            <span>Mes Factures</span>
-                        </a>
+                        @if (auth()->check() && auth()->user()->isFirmAdmin())
+                            <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
+                                <i class="bi bi-receipt"></i>
+                                <span>Mes Factures</span>
+                            </a>
+                        @endif
                         <a href="{{ route('settings.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-gear"></i> Paramètres
                         </a>
@@ -2832,8 +2834,8 @@
                             {{-- Dynamic overflow items will be injected here --}}
                         </div>
 
-                        {{-- Subscription in dropdown (Non-admin users) --}}
-                        @if (auth()->check() && auth()->user()->role !== 'admin' && !auth()->user()->isSuperAdmin())
+                        {{-- Subscription in dropdown (Only for Firm Admins or non-superadmin admins) --}}
+                        @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
                                 style="position:relative; {{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
@@ -3080,12 +3082,14 @@
                                     Paramètres
                                 </a>
                             </li>
-                            <li>
-                                <a href="{{ route('invoices.index') }}">
-                                    <i class="bi bi-chevron-right"></i>
-                                    Mes Factures
-                                </a>
-                            </li>
+                            @if (auth()->check() && auth()->user()->isFirmAdmin())
+                                <li>
+                                    <a href="{{ route('invoices.index') }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                        Mes Factures
+                                    </a>
+                                </li>
+                            @endif
                             @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <li>
                                     <a href="{{ route('firm.index') }}">
