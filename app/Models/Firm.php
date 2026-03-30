@@ -93,7 +93,7 @@ class Firm extends Model
     public function getActiveUsersCountAttribute(): int
     {
         return $this->users()
-            ->where('role', '!=', 'super_admin')
+            ->where('role', 'employee') // ✅ Only count employees (Admin is excluded)
             ->where('status', 'active')
             ->count();
     }

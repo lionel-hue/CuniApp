@@ -91,7 +91,7 @@
                         {{ $activeUsersCount }} / {{ $subscriptionLimit }}
                     </div>
                     <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
-                        Utilisateurs Actifs
+                        Employés Actifs
                     </div>
                 </div>
                 <div style="text-align: center; padding: 20px;">
@@ -130,7 +130,7 @@
                         style="margin-top: 12px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: var(--radius); border-left: 3px solid var(--accent-orange);">
                         <p style="font-size: 13px; color: var(--accent-orange); margin: 0;">
                             <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Attention:</strong> Vous approchez de la limite d'utilisateurs. Envisagez de mettre à
+                            <strong>Attention:</strong> Vous approchez de la limite d'employés. Envisagez de mettre à
                             niveau votre abonnement.
                         </p>
                     </div>
