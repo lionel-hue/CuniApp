@@ -9,6 +9,7 @@ class Notification extends Model {
 
     protected $fillable = [
         'user_id', 
+        'firm_id', // ✅ Added for multi-tenancy
         'type',
         'title',
         'message',

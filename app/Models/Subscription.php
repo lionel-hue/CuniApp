@@ -18,6 +18,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id',
+        'firm_id', // ✅ Added for multi-tenancy
         'subscription_plan_id',
         'status',
         'start_date',

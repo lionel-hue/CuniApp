@@ -56,18 +56,6 @@ if (auth()->check() && auth()->user()->firm_id) {
         </div>
     @endif
 
-    {{-- DEBUG TEMPORAIRE (à supprimer en production) --}}
-    <div style="background: #ffcccc; border: 2px solid red; padding: 15px; margin-bottom: 20px; font-family: monospace;">
-        <strong>DEBUG BANDEAU :</strong><br>
-        User ID: {{ auth()->id() }}<br>
-        Firm ID: {{ auth()->user()->firm_id ?? 'NULL' }}<br>
-        Active Sub ID: {{ $activeSub ? $activeSub->id : 'NONE' }}<br>
-        Active Sub Price: {{ $activeSub ? $activeSub->price : 'N/A' }}<br>
-        Active Sub End: {{ $activeSub ? $activeSub->end_date : 'N/A' }}<br>
-        Is Trial: {{ $isTrial ? 'YES' : 'NO' }}<br>
-        Days Left: {{ $daysLeft }}
-    </div>
-
 
     <style>
         /* Dashboard Specific Styles - Optimized & Deduplicated */
