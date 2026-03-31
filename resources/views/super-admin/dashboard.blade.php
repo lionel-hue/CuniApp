@@ -129,7 +129,12 @@
             <div class="cuni-card h-full">
                 <div class="card-header-custom flex items-center justify-between py-3">
                     <h3 class="card-title text-sm"><i class="bi bi-graph-up-arrow"></i> Évolution des Inscriptions (30 jours)</h3>
-                    <span class="badge secondary sm">{{ array_sum($signupCounts) }} total</span>
+                    <div class="flex items-center gap-3">
+                        <span class="badge secondary sm">{{ array_sum($signupCounts) }} total</span>
+                        <a href="{{ route('admin.subscriptions.index') }}" class="btn-cuni sm secondary" style="font-size: 0.75rem; padding: 4px 8px;">
+                            Voir plus <i class="bi bi-arrow-right ml-1"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     <div style="height: 250px; position: relative;">
@@ -142,8 +147,11 @@
         {{-- Active Users / Quick Stats --}}
         <div>
             <div class="cuni-card h-full">
-                <div class="card-header-custom py-3">
+                <div class="card-header-custom py-3 flex items-center justify-between">
                     <h3 class="card-title text-sm"><i class="bi bi-activity"></i> Activité Globale</h3>
+                    <a href="{{ route('super.admin.firms') }}" class="btn-cuni sm secondary" style="font-size: 0.75rem; padding: 4px 8px;">
+                        Voir plus <i class="bi bi-arrow-right ml-1"></i>
+                    </a>
                 </div>
                 <div class="card-body p-4">
                     <div class="flex flex-col gap-4">
@@ -184,10 +192,13 @@
 
     {{-- Top Firms Leaderboard --}}
     <div class="cuni-card mb-6">
-        <div class="card-header-custom">
+        <div class="card-header-custom flex items-center justify-between">
             <h3 class="card-title">
                 <i class="bi bi-trophy"></i> Top 5 Entreprises (Par Revenus)
             </h3>
+            <a href="{{ route('super.admin.firms') }}" class="btn-cuni sm secondary">
+                Voir plus <i class="bi bi-arrow-right ml-1"></i>
+            </a>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -243,10 +254,13 @@
 
     {{-- Recent Signups --}}
     <div class="cuni-card">
-        <div class="card-header-custom">
+        <div class="card-header-custom flex items-center justify-between">
             <h3 class="card-title">
                 <i class="bi bi-person-plus"></i> Inscriptions Récentes (7 jours)
             </h3>
+            <a href="{{ route('admin.subscriptions.index') }}" class="btn-cuni sm secondary">
+                Voir plus <i class="bi bi-arrow-right ml-1"></i>
+            </a>
         </div>
         <div class="card-body">
             @if ($recentSignups->count() > 0)

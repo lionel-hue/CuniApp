@@ -16,83 +16,81 @@
                 <span>/</span>
                 <span>Abonnements</span>
             </div>
-
-
         </div>
-
-        {{-- Stats Grid - Compact & Modern --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="cuni-card stats-card-compact">
-                <div class="card-body p-3">
-                    <div class="flex items-center gap-3">
-                        <div class="stats-icon-small" style="background: rgba(59, 130, 246, 0.1);">
-                            <i class="bi bi-people text-blue-500"></i>
-                        </div>
-                        <div>
-                            <p class="stats-label-small">Utilisateurs Total</p>
-                            <p class="stats-value-small">{{ number_format($stats['total_users']) }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cuni-card stats-card-compact">
-                <div class="card-body p-3">
-                    <div class="flex items-center gap-3">
-                        <div class="stats-icon-small" style="background: rgba(16, 185, 129, 0.1);">
-                            <i class="bi bi-check-circle text-green-500"></i>
-                        </div>
-                        <div>
-                            <p class="stats-label-small">Abonnements Actifs</p>
-                            <p class="stats-value-small text-green-600">{{ number_format($stats['active_subscriptions']) }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cuni-card stats-card-compact">
-                <div class="card-body p-3">
-                    <div class="flex items-center gap-3">
-                        <div class="stats-icon-small" style="background: rgba(245, 158, 11, 0.1);">
-                            <i class="bi bi-clock text-amber-500"></i>
-                        </div>
-                        <div>
-                            <p class="stats-label-small">Expire Bientôt</p>
-                            <p class="stats-value-small text-amber-600">{{ $stats['expiring_soon'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cuni-card stats-card-compact">
-                <div class="card-body p-3">
-                    <div class="flex items-center gap-3">
-                        <div class="stats-icon-small" style="background: rgba(139, 92, 246, 0.1);">
-                            <i class="bi bi-currency-euro text-purple-500"></i>
-                        </div>
-                        <div>
-                            <p class="stats-label-small">Revenus (Mois)</p>
-                            <p class="stats-value-small">{{ number_format($stats['revenue_this_month'], 0, ',', ' ') }} <small class="text-xs">FCFA</small></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <style>
-            .stats-card-compact { transition: transform 0.2s ease; border: 1px solid var(--surface-border); }
-            .stats-card-compact:hover { transform: translateY(-2px); }
-            .stats-icon-small { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
-            .stats-label-small { font-size: 0.72rem; color: var(--text-tertiary); margin: 0; text-transform: uppercase; letter-spacing: 0.025em; font-weight: 600; }
-            .stats-value-small { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-primary); line-height: 1.2; }
-        </style>
-
 
         <div class="header-actions">
             <a href="{{ route('admin.subscriptions.archives') }}" class="btn-cuni secondary">
                 <i class="bi bi-archive"></i> Voir les Archives
             </a>
         </div>
+    </div>
+
+    {{-- Stats Grid - Compact & Modern --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="cuni-card stats-card-compact">
+            <div class="card-body p-3">
+                <div class="flex items-center gap-3">
+                    <div class="stats-icon-small" style="background: rgba(59, 130, 246, 0.1);">
+                        <i class="bi bi-people text-blue-500"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label-small">Utilisateurs Total</p>
+                        <p class="stats-value-small">{{ number_format($stats['total_users']) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cuni-card stats-card-compact">
+            <div class="card-body p-3">
+                <div class="flex items-center gap-3">
+                    <div class="stats-icon-small" style="background: rgba(16, 185, 129, 0.1);">
+                        <i class="bi bi-check-circle text-green-500"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label-small">Abonnements Actifs</p>
+                        <p class="stats-value-small text-green-600">{{ number_format($stats['active_subscriptions']) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cuni-card stats-card-compact">
+            <div class="card-body p-3">
+                <div class="flex items-center gap-3">
+                    <div class="stats-icon-small" style="background: rgba(245, 158, 11, 0.1);">
+                        <i class="bi bi-clock text-amber-500"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label-small">Expire Bientôt</p>
+                        <p class="stats-value-small text-amber-600">{{ $stats['expiring_soon'] }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cuni-card stats-card-compact">
+            <div class="card-body p-3">
+                <div class="flex items-center gap-3">
+                    <div class="stats-icon-small" style="background: rgba(139, 92, 246, 0.1);">
+                        <i class="bi bi-currency-euro text-purple-500"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label-small">Revenus (Mois)</p>
+                        <p class="stats-value-small">{{ number_format($stats['revenue_this_month'], 0, ',', ' ') }} <small class="text-xs">FCFA</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .stats-card-compact { transition: transform 0.2s ease; border: 1px solid var(--surface-border); }
+        .stats-card-compact:hover { transform: translateY(-2px); }
+        .stats-icon-small { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .stats-label-small { font-size: 0.72rem; color: var(--text-tertiary); margin: 0; text-transform: uppercase; letter-spacing: 0.025em; font-weight: 600; }
+        .stats-value-small { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-primary); line-height: 1.2; }
+    </style>
 
         {{-- Users Table --}}
         <div class="cuni-card">
