@@ -67,21 +67,37 @@ class User extends Authenticatable
 
     /**
      * Proper relationship for eager loading active subscription
+     * UPDATED: Now excludes archived subscriptions and uses the model scope
      */
     public function activeSubscriptionRelation()
     {
         return $this->hasOne(\App\Models\Subscription::class)
             ->where('status', 'active')
             ->where('end_date', '>=', now())
+            ->whereNull('archived_at')
             ->latest('created_at');
     }
 
     public function hasActiveSubscription(): bool
     {
-        return $this->subscriptions()
-            ->where('status', 'active')
+        // 1. Super Admins and Admins always have full access
+        if ($this->isSuperAdmin() || $this->role === 'admin') {
+            return true;
+        }
+
+        // 2. Check for an active, non-archived subscription
+        // If the user has a firm_id, we check the firm's subscription
+        $query = \App\Models\Subscription::where('status', 'active')
             ->where('end_date', '>=', now())
-            ->exists();
+            ->whereNull('archived_at');
+
+        if ($this->firm_id) {
+            $query->where('firm_id', $this->firm_id);
+        } else {
+            $query->where('user_id', $this->id);
+        }
+
+        return $query->exists();
     }
 
     public function isSubscribed(): bool

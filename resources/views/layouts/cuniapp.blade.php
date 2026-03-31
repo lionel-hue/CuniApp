@@ -2784,6 +2784,7 @@
                     <i class="bi bi-speedometer2"></i>
                     <span>Tableau de bord</span>
                 </a>
+                @if (auth()->user()->hasActiveSubscription())
                 <a href="{{ route('males.index') }}" class="nav-link nav-item" data-priority="3" data-route="males.*">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span>Mâles</span>
@@ -2803,8 +2804,9 @@
                     <span>Mises Bas</span>
                 </a>
                 @endif
+                @endif
                 {{-- ✅ ENTREPRISE LINK (Firm Admins) --}}
-                @if (auth()->check() && auth()->user()->isFirmAdmin())
+                @if (auth()->check() && auth()->user()->isFirmAdmin() && auth()->user()->hasActiveSubscription())
                     <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
                         data-route="firm.*">
                         <i class="bi bi-building"></i>
@@ -2825,7 +2827,7 @@
                     <div class="dropdown-menu-custom" id="moreDropdown"
                         style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; z-index: 9999 !important; display: none;">
                         {{-- Static items always in dropdown --}}
-                        @if (!auth()->user()->isSuperAdmin())
+                        @if (auth()->user()->hasActiveSubscription())
                         <a href="{{ route('saillies.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-heart"></i> Saillies
                         </a>
@@ -2839,21 +2841,15 @@
                             <i class="bi bi-clock-history"></i> Activités
                         </a>
                         @endif
+                        
                         @if (auth()->check() && auth()->user()->isFirmAdmin())
+                            @if (auth()->user()->hasActiveSubscription())
                             <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
                                 <i class="bi bi-receipt"></i>
                                 <span>Mes Factures</span>
                             </a>
-                        @endif
+                            @endif
 
-                        {{-- ✅ OVERFLOW ITEMS CONTAINER --}}
-                        <div id="overflowItemsContainer"
-                            style="border-top: 1px solid var(--surface-border); margin: 8px 0; padding-top: 8px;">
-                            {{-- Dynamic overflow items will be injected here --}}
-                        </div>
-
-                        {{-- Subscription in dropdown (Only for Firm Admins) --}}
-                        @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
                                 style="position:relative; {{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
@@ -2875,6 +2871,14 @@
                                         style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">Inactif</span>
                                 @endif
                             </a>
+                        @endif
+
+                        {{-- ✅ OVERFLOW ITEMS CONTAINER (Only if active sub) --}}
+                        @if (auth()->user()->hasActiveSubscription())
+                        <div id="overflowItemsContainer"
+                            style="border-top: 1px solid var(--surface-border); margin: 8px 0; padding-top: 8px;">
+                            {{-- Dynamic overflow items will be injected here --}}
+                        </div>
                         @endif
                     </div>
                 </div>
@@ -2986,6 +2990,8 @@
 
                 @if (!auth()->user()->isSuperAdmin())
                 <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
+                
+                @if (auth()->user()->hasActiveSubscription())
                 <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> Mâles</a>
                 <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> Femelles</a>
                 <a href="{{ route('lapins.index') }}" class="mobile-nav-link"><i class="bi bi-collection"></i> Tous les Lapins</a>
@@ -2998,11 +3004,14 @@
                 <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> Ventes</a>
                 <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> Activités</a>
                 @endif
+                @endif
                 
                 @if (auth()->check() && auth()->user()->isFirmAdmin())
+                    @if (auth()->user()->hasActiveSubscription())
                     <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> Entreprise</a>
+                    @endif
                 @endif
 
                 <div class="mobile-nav-divider"></div>

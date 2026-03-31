@@ -23,6 +23,7 @@ class SubscriptionController extends Controller
         $currentSubscription = $user->activeSubscription();
 
         $plans = SubscriptionPlan::where('is_active', true)
+            ->where('price', '>', 0)
             ->orderBy('duration_months')
             ->get();
 

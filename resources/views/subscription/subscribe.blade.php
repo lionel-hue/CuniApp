@@ -53,7 +53,7 @@
                 <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                     <span class="text-gray-600">Prix/mois équivalent</span>
                     <span class="font-semibold">
-                        {{ number_format($plan->price / $plan->duration_months, 0, ',', ' ') }} FCFA
+                        {{ $plan->duration_months > 0 ? number_format($plan->price / $plan->duration_months, 0, ',', ' ') : number_format($plan->price, 0, ',', ' ') }} FCFA
                     </span>
                 </div>
                 <div class="flex justify-between items-center">

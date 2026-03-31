@@ -30,12 +30,14 @@ class SubscriptionManagementController extends Controller
             if ($status === 'active') {
                 $query->whereHas('subscriptions', function ($q) {
                     $q->where('status', 'active')
-                        ->where('end_date', '>=', now());
+                        ->where('end_date', '>=', now())
+                        ->whereNull('archived_at');
                 });
             } elseif ($status === 'expired') {
                 $query->whereDoesntHave('subscriptions', function ($q) {
                     $q->where('status', 'active')
-                        ->where('end_date', '>=', now());
+                        ->where('end_date', '>=', now())
+                        ->whereNull('archived_at');
                 });
             } elseif ($status === 'cancelled') {
                 $query->whereHas('subscriptions', function ($q) {

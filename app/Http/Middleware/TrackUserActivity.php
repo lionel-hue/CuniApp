@@ -28,16 +28,11 @@ class TrackUserActivity
                 $user->last_seen_at = $now;
                 $user->save();
                 
-                // Track daily activity
-                UserDailyActivity::updateOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'date' => $now->toDateString(),
-                    ],
-                    [
-                        'hits' => \Illuminate\Support\Facades\DB::raw('hits + 1')
-                    ]
-                );
+                // Track daily activity using firstOrCreate + increment to avoid cast errors
+                UserDailyActivity::firstOrCreate([
+                    'user_id' => $user->id,
+                    'date' => $now->toDateString(),
+                ])->increment('hits');
             }
         }
 

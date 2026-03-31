@@ -346,7 +346,7 @@ $subscriptionToManage = $user
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px;">Plan</label>
                         <select name="plan_id" class="form-select" required>
-                            @foreach (\App\Models\SubscriptionPlan::where('is_active', true)->get() as $plan)
+                            @foreach (\App\Models\SubscriptionPlan::where('is_active', true)->where('price', '>', 0)->get() as $plan)
                                 <option value="{{ $plan->id }}">{{ $plan->name }} -
                                     {{ number_format($plan->price, 0, ',', ' ') }} FCFA</option>
                             @endforeach
