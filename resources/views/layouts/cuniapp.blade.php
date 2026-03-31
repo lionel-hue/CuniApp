@@ -3070,6 +3070,7 @@
                     </h4>
                     <div class="footer-section-body">
                         <ul class="footer-links">
+                            @if(!auth()->user()->isSuperAdmin())
                             <li>
                                 <a href="{{ route('dashboard') }}">
                                     <i class="bi bi-chevron-right"></i>
@@ -3082,6 +3083,7 @@
                                     Activités
                                 </a>
                             </li>
+                            @endif
                             <li>
                                 <a href="{{ route('notifications.index') }}">
                                     <i class="bi bi-chevron-right"></i> Notifications
@@ -3163,6 +3165,7 @@
                 </div>
 
                 <!-- Gestion Section -->
+                @if(!auth()->user()->isSuperAdmin())
                 <div class="footer-section">
                     <h4 onclick="toggleFooterSection(this)">
                         <span style="display:flex;align-items:center;gap:8px;">
@@ -3183,6 +3186,7 @@
                         </ul>
                     </div>
                 </div>
+                @endif
 
                 <!-- Contact Section -->
                 <div class="footer-section">
