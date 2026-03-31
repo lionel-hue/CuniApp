@@ -2779,6 +2779,7 @@
                     </a>
                 @endif
 
+                @if (!auth()->user()->isSuperAdmin())
                 <a href="{{ route('dashboard') }}" class="nav-link nav-item" data-priority="2" data-route="dashboard">
                     <i class="bi bi-speedometer2"></i>
                     <span>Tableau de bord</span>
@@ -2801,6 +2802,7 @@
                     <i class="bi bi-egg"></i>
                     <span>Mises Bas</span>
                 </a>
+                @endif
                 {{-- ✅ ENTREPRISE LINK (Firm Admins & Super Admins) --}}
                 @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
                     <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
@@ -2822,6 +2824,7 @@
                     <div class="dropdown-menu-custom" id="moreDropdown"
                         style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; z-index: 9999 !important; display: none;">
                         {{-- Static items always in dropdown --}}
+                        @if (!auth()->user()->isSuperAdmin())
                         <a href="{{ route('saillies.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-heart"></i> Saillies
                         </a>
@@ -2834,7 +2837,8 @@
                         <a href="{{ route('activites.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-clock-history"></i> Activités
                         </a>
-                        @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                        @endif
+                        @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
                                 <i class="bi bi-receipt"></i>
                                 <span>Mes Factures</span>
@@ -2850,8 +2854,8 @@
                             {{-- Dynamic overflow items will be injected here --}}
                         </div>
 
-                        {{-- Subscription in dropdown (Only for Firm Admins or Super Admins) --}}
-                        @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                        {{-- Subscription in dropdown (Only for Firm Admins) --}}
+                        @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
                                 style="position:relative; {{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
@@ -2981,6 +2985,7 @@
                     <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link"><i class="bi bi-cash-stack"></i> Transactions Globales</a>
                 @endif
 
+                @if (!auth()->user()->isSuperAdmin())
                 <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
                 <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> Mâles</a>
                 <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> Femelles</a>
@@ -2993,8 +2998,9 @@
                 <a href="{{ route('naissances.index') }}" class="mobile-nav-link"><i class="bi bi-egg-fill"></i> Naissances</a>
                 <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> Ventes</a>
                 <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> Activités</a>
+                @endif
                 
-                @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                @if (auth()->check() && auth()->user()->isFirmAdmin())
                     <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> Entreprise</a>
