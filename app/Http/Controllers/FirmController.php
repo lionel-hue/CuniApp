@@ -168,16 +168,44 @@ class FirmController extends Controller
                 'max:255',
                 'unique:users,email,' . $userId // ✅ Exclude current user
             ],
-            'status' => ['required', 'in:active,inactive'],
         ]);
 
         $employee->update([
             'name' => $request->name,
             'email' => $request->email,
-            'status' => $request->status ?? 'active',
         ]);
 
         return back()->with('success', 'Employé mis à jour avec succès !');
+    }
+
+    public function employeeActivity(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user->isFirmAdmin()) {
+            abort(403);
+        }
+
+        $employee = \App\Models\User::where('id', $id)->where('firm_id', $user->firm_id)->firstOrFail();
+        
+        $period = $request->get('period', 30);
+        $days = $period == '6_months' ? 180 : (int) $period;
+
+        $activities = \App\Models\UserDailyActivity::where('user_id', $employee->id)
+            ->where('date', '>=', now()->subDays($days)->toDateString())
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $labels = [];
+        $data = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dateStr = now()->subDays($i)->toDateString();
+            $labels[] = now()->subDays($i)->format('d/m');
+            $data[] = isset($activities[$dateStr]) ? $activities[$dateStr]->hits : 0;
+        }
+
+        return response()->json(['labels' => $labels, 'data' => $data]);
     }
 
     public function deactivateEmployee($userId)

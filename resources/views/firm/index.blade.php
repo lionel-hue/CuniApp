@@ -183,48 +183,33 @@
                                     <td class="ps-4 fw-semibold text-dark">{{ $employee->name }}</td>
                                     <td class="text-muted">{{ $employee->email }}</td>
                                     <td>
-                                        @php
-                                            $status = $employee->status ?? 'active'; // Default to active if null
-                                            $statusLabels = [
-                                                'active' => ['Actif', 'rgba(16, 185, 129, 0.1)', '#10B981'],
-                                                'inactive' => ['Inactif', 'rgba(107, 114, 128, 0.1)', '#6B7280'],
-                                            ];
-                                            $label = $statusLabels[$status] ?? [
-                                                'Non spécifié',
-                                                'rgba(245, 158, 11, 0.1)',
-                                                '#F59E0B',
-                                            ];
-                                        @endphp
-                                        <span class="badge"
-                                            style="background: {{ $label[1] }}; color: {{ $label[2] }}; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
-                                            @if ($status === 'active')
-                                                <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>
-                                            @elseif($status === 'inactive')
-                                                <i class="bi bi-pause-circle-fill" style="margin-right: 4px;"></i>
-                                            @else
-                                                <i class="bi bi-question-circle-fill" style="margin-right: 4px;"></i>
-                                            @endif
-                                            {{ $label[0] }}
-                                        </span>
+                                    <td>
+                                        @if ($employee->isOnline())
+                                            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+                                                <i class="bi bi-circle-fill" style="margin-right: 4px; font-size: 8px;"></i>
+                                                En ligne
+                                            </span>
+                                        @else
+                                            <span class="badge" style="background: rgba(107, 114, 128, 0.1); color: #6B7280; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+                                                <i class="bi bi-circle" style="margin-right: 4px; font-size: 8px;"></i>
+                                                Hors ligne
+                                                @if($employee->last_seen_at)
+                                                    <small class="ms-1 opacity-75">({{ $employee->last_seen_at->diffForHumans() }})</small>
+                                                @endif
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="text-muted">{{ $employee->created_at->format('d/m/Y') }}</td>
                                     <td class="pe-4">
-                                        <div class="action-buttons">
+                                        <div class="action-buttons" style="display: flex; gap: 8px;">
+                                            <button type="button" class="btn-cuni sm" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;"
+                                                onclick="showEmployeeActivity({{ $employee->id }}, '{{ addslashes($employee->name) }}')" title="Voir l'activité">
+                                                <i class="bi bi-graph-up"></i>
+                                            </button>
                                             <button type="button" class="btn-cuni sm secondary"
-                                                onclick="showEditEmployeeModal({{ $employee->id }}, '{{ $employee->name }}', '{{ $employee->email }}', '{{ $employee->status }}')">
+                                                onclick="showEditEmployeeModal({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ addslashes($employee->email) }}')">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            @if ($employee->status === 'active')
-                                                <form action="{{ route('firm.employee.deactivate', $employee->id) }}"
-                                                    method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn-cuni sm danger"
-                                                        onclick="return confirm('Désactiver cet employé ?')">
-                                                        <i class="bi bi-x-circle"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -451,13 +436,7 @@
                     <input type="email" name="email" id="editEmployeeEmail" class="form-control" required>
                 </div>
 
-                <div style="margin-bottom: 24px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px;">Statut</label>
-                    <select name="status" id="editEmployeeStatus" class="form-select" required>
-                        <option value="active">Actif</option>
-                        <option value="inactive">Inactif</option>
-                    </select>
-                </div>
+                <div style="margin-bottom: 24px;"></div>
 
                 <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
                     <button type="button" class="btn-cuni secondary" onclick="closeEditEmployeeModal()">
@@ -471,7 +450,36 @@
         </div>
     </div>
 
+    {{-- ✅ ACTIVITY MODAL --}}
+    <div id="activityEmployeeModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--surface); border-radius: var(--radius-lg); max-width: 700px; width: 95%; padding: 32px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="font-size: 20px; font-weight: 700;">
+                    <i class="bi bi-graph-up" style="color: var(--primary);"></i>
+                    Activité: <span id="activityEmployeeName"></span>
+                </h3>
+                <button type="button" onclick="closeEmployeeActivityModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div style="font-size: 14px; color: var(--text-secondary);">Fréquence d'activité</div>
+                <select id="activityPeriodSelect" class="form-select" style="width: auto; padding: 6px 30px 6px 12px;" onchange="fetchEmployeeActivity()">
+                    <option value="7">Derniers 7 jours</option>
+                    <option value="30" selected>Derniers 30 jours</option>
+                    <option value="6_months">6 derniers mois</option>
+                </select>
+            </div>
+
+            <div style="position: relative; height: 320px; width: 100%;">
+                <canvas id="employeeActivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // ============================================
             // MODAL FUNCTIONS
@@ -489,14 +497,13 @@
                 resetPasswordStrength();
             }
 
-            function showEditEmployeeModal(id, name, email, status) {
+            function showEditEmployeeModal(id, name, email) {
                 // ✅ Use placeholder and replace
                 document.getElementById('editEmployeeForm').action =
                     "{{ route('firm.employee.update', ['userId' => ':id']) }}".replace(':id', id);
 
                 document.getElementById('editEmployeeName').value = name;
                 document.getElementById('editEmployeeEmail').value = email;
-                document.getElementById('editEmployeeStatus').value = status;
                 document.getElementById('editEmployeeModal').style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             }
@@ -515,6 +522,71 @@
                     }
                 });
             });
+
+            // Activity Chart Logic
+            let activityChart = null;
+            let currentActivityEmployeeId = null;
+
+            function showEmployeeActivity(id, name) {
+                currentActivityEmployeeId = id;
+                document.getElementById('activityEmployeeName').innerText = name;
+                document.getElementById('activityEmployeeModal').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                fetchEmployeeActivity();
+            }
+
+            function closeEmployeeActivityModal() {
+                document.getElementById('activityEmployeeModal').style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            function fetchEmployeeActivity() {
+                const period = document.getElementById('activityPeriodSelect').value;
+                const url = `/firm/employee/${currentActivityEmployeeId}/activity?period=${period}`;
+                
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        const ctx = document.getElementById('employeeActivityChart').getContext('2d');
+                        
+                        if (activityChart) {
+                            activityChart.destroy();
+                        }
+                        
+                        activityChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: 'Actions (Requêtes)',
+                                    data: data.data,
+                                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                    borderColor: 'rgba(59, 130, 246, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false,
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: { precision: 0 }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => console.error(err));
+            }
 
             // Close on Escape key
             document.addEventListener('keydown', function(e) {

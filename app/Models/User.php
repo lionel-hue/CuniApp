@@ -43,6 +43,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'subscription_ends_at' => 'datetime',
             'last_subscription_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -139,6 +140,16 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->role === 'employee';
+    }
+
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at && $this->last_seen_at->diffInMinutes(now()) <= 5;
+    }
+
+    public function dailyActivities()
+    {
+        return $this->hasMany(UserDailyActivity::class);
     }
 
     // ====================================================================

@@ -295,6 +295,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [FirmController::class, 'index'])->name('index');
             Route::post('/employee', [FirmController::class, 'storeEmployee'])->name('employee.store');
             Route::patch('/employee/{userId}', [FirmController::class, 'updateEmployee'])->name('employee.update');
+            Route::get('/employee/{id}/activity', [FirmController::class, 'employeeActivity'])->name('employee.activity');
             Route::patch('/employee/{userId}/deactivate', [FirmController::class, 'deactivateEmployee'])->name('employee.deactivate');
             Route::delete('/employee/{userId}', [FirmController::class, 'deleteEmployee'])->name('employee.delete');
             Route::patch('/update', [FirmController::class, 'updateFirm'])->name('update');

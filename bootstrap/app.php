@@ -45,6 +45,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'firm.required' => \App\Http\Middleware\EnsureUserHasFirm::class,
         ]);
 
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackUserActivity::class,
+        ]);
+
         // ✅ Trust proxies for production (Cloudflare, Load Balancer, etc.)
         $middleware->trustProxies(at: '*');
     })
