@@ -36,12 +36,20 @@ return new class extends Migration
                 }
 
                 // Step 2: Backfill existing records (safe to run even if column already exists)
-                DB::statement("
-                UPDATE {$table} t
-                JOIN users u ON t.user_id = u.id
-                SET t.firm_id = u.firm_id
-                WHERE u.firm_id IS NOT NULL
-            ");
+                if (config('database.default') === 'sqlite') {
+                    DB::statement("
+                        UPDATE {$table} 
+                        SET firm_id = (SELECT firm_id FROM users WHERE users.id = {$table}.user_id)
+                        WHERE EXISTS (SELECT 1 FROM users WHERE users.id = {$table}.user_id AND users.firm_id IS NOT NULL)
+                    ");
+                } else {
+                    DB::statement("
+                        UPDATE {$table} t
+                        JOIN users u ON t.user_id = u.id
+                        SET t.firm_id = u.firm_id
+                        WHERE u.firm_id IS NOT NULL
+                    ");
+                }
             }
         }
     }

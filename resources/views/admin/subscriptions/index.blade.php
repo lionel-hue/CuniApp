@@ -20,72 +20,72 @@
 
         </div>
 
-        {{-- Stats Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="cuni-card">
-                <div class="card-body p-4">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <p style="font-size: 13px; color: var(--text-secondary);">Utilisateurs Total</p>
-                            <p style="font-size: 28px; font-weight: 700; color: var(--text-primary);">
-                                {{ $stats['total_users'] }}</p>
+        {{-- Stats Grid - Compact & Modern --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="cuni-card stats-card-compact">
+                <div class="card-body p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="stats-icon-small" style="background: rgba(59, 130, 246, 0.1);">
+                            <i class="bi bi-people text-blue-500"></i>
                         </div>
-                        <div
-                            style="width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-people" style="font-size: 24px; color: #3B82F6;"></i>
+                        <div>
+                            <p class="stats-label-small">Utilisateurs Total</p>
+                            <p class="stats-value-small">{{ number_format($stats['total_users']) }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="cuni-card">
-                <div class="card-body p-4">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <p style="font-size: 13px; color: var(--text-secondary);">Abonnements Actifs</p>
-                            <p style="font-size: 28px; font-weight: 700; color: var(--accent-green);">
-                                {{ $stats['active_subscriptions'] }}</p>
+            <div class="cuni-card stats-card-compact">
+                <div class="card-body p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="stats-icon-small" style="background: rgba(16, 185, 129, 0.1);">
+                            <i class="bi bi-check-circle text-green-500"></i>
                         </div>
-                        <div
-                            style="width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-check-circle" style="font-size: 24px; color: var(--accent-green);"></i>
+                        <div>
+                            <p class="stats-label-small">Abonnements Actifs</p>
+                            <p class="stats-value-small text-green-600">{{ number_format($stats['active_subscriptions']) }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="cuni-card">
-                <div class="card-body p-4">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <p style="font-size: 13px; color: var(--text-secondary);">Expire Bientôt</p>
-                            <p style="font-size: 28px; font-weight: 700; color: var(--accent-orange);">
-                                {{ $stats['expiring_soon'] }}</p>
+            <div class="cuni-card stats-card-compact">
+                <div class="card-body p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="stats-icon-small" style="background: rgba(245, 158, 11, 0.1);">
+                            <i class="bi bi-clock text-amber-500"></i>
                         </div>
-                        <div
-                            style="width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-clock" style="font-size: 24px; color: var(--accent-orange);"></i>
+                        <div>
+                            <p class="stats-label-small">Expire Bientôt</p>
+                            <p class="stats-value-small text-amber-600">{{ $stats['expiring_soon'] }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="cuni-card">
-                <div class="card-body p-4">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <p style="font-size: 13px; color: var(--text-secondary);">Revenus ce Mois</p>
-                            <p style="font-size: 28px; font-weight: 700; color: var(--primary);">
-                                {{ number_format($stats['revenue_this_month'], 0, ',', ' ') }} FCFA</p>
+            <div class="cuni-card stats-card-compact">
+                <div class="card-body p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="stats-icon-small" style="background: rgba(139, 92, 246, 0.1);">
+                            <i class="bi bi-currency-euro text-purple-500"></i>
                         </div>
-                        <div
-                            style="width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(139, 92, 246, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-currency-euro" style="font-size: 24px; color: var(--accent-purple);"></i>
+                        <div>
+                            <p class="stats-label-small">Revenus (Mois)</p>
+                            <p class="stats-value-small">{{ number_format($stats['revenue_this_month'], 0, ',', ' ') }} <small class="text-xs">FCFA</small></p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <style>
+            .stats-card-compact { transition: transform 0.2s ease; border: 1px solid var(--surface-border); }
+            .stats-card-compact:hover { transform: translateY(-2px); }
+            .stats-icon-small { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+            .stats-label-small { font-size: 0.72rem; color: var(--text-tertiary); margin: 0; text-transform: uppercase; letter-spacing: 0.025em; font-weight: 600; }
+            .stats-value-small { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-primary); line-height: 1.2; }
+        </style>
 
 
         <div class="header-actions">

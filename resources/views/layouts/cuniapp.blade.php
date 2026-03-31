@@ -3252,6 +3252,7 @@
         <i class="bi bi-arrow-up-short"></i>
     </button>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')
     @include('components.modal-system')
     <script>
@@ -3785,8 +3786,6 @@
             window.headerOverflowManager = new HeaderOverflowManager();
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    @stack('scripts')
 </body>
 
 </html>
