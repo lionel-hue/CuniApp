@@ -162,39 +162,6 @@ class SuperAdminController extends Controller
             'subscription_limit' => $firm->subscription_limit,
         ];
 
-        // ✅ SIGNUP EVOLUTION DATA (Last 30 days)
-        $signupEvolution = \App\Models\User::where('role', 'firm_admin')
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->whereBetween('created_at', [now()->subDays(30), now()])
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('count', 'date');
-
-        // Build arrays for Chart.js
-        $signupLabels = [];
-        $signupCounts = [];
-
-        for ($i = 29; $i >= 0; $i--) {
-            $date = now()->subDays($i)->format('Y-m-d');
-            $signupLabels[] = now()->subDays($i)->format('d/m');
-            $signupCounts[] = $signupEvolution->get($date) ?? 0;
-        }
-
-        // Fix: Add missing variables for the dashboard view
-        $topFirms = Firm::with(['owner', 'activeSubscription'])
-            ->where('status', 'active')
-            ->limit(5)
-            ->get();
-        $recentSignups = User::where('role', 'firm_admin')
-            ->whereBetween('created_at', [now()->subDays(7), now()])
-            ->limit(10)
-            ->get();
-        $activeUsers24h = DB::table('sessions')
-            ->where('last_activity', '>=', now()->subHours(24)->timestamp)
-            ->whereNotNull('user_id')
-            ->distinct('user_id')
-            ->count('user_id');
-
-        return view('super-admin.dashboard', compact('stats', 'topFirms', 'recentSignups', 'activeUsers24h', 'signupLabels', 'signupCounts'));
+        return view('super-admin.firms.show', compact('firm', 'stats'));
     }
 }

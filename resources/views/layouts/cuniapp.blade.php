@@ -2803,8 +2803,8 @@
                     <span>Mises Bas</span>
                 </a>
                 @endif
-                {{-- ✅ ENTREPRISE LINK (Firm Admins & Super Admins) --}}
-                @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                {{-- ✅ ENTREPRISE LINK (Firm Admins) --}}
+                @if (auth()->check() && auth()->user()->isFirmAdmin())
                     <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
                         data-route="firm.*">
                         <i class="bi bi-building"></i>
@@ -2813,6 +2813,7 @@
                 @endif
 
                 {{-- ✅ MORE DROPDOWN - Will receive overflow items --}}
+                @if (!auth()->user()->isSuperAdmin())
                 <div class="dropdown-container" style="position: relative; display: inline-block;">
                     <button class="nav-link" type="button" onclick="toggleMoreDropdown(event)" id="moreButton"
                         style="position: relative;">
@@ -2844,9 +2845,6 @@
                                 <span>Mes Factures</span>
                             </a>
                         @endif
-                        <a href="{{ route('settings.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-gear"></i> Paramètres
-                        </a>
 
                         {{-- ✅ OVERFLOW ITEMS CONTAINER --}}
                         <div id="overflowItemsContainer"
@@ -2880,6 +2878,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
             </nav>
 
             {{-- ✅ MOBILE MENU TRIGGER --}}
@@ -3117,7 +3116,7 @@
                                     </a>
                                 </li>
                             @endif
-                            @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                            @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <li>
                                     <a href="{{ route('firm.index') }}">
                                         <i class="bi bi-chevron-right"></i>
