@@ -18,12 +18,20 @@ return new class extends Migration
         });
 
         // Link existing subscriptions to user's firm (will be created in data migration)
-        DB::statement('
-            UPDATE subscriptions s
-            JOIN users u ON s.user_id = u.id
-            SET s.firm_id = u.firm_id
-            WHERE u.firm_id IS NOT NULL
-        ');
+        if (config('database.default') === 'sqlite') {
+            DB::statement("
+                UPDATE subscriptions 
+                SET firm_id = (SELECT firm_id FROM users WHERE users.id = subscriptions.user_id)
+                WHERE EXISTS (SELECT 1 FROM users WHERE users.id = subscriptions.user_id AND users.firm_id IS NOT NULL)
+            ");
+        } else {
+            DB::statement("
+                UPDATE subscriptions s
+                JOIN users u ON s.user_id = u.id
+                SET s.firm_id = u.firm_id
+                WHERE u.firm_id IS NOT NULL
+            ");
+        }
     }
 
     public function down(): void

@@ -2755,42 +2755,60 @@
             {{-- ✅ MAIN NAVIGATION WITH OVERFLOW CONTAINER --}}
             <nav class="nav-main-links" id="navMainLinks" style="overflow: visible !important;">
                 {{-- Navigation items will be managed by JavaScript --}}
-                <a href="{{ route('dashboard') }}" class="nav-link nav-item" data-priority="1" data-route="dashboard">
+                {{-- ✅ SUPER ADMIN LINKS (Super Admins Only) --}}
+                @if (auth()->check() && auth()->user()->isSuperAdmin())
+                    <a href="{{ route('super.admin.dashboard') }}" class="nav-link nav-item" data-priority="1"
+                        data-route="super.admin.dashboard" style="color: var(--accent-orange); font-weight: 700;">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Super Admin</span>
+                    </a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="nav-link nav-item" data-priority="1.1"
+                        data-route="admin.subscriptions.index">
+                        <i class="bi bi-card-checklist"></i>
+                        <span>Abonnements</span>
+                    </a>
+                    <a href="{{ route('super.admin.firms') }}" class="nav-link nav-item" data-priority="1.2"
+                        data-route="super.admin.firms">
+                        <i class="bi bi-buildings"></i>
+                        <span>Entreprises</span>
+                    </a>
+                    <a href="{{ route('admin.subscriptions.transactions') }}" class="nav-link nav-item" data-priority="1.3"
+                        data-route="admin.subscriptions.transactions">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Transactions</span>
+                    </a>
+                @endif
+
+                @if (!auth()->user()->isSuperAdmin())
+                <a href="{{ route('dashboard') }}" class="nav-link nav-item" data-priority="2" data-route="dashboard">
                     <i class="bi bi-speedometer2"></i>
                     <span>Tableau de bord</span>
                 </a>
-                <a href="{{ route('males.index') }}" class="nav-link nav-item" data-priority="2" data-route="males.*">
+                <a href="{{ route('males.index') }}" class="nav-link nav-item" data-priority="3" data-route="males.*">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span>Mâles</span>
                 </a>
-                <a href="{{ route('femelles.index') }}" class="nav-link nav-item" data-priority="3"
+                <a href="{{ route('femelles.index') }}" class="nav-link nav-item" data-priority="4"
                     data-route="femelles.*">
                     <i class="bi bi-arrow-down-right-square"></i>
                     <span>Femelles</span>
                 </a>
-                <a href="{{ route('lapins.index') }}" class="nav-link nav-item" data-priority="4" data-route="lapins.*">
+                <a href="{{ route('lapins.index') }}" class="nav-link nav-item" data-priority="5" data-route="lapins.*">
                     <i class="bi bi-collection"></i>
                     <span>Tous les Lapins</span>
                 </a>
-                <a href="{{ route('mises-bas.index') }}" class="nav-link nav-item" data-priority="5"
+                <a href="{{ route('mises-bas.index') }}" class="nav-link nav-item" data-priority="6"
                     data-route="mises-bas.*">
                     <i class="bi bi-egg"></i>
                     <span>Mises Bas</span>
                 </a>
-                {{-- ✅ ENTREPRISE LINK (Firm Admins Only) --}}
-                @if (auth()->check() && auth()->user()->isFirmAdmin())
+                @endif
+                {{-- ✅ ENTREPRISE LINK (Firm Admins & Super Admins) --}}
+                @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
                     <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
                         data-route="firm.*">
                         <i class="bi bi-building"></i>
                         <span>Entreprise</span>
-                    </a>
-                @endif
-                {{-- ✅ SUPER ADMIN LINK (Super Admins Only) --}}
-                @if (auth()->check() && auth()->user()->isSuperAdmin())
-                    <a href="{{ route('super.admin.dashboard') }}" class="nav-link nav-item" data-priority="8"
-                        data-route="super.admin.*" style="color: var(--accent-orange);">
-                        <i class="bi bi-star-fill"></i>
-                        <span>Super Admin</span>
                     </a>
                 @endif
 
@@ -2806,6 +2824,7 @@
                     <div class="dropdown-menu-custom" id="moreDropdown"
                         style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 240px; z-index: 9999 !important; display: none;">
                         {{-- Static items always in dropdown --}}
+                        @if (!auth()->user()->isSuperAdmin())
                         <a href="{{ route('saillies.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-heart"></i> Saillies
                         </a>
@@ -2818,6 +2837,7 @@
                         <a href="{{ route('activites.index') }}" class="dropdown-item-custom static-dropdown-item">
                             <i class="bi bi-clock-history"></i> Activités
                         </a>
+                        @endif
                         @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
                                 <i class="bi bi-receipt"></i>
@@ -2834,7 +2854,7 @@
                             {{-- Dynamic overflow items will be injected here --}}
                         </div>
 
-                        {{-- Subscription in dropdown (Only for Firm Admins or non-superadmin admins) --}}
+                        {{-- Subscription in dropdown (Only for Firm Admins) --}}
                         @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
@@ -2957,6 +2977,15 @@
                 <button class="mobile-nav-close" onclick="toggleMobileNav()" style="background: none; border: none; font-size: 24px; color: var(--text-primary); cursor: pointer;"><i class="bi bi-x"></i></button>
             </div>
             <div class="mobile-nav-links" style="padding: 20px;">
+                @if (auth()->check() && auth()->user()->isSuperAdmin())
+                    <div class="mobile-nav-divider"></div>
+                    <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange); font-weight: 700;"><i class="bi bi-star-fill"></i> Super Admin</a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-card-checklist"></i> Gestion Abonnements</a>
+                    <a href="{{ route('super.admin.firms') }}" class="mobile-nav-link"><i class="bi bi-buildings"></i> Toutes les Entreprises</a>
+                    <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link"><i class="bi bi-cash-stack"></i> Transactions Globales</a>
+                @endif
+
+                @if (!auth()->user()->isSuperAdmin())
                 <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
                 <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> Mâles</a>
                 <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> Femelles</a>
@@ -2969,16 +2998,12 @@
                 <a href="{{ route('naissances.index') }}" class="mobile-nav-link"><i class="bi bi-egg-fill"></i> Naissances</a>
                 <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> Ventes</a>
                 <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> Activités</a>
-                <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
+                @endif
                 
                 @if (auth()->check() && auth()->user()->isFirmAdmin())
+                    <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> Entreprise</a>
-                @endif
-
-                @if (auth()->check() && auth()->user()->isSuperAdmin())
-                    <div class="mobile-nav-divider"></div>
-                    <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange);"><i class="bi bi-star-fill"></i> Super Admin</a>
                 @endif
 
                 <div class="mobile-nav-divider"></div>
@@ -3045,6 +3070,7 @@
                     </h4>
                     <div class="footer-section-body">
                         <ul class="footer-links">
+                            @if(!auth()->user()->isSuperAdmin())
                             <li>
                                 <a href="{{ route('dashboard') }}">
                                     <i class="bi bi-chevron-right"></i>
@@ -3057,6 +3083,7 @@
                                     Activités
                                 </a>
                             </li>
+                            @endif
                             <li>
                                 <a href="{{ route('notifications.index') }}">
                                     <i class="bi bi-chevron-right"></i> Notifications
@@ -3082,7 +3109,7 @@
                                     Paramètres
                                 </a>
                             </li>
-                            @if (auth()->check() && auth()->user()->isFirmAdmin())
+                            @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
                                 <li>
                                     <a href="{{ route('invoices.index') }}">
                                         <i class="bi bi-chevron-right"></i>
@@ -3090,7 +3117,7 @@
                                     </a>
                                 </li>
                             @endif
-                            @if (auth()->check() && auth()->user()->isFirmAdmin())
+                            @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
                                 <li>
                                     <a href="{{ route('firm.index') }}">
                                         <i class="bi bi-chevron-right"></i>
@@ -3138,6 +3165,7 @@
                 </div>
 
                 <!-- Gestion Section -->
+                @if(!auth()->user()->isSuperAdmin())
                 <div class="footer-section">
                     <h4 onclick="toggleFooterSection(this)">
                         <span style="display:flex;align-items:center;gap:8px;">
@@ -3158,6 +3186,7 @@
                         </ul>
                     </div>
                 </div>
+                @endif
 
                 <!-- Contact Section -->
                 <div class="footer-section">
@@ -3251,6 +3280,7 @@
         <i class="bi bi-arrow-up-short"></i>
     </button>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')
     @include('components.modal-system')
     <script>
@@ -3779,13 +3809,54 @@
             }
         }
 
+        // ============================================
+        // ✅ ACTIVE NAVIGATION LINK HIGHLIGHTING
+        // ============================================
+        function highlightActiveNavLinks() {
+            const currentUrl = window.location.href;
+            const currentPath = window.location.pathname;
+            const currPathRaw = currentPath.replace(/\/$/, '') || '/';
+
+            // Function to find and highlight the best match for a given set of links
+            const highlightBestMatch = (selector) => {
+                let bestLink = null;
+                let longestMatch = 0;
+
+                document.querySelectorAll(selector).forEach(link => {
+                    try {
+                        const linkUrl = new URL(link.href, window.location.origin);
+                        const linkPath = linkUrl.pathname.replace(/\/$/, '') || '/';
+
+                        if (linkPath === '/' && currPathRaw === '/') {
+                            if (!bestLink) bestLink = link;
+                        } else if (linkPath !== '/' && currPathRaw.startsWith(linkPath)) {
+                            // Find the most specific match (longest path)
+                            if (linkPath.length > longestMatch) {
+                                longestMatch = linkPath.length;
+                                bestLink = link;
+                            }
+                        } else if (linkUrl.href === currentUrl && longestMatch === 0) {
+                            bestLink = link;
+                        }
+                    } catch (e) {}
+                });
+
+                if (bestLink) {
+                    bestLink.classList.add('active');
+                }
+            };
+
+            // Apply to Desktop and Mobile nav links
+            highlightBestMatch('.nav-link[href]');
+            highlightBestMatch('.mobile-nav-link[href]');
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             window.headerOverflowManager = new HeaderOverflowManager();
+            highlightActiveNavLinks();
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    @stack('scripts')
 </body>
 
 </html>
