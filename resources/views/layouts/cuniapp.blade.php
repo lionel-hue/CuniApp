@@ -2755,12 +2755,27 @@
             {{-- ✅ MAIN NAVIGATION WITH OVERFLOW CONTAINER --}}
             <nav class="nav-main-links" id="navMainLinks" style="overflow: visible !important;">
                 {{-- Navigation items will be managed by JavaScript --}}
-                {{-- ✅ SUPER ADMIN LINK (Super Admins Only) - MOVED TO TOP --}}
+                {{-- ✅ SUPER ADMIN LINKS (Super Admins Only) --}}
                 @if (auth()->check() && auth()->user()->isSuperAdmin())
                     <a href="{{ route('super.admin.dashboard') }}" class="nav-link nav-item" data-priority="1"
-                        data-route="super.admin.*" style="color: var(--accent-orange); font-weight: 700;">
+                        data-route="super.admin.dashboard" style="color: var(--accent-orange); font-weight: 700;">
                         <i class="bi bi-star-fill"></i>
                         <span>Super Admin</span>
+                    </a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="nav-link nav-item" data-priority="1.1"
+                        data-route="admin.subscriptions.index">
+                        <i class="bi bi-card-checklist"></i>
+                        <span>Abonnements</span>
+                    </a>
+                    <a href="{{ route('super.admin.firms') }}" class="nav-link nav-item" data-priority="1.2"
+                        data-route="super.admin.firms">
+                        <i class="bi bi-buildings"></i>
+                        <span>Entreprises</span>
+                    </a>
+                    <a href="{{ route('admin.subscriptions.transactions') }}" class="nav-link nav-item" data-priority="1.3"
+                        data-route="admin.subscriptions.transactions">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Transactions</span>
                     </a>
                 @endif
 
@@ -2961,6 +2976,9 @@
                 @if (auth()->check() && auth()->user()->isSuperAdmin())
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange); font-weight: 700;"><i class="bi bi-star-fill"></i> Super Admin</a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-card-checklist"></i> Gestion Abonnements</a>
+                    <a href="{{ route('super.admin.firms') }}" class="mobile-nav-link"><i class="bi bi-buildings"></i> Toutes les Entreprises</a>
+                    <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link"><i class="bi bi-cash-stack"></i> Transactions Globales</a>
                 @endif
 
                 <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
@@ -3781,9 +3799,52 @@
             }
         }
 
+        // ============================================
+        // ✅ ACTIVE NAVIGATION LINK HIGHLIGHTING
+        // ============================================
+        function highlightActiveNavLinks() {
+            const currentUrl = window.location.href;
+            const currentPath = window.location.pathname;
+            const currPathRaw = currentPath.replace(/\/$/, '') || '/';
+
+            // Function to find and highlight the best match for a given set of links
+            const highlightBestMatch = (selector) => {
+                let bestLink = null;
+                let longestMatch = 0;
+
+                document.querySelectorAll(selector).forEach(link => {
+                    try {
+                        const linkUrl = new URL(link.href, window.location.origin);
+                        const linkPath = linkUrl.pathname.replace(/\/$/, '') || '/';
+
+                        if (linkPath === '/' && currPathRaw === '/') {
+                            if (!bestLink) bestLink = link;
+                        } else if (linkPath !== '/' && currPathRaw.startsWith(linkPath)) {
+                            // Find the most specific match (longest path)
+                            if (linkPath.length > longestMatch) {
+                                longestMatch = linkPath.length;
+                                bestLink = link;
+                            }
+                        } else if (linkUrl.href === currentUrl && longestMatch === 0) {
+                            bestLink = link;
+                        }
+                    } catch (e) {}
+                });
+
+                if (bestLink) {
+                    bestLink.classList.add('active');
+                }
+            };
+
+            // Apply to Desktop and Mobile nav links
+            highlightBestMatch('.nav-link[href]');
+            highlightBestMatch('.mobile-nav-link[href]');
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             window.headerOverflowManager = new HeaderOverflowManager();
+            highlightActiveNavLinks();
         });
     </script>
 </body>
