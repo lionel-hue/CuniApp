@@ -1234,38 +1234,6 @@ if (auth()->check() && auth()->user()->firm_id) {
             </div>
         @endif
 
-        {{-- ✅ VISUAL ANALYTICS SECTION --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- Finance Chart -->
-            <div class="cuni-card">
-                <div class="card-header-custom">
-                    <h3 class="card-title"><i class="bi bi-graph-up"></i> Ventes ({{ now()->year }})</h3>
-                </div>
-                <div class="card-body" style="height: 280px; padding: 20px;">
-                    <canvas id="financeChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Activity Chart -->
-            <div class="cuni-card">
-                <div class="card-header-custom">
-                    <h3 class="card-title"><i class="bi bi-activity"></i> Saillies & Naissances</h3>
-                </div>
-                <div class="card-body" style="height: 280px; padding: 20px;">
-                    <canvas id="activityChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Survie Chart -->
-            <div class="cuni-card">
-                <div class="card-header-custom">
-                    <h3 class="card-title"><i class="bi bi-heart-pulse"></i> Taux de Survie</h3>
-                </div>
-                <div class="card-body" style="height: 280px; padding: 20px;">
-                    <canvas id="survieChart"></canvas>
-                </div>
-            </div>
-        </div>
 
         {{-- ✅ QUICK ACTIONS SECTION --}}
         <div class="section-block mb-6">
@@ -1273,7 +1241,15 @@ if (auth()->check() && auth()->user()->firm_id) {
                 <h2><i class="bi bi-lightning-charge"></i> Actions Rapides</h2>
             </div>
             <div class="actions-grid">
-                @foreach ([['url' => route('males.index'), 'icon' => 'male', 'title' => 'Gérer Mâles', 'desc' => 'Consulter et modifier', 'color' => 'blue'], ['url' => route('femelles.index'), 'icon' => 'female', 'title' => 'Gérer Femelles', 'desc' => 'Suivi reproduction', 'color' => 'pink'], ['url' => route('saillies.index'), 'icon' => 'breed', 'title' => 'Planifier Saillie', 'desc' => 'Nouveau croisement', 'color' => 'purple']] as $action)
+                @php
+                    $quickActions = [
+                        ['url' => route('saillies.create'), 'icon' => 'breed', 'title' => 'Enregistrer Saillie', 'desc' => 'Nouveau croisement', 'color' => 'purple'],
+                        ['url' => route('naissances.create'), 'icon' => 'birth', 'title' => 'Déclarer Naissance', 'desc' => 'Suivi de portée', 'color' => 'green'],
+                        ['url' => route('sales.create'), 'icon' => 'total', 'title' => 'Enregistrer Vente', 'desc' => 'Sortie de stock', 'color' => 'blue'],
+                        ['url' => route('lapins.create'), 'icon' => 'male', 'title' => 'Ajouter Lapin', 'desc' => 'Nouvelle acquisition', 'color' => 'pink'],
+                    ];
+                @endphp
+                @foreach ($quickActions as $action)
                     <a href="{{ $action['url'] }}" class="action-tile {{ $action['color'] }}">
                         <div class="tile-icon">
                             @if ($action['icon'] === 'male')
@@ -1281,20 +1257,17 @@ if (auth()->check() && auth()->user()->firm_id) {
                                     <circle cx="10" cy="14" r="6" />
                                     <path d="M16 8h6V2M22 2l-8.5 8.5" />
                                 </svg>
-                            @elseif($action['icon'] === 'female')
+                            @elseif($action['icon'] === 'birth')
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="8" r="6" />
-                                    <path d="M12 14v8M9 19h6" />
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                                 </svg>
                             @elseif($action['icon'] === 'breed')
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                 </svg>
                             @else
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon
-                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    <path d="M12 1v22M17 5H9.5a4.5 4.5 0 1 0 0 9h5a4.5 4.5 0 1 1 0 9H7" />
                                 </svg>
                             @endif
                         </div>
@@ -1309,55 +1282,90 @@ if (auth()->check() && auth()->user()->firm_id) {
 
         <div class="main-grid">
             <div class="content-col">
-                {{-- Recent Rabbits Widget --}}
-                <div class="widget">
-                    <div class="widget-head">
-                        <h3>Derniers Lapins</h3>
-                        <a href="{{ route('lapins.index') }}" class="text-link">Voir tout</a>
+                {{-- ✅ VISUAL ANALYTICS --}}
+                <div class="grid grid-cols-1 gap-6 mb-6">
+                    <!-- Global Finance Chart (Full Width in column) -->
+                    <div class="cuni-card">
+                        <div class="card-header-custom">
+                            <h3 class="card-title"><i class="bi bi-graph-up"></i> Ventes ({{ now()->year }})</h3>
+                        </div>
+                        <div class="card-body" style="height: 280px; padding: 20px;">
+                            <canvas id="financeChart"></canvas>
+                        </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
-                        @foreach($males->take(2) as $m)
-                            <div style="background: var(--surface-alt); padding: 12px; border-radius: var(--radius); border-left: 3px solid var(--primary);">
-                                <div style="font-weight: 600; font-size: 14px;">{{ $m->nom }}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Mâle • {{ $m->code }}</div>
+                    
+                    <!-- Side-by-Side Activity & Survival -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="cuni-card">
+                            <div class="card-header-custom">
+                                <h3 class="card-title"><i class="bi bi-activity"></i> Saillies & Naissances</h3>
                             </div>
-                        @endforeach
-                        @foreach($femelles->take(2) as $f)
-                            <div style="background: var(--surface-alt); padding: 12px; border-radius: var(--radius); border-left: 3px solid var(--accent-pink);">
-                                <div style="font-weight: 600; font-size: 14px;">{{ $f->nom }}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Femelle • {{ $f->code }}</div>
+                            <div class="card-body" style="height: 260px; padding: 20px;">
+                                <canvas id="activityChart"></canvas>
                             </div>
-                        @endforeach
+                        </div>
+                        <div class="cuni-card">
+                            <div class="card-header-custom">
+                                <h3 class="card-title"><i class="bi bi-heart-pulse"></i> Taux de Survie</h3>
+                            </div>
+                            <div class="card-body" style="height: 260px; padding: 20px;">
+                                <canvas id="survieChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Recent Sales Widget --}}
-                <div class="widget mt-6">
-                    <div class="widget-head">
-                        <h3>Dernières Ventes</h3>
-                        <a href="{{ route('ventes.index') }}" class="text-link">Historique</a>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+                    {{-- Recent Rabbits Widget --}}
+                    <div class="widget">
+                        <div class="widget-head">
+                            <h3>Derniers Lapins</h3>
+                            <a href="{{ route('lapins.index') }}" class="text-link">Voir tout</a>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            @foreach($males->take(2) as $m)
+                                <div style="background: var(--surface-alt); padding: 12px; border-radius: var(--radius); border-left: 3px solid var(--primary);">
+                                    <div style="font-weight: 600; font-size: 13px;">{{ $m->nom }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">{{ $m->code }}</div>
+                                </div>
+                            @endforeach
+                            @foreach($femelles->take(2) as $f)
+                                <div style="background: var(--surface-alt); padding: 12px; border-radius: var(--radius); border-left: 3px solid var(--accent-pink);">
+                                    <div style="font-weight: 600; font-size: 13px;">{{ $f->nom }}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">{{ $f->code }}</div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Client</th>
-                                    <th class="text-end">Montant</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($recentSales->take(4) as $sale)
+
+                    {{-- Recent Sales Widget --}}
+                    <div class="widget">
+                        <div class="widget-head">
+                            <h3>Dernières Ventes</h3>
+                            <a href="{{ route('sales.index') }}" class="text-link">Historique</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm" style="font-size: 12px;">
+                                <thead>
                                     <tr>
-                                        <td>{{ $sale->date_sale->format('d/m/y') }}</td>
-                                        <td>{{ Str::limit($sale->client_name ?? 'Client Divers', 15) }}</td>
-                                        <td class="text-end fw-bold">{{ number_format($sale->total_amount, 0, ',', ' ') }}</td>
+                                        <th>Date</th>
+                                        <th>Client</th>
+                                        <th class="text-end">Montant</th>
                                     </tr>
-                                @empty
-                                    <tr><td colspan="3" class="text-center text-muted">Aucune vente</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse($recentSales->take(4) as $sale)
+                                        <tr>
+                                            <td>{{ $sale->date_sale->format('d/m/y') }}</td>
+                                            <td>{{ Str::limit($sale->client_name ?? 'Divers', 12) }}</td>
+                                            <td class="text-end fw-bold">{{ number_format($sale->total_amount, 0, ',', ' ') }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center text-muted">Aucune vente</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

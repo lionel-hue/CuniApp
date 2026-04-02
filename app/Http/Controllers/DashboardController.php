@@ -197,16 +197,17 @@ class DashboardController extends Controller
         // Ventes (bleu)
         $recentSales = Sale::where(fn($q) => $q->where('user_id', $userId))
             ->latest('created_at')
-            ->limit(1)
-            ->get()
-            ->map(fn($v) => [
-                'type' => 'blue',
-                'title' => 'Vente enregistrée',
-                'desc' => number_format($v->total_amount, 0, ',', ' ') . ' FCFA',
-                'time' => Carbon::parse($v->created_at)->diffForHumans(),
-                'date' => $v->created_at,
-                'url' => route('sales.show', $v->id) ?? '#',
-            ]);
+            ->limit(5)
+            ->get();
+
+        $tlSales = $recentSales->map(fn($v) => [
+            'type' => 'blue',
+            'title' => 'Vente enregistrée',
+            'desc' => number_format($v->total_amount, 0, ',', ' ') . ' FCFA',
+            'time' => Carbon::parse($v->created_at)->diffForHumans(),
+            'date' => $v->created_at,
+            'url' => route('sales.show', $v->id) ?? '#',
+        ]);
 
         // Mises Bas (amber)
         $recentMisesBas = MiseBas::where(fn($q) => $q->where('user_id', $userId))
@@ -256,7 +257,7 @@ class DashboardController extends Controller
         $timelineActivities = collect([
             ...$recentNaissances->toArray(),
             ...$recentSaillies->toArray(),
-            ...$recentSales->toArray(),
+            ...($tlSales ?? collect())->toArray(),
             ...$recentMisesBas->toArray(),
             ...$nouveauxLapins->toArray(),
         ])
@@ -293,7 +294,8 @@ class DashboardController extends Controller
             'financialData',
             'activityData',
             'survieData',
-            'nbAlertes'
+            'nbAlertes',
+            'recentSales'
         ));
     }
 
