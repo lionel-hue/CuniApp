@@ -22,58 +22,40 @@ class SubscriptionManagementController extends Controller
      */
     public function index(Request $request)
     {
-        // On ne liste que :
-        // 1. Les utilisateurs sans aucun abonnement (nouveaux)
-        // 2. Les utilisateurs ayant au moins un abonnement NON-ARCHIVÉ
+        Log::info('SubscriptionManagementController@index called', ['status' => $request->status]);
+
+        // La requête de base : on ne liste que les utilisateurs gérables (prospects ou abonnés non-archivés)
         $query = User::where(function($q) {
             $q->whereDoesntHave('subscriptions')
-              ->orWhereHas('subscriptions', function($subQuery) {
-                  $subQuery->whereNull('archived_at');
+              ->orWhereHas('subscriptions', function($sq) {
+                  $sq->whereNull('archived_at');
               });
-        })->with(['activeSubscriptionRelation.plan']);
+        })->with(['activeSubscriptionRelation.plan', 'subscriptions' => function($q) {
+            $q->whereNull('archived_at')->latest();
+        }]);
 
-        // Filter by subscription status
-
+        // Filtre par statut d'abonnement
         if ($request->has('status')) {
             $status = $request->status;
             if ($status === 'active') {
-                $query->where(function($q) {
-                    // Direct active subscription
-                    $q->whereHas('subscriptions', function ($sq) {
-                        $sq->where('status', 'active')
-                            ->where('end_date', '>=', now())
-                            ->whereNull('archived_at');
-                    })
-                    // OR Firm has active subscription (for employees)
-                    ->orWhereHas('firm.subscriptions', function ($sq) {
-                        $sq->where('status', 'active')
-                            ->where('end_date', '>=', now())
-                            ->whereNull('archived_at');
-                    });
+                $query->whereHas('subscriptions', function ($sq) {
+                    $sq->where('status', 'active')
+                       ->where('end_date', '>=', now())
+                       ->whereNull('archived_at');
                 });
             } elseif ($status === 'expired') {
-                // Not active (neither direct nor via firm)
-                $query->where(function($q) {
-                    $q->whereDoesntHave('subscriptions', function ($sq) {
-                        $sq->where('status', 'active')
-                            ->where('end_date', '>=', now())
-                            ->whereNull('archived_at');
-                    })
-                    ->whereDoesntHave('firm.subscriptions', function ($sq) {
-                        $sq->where('status', 'active')
-                            ->where('end_date', '>=', now())
-                            ->whereNull('archived_at');
-                    });
+                $query->whereHas('subscriptions', function ($sq) {
+                    $sq->where('end_date', '<', now())
+                       ->whereNull('archived_at');
                 });
             } elseif ($status === 'cancelled') {
-                $query->whereHas('subscriptions', function ($q) {
-                    $q->where('status', 'cancelled');
+                $query->whereHas('subscriptions', function ($sq) {
+                    $sq->where('status', 'cancelled')
+                       ->whereNull('archived_at');
                 });
             }
         }
 
-
-        // Search by name or email
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -84,7 +66,6 @@ class SubscriptionManagementController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Statistics
         $stats = [
             'total_users' => User::count(),
             'active_subscriptions' => Subscription::where('status', 'active')
@@ -95,8 +76,8 @@ class SubscriptionManagementController extends Controller
                 ->whereBetween('end_date', [now(), now()->addDays(7)])
                 ->whereNull('archived_at')
                 ->count(),
-
-            'revenue_this_month' => PaymentTransaction::where('status', 'completed')
+            'total_revenue' => DB::table('payment_transactions')
+                ->where('status', 'completed')
                 ->whereMonth('created_at', now()->month)
                 ->sum('amount'),
         ];
@@ -384,17 +365,32 @@ class SubscriptionManagementController extends Controller
             abort(403);
         }
 
-        $subscription->update(['archived_at' => now()]);
+        // Déjà archivé ? On ignore
+        if ($subscription->archived_at) {
+            return back()->with('info', 'Cet abonnement est déjà archivé.');
+        }
 
-        // ✅ Sync User status if this was the active sub
-        if ($subscription->user && $subscription->user->subscription_status === 'active') {
+        $subscription->archived_at = now();
+        $subscription->save();
+
+        // ✅ Sync User status
+        if ($subscription->user) {
+            $user = $subscription->user;
             // Re-evaluating status (might be expired or none now)
-            $newStatus = $subscription->user->hasActiveSubscription() ? 'active' : 'inactive';
-            $subscription->user->update(['subscription_status' => $newStatus]);
+            $activeSub = $user->activeSubscription();
+            if ($activeSub) {
+                $user->subscription_status = 'active';
+                $user->subscription_ends_at = $activeSub->end_date;
+            } else {
+                $user->subscription_status = 'inactive';
+                $user->subscription_ends_at = null;
+            }
+            $user->save();
         }
 
         return back()->with('success', 'Abonnement archivé avec succès.');
     }
+
 
 
 
@@ -405,12 +401,12 @@ class SubscriptionManagementController extends Controller
     public function restore($id)
     {
         try {
-            $subscription = \App\Models\Subscription::findOrFail($id);
+            $subscription = \App\Models\Subscription::where('id', $id)->firstOrFail();
             
-            // 1. On retire la marque d'archivage
+            // On retire la marque d'archivage
             $subscription->archived_at = null;
             
-            // 2. Logique de statut intelligente
+            // Logique de statut intelligente
             $now = now();
             if ($subscription->end_date && $subscription->end_date > $now) {
                 $subscription->status = 'active';
@@ -420,28 +416,29 @@ class SubscriptionManagementController extends Controller
             
             $subscription->save();
 
-            // 3. Mise à jour de l'utilisateur (avec vérification)
+            // ✅ Mise à jour de l'utilisateur (avec re-validation)
             if ($subscription->user) {
-                $subscription->user->update([
-                    'subscription_status' => $subscription->status,
-                    'subscription_ends_at' => $subscription->end_date,
-                ]);
+                $user = $subscription->user;
+                $activeSub = $user->activeSubscription(); // Might be another one now
+
+                if ($activeSub) {
+                    $user->subscription_status = 'active';
+                    $user->subscription_ends_at = $activeSub->end_date;
+                } else {
+                    $user->subscription_status = $subscription->status;
+                    $user->subscription_ends_at = $subscription->end_date;
+                }
+                $user->save();
             }
 
             $msg = 'Abonnement restauré avec succès.';
-            if ($subscription->status === 'active') {
-                $msg .= ' Il a été réactivé car toujours valable.';
-            } else {
-                $msg .= ' Il est restauré mais expiré.';
-            }
-
             return back()->with('success', $msg);
 
         } catch (\Exception $e) {
-            // En cas d'erreur, on affiche le message au lieu d'une page blanche
             return back()->with('error', 'Erreur lors de la restauration : ' . $e->getMessage());
         }
     }
+
 
     
 

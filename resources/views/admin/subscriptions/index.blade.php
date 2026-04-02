@@ -190,14 +190,10 @@
                                             </a>
 
                                             @php
-                                                // LOGIQUE CLÉ : On cherche le dernier abonnement PEU IMPORTE SON STATUT
-                                                // La seule condition est qu'il ne soit PAS archivé.
-$subscriptionToManage = $user
-    ->subscriptions()
-    ->whereNull('archived_at')
-    ->latest('created_at')
-                                                    ->first();
+                                                // On cherche le dernier abonnement NON archivé
+                                                $subscriptionToManage = $user->subscriptions->first();
                                             @endphp
+
 
                                             @if ($subscriptionToManage)
                                                 {{-- CAS 1 : Un abonnement existe (Actif OU Expiré) -> BOUTON ARCHIVER --}}
