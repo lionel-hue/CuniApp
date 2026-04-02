@@ -68,10 +68,10 @@
                         <i class="bi bi-filter-circle" style="margin-right: 4px;"></i> Résultat
                     </label>
                     <select name="resultat" class="form-select" style="border-radius: var(--radius-lg);">
-                        <option value="">Tous</option>
+                        <option value="all" {{ request('resultat') === 'all' || !request()->has('resultat') ? 'selected' : '' }}>Tous</option>
                         <option value="+" {{ request('resultat') === '+' ? 'selected' : '' }}>Positif</option>
                         <option value="-" {{ request('resultat') === '-' ? 'selected' : '' }}>Négatif</option>
-                        <option value="" {{ request('resultat') === '' && request()->filled('resultat') ? 'selected' : '' }}>En attente</option>
+                        <option value="attente" {{ request('resultat') === 'attente' ? 'selected' : '' }}>En attente</option>
                     </select>
                 </div>
                 
@@ -119,7 +119,7 @@
                             <span class="badge" style="background: var(--primary-subtle); color: var(--primary); margin: 0 4px;">
                                 Négatif
                             </span>
-                        @elseif(request()->filled('resultat') && request('resultat') === '')
+                        @elseif(request('resultat') === 'attente')
                             <span class="badge" style="background: var(--primary-subtle); color: var(--primary); margin: 0 4px;">
                                 En attente
                             </span>

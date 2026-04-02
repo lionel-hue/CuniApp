@@ -26,6 +26,17 @@ class FemelleController extends Controller
             });
         }
 
+        // Filtre par état
+        if ($request->filled('etat')) {
+            $query->where('etat', $request->get('etat'));
+        }
+
+        // Filtre par origine
+        if ($request->filled('origine')) {
+            $query->where('origine', $request->get('origine'));
+        }
+
+
         $femelles = $query->latest()->paginate(10)->withQueryString();
 
         return view('femelles.index', compact('femelles'));

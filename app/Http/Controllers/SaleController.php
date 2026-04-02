@@ -49,6 +49,11 @@ class SaleController extends Controller
             $query->whereDate('date_sale', '<=', $request->date_to);
         }
 
+        // ✅ FILTER DELETABLE SALES (60 days+)
+        if ($request->filled('filter') && $request->filter === 'deletable') {
+            $query->whereDate('date_sale', '<=', now()->subDays(60));
+        }
+
         // ✅ PAGINATION (15 per page)
         $sales = $query->latest('date_sale')->paginate(15)->withQueryString();
 

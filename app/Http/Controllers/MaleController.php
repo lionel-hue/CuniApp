@@ -33,7 +33,13 @@ class MaleController extends Controller
             $query->where('etat', $request->get('etat'));
         }
 
-        $males = $query->latest()->paginate(10);
+        // Filtre par origine
+        if ($request->filled('origine')) {
+            $query->where('origine', $request->get('origine'));
+        }
+
+        $males = $query->latest()->paginate(10)->withQueryString();
+
 
         return view('males.index', compact('males'));
     }

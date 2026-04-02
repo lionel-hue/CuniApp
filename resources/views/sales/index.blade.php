@@ -122,6 +122,12 @@
     <div class="cuni-card" style="margin-bottom: 20px;">
         <div class="card-body" style="padding: 16px;">
             <form method="GET" action="{{ route('sales.index') }}">
+                @if(request('payment_status'))
+                    <input type="hidden" name="payment_status" value="{{ request('payment_status') }}">
+                @endif
+                @if(request('filter'))
+                    <input type="hidden" name="filter" value="{{ request('filter') }}">
+                @endif
                 <div
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end;">
                     {{-- Recherche texte --}}
@@ -208,27 +214,27 @@
                 <span style="font-weight: 600; color: var(--text-primary);">
                     <i class="bi bi-funnel"></i> Filtres rapides :
                 </span>
-                <a href="{{ route('sales.index') }}"
+                <a href="{{ request()->fullUrlWithQuery(['payment_status' => null, 'filter' => null]) }}"
                     class="badge {{ !request('payment_status') && !request('filter') ? 'bg-primary' : 'bg-secondary' }}"
                     style="text-decoration: none; padding: 6px 12px; border-radius: 20px;">
                     Toutes
                 </a>
-                <a href="{{ route('sales.index', ['payment_status' => 'paid']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['payment_status' => 'paid', 'filter' => null]) }}"
                     class="badge {{ request('payment_status') === 'paid' ? 'bg-success' : 'bg-secondary' }}"
                     style="text-decoration: none; padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-check-circle"></i> Payé
                 </a>
-                <a href="{{ route('sales.index', ['payment_status' => 'partial']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['payment_status' => 'partial', 'filter' => null]) }}"
                     class="badge {{ request('payment_status') === 'partial' ? 'bg-warning' : 'bg-secondary' }}"
                     style="text-decoration: none; padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-clock"></i> Partiel
                 </a>
-                <a href="{{ route('sales.index', ['payment_status' => 'pending']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['payment_status' => 'pending', 'filter' => null]) }}"
                     class="badge {{ request('payment_status') === 'pending' ? 'bg-danger' : 'bg-secondary' }}"
                     style="text-decoration: none; padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-hourglass"></i> En attente
                 </a>
-                <a href="{{ route('sales.index', ['filter' => 'deletable']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['filter' => 'deletable', 'payment_status' => null]) }}"
                     class="badge {{ request('filter') === 'deletable' ? 'bg-danger' : 'bg-secondary' }}"
                     style="text-decoration: none; padding: 6px 12px; border-radius: 20px;">
                     <i class="bi bi-trash"></i> Supprimables (60j+)

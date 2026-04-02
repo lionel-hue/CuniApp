@@ -45,8 +45,8 @@ class SaillieController extends Controller
         }
 
         // 🎯 Filtre par résultat de palpation
-        if ($request->filled('resultat')) {
-            if ($request->resultat === '') {
+        if ($request->filled('resultat') && $request->resultat !== 'all') {
+            if ($request->resultat === 'attente') {
                 $query->whereNull('palpation_resultat');
             } else {
                 $query->where('palpation_resultat', $request->resultat);
