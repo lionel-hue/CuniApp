@@ -76,12 +76,21 @@
                 </p>
             </div>
             <div class="form-group">
+                <label class="form-label">Plan Actuel</label>
+                <p class="fw-bold" style="color: var(--primary);">
+                    {{ $user->effective_plan_name }}
+                </p>
+            </div>
+            <div class="form-group">
                 <label class="form-label">Expiration</label>
                 <p class="fw-semibold">
-                    @if($user->subscription_ends_at)
-                        {{ $user->subscription_ends_at->format('d/m/Y H:i') }}
+                    @php
+                        $sub = $user->effective_subscription;
+                    @endphp
+                    @if($sub && $sub->end_date)
+                        {{ $sub->end_date->format('d/m/Y H:i') }}
                         @php
-                            $daysLeft = $user->subscription_ends_at->diffInDays(now(), false);
+                            $daysLeft = $sub->end_date->diffInDays(now(), false);
                         @endphp
                         @if($daysLeft < 0)
                             <span style="color: var(--accent-red); font-size: 12px;"> (Expiré depuis {{ abs($daysLeft) }} jours)</span>
@@ -93,6 +102,7 @@
                     @endif
                 </p>
             </div>
+
             <div class="form-group">
                 <label class="form-label">Inscrit le</label>
                 <p style="color: var(--text-secondary); font-size: 13px;">

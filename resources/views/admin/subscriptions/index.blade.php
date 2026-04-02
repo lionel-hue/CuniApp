@@ -131,11 +131,7 @@
                                     <td style="padding: 12px; font-weight: 600;">{{ $user->name }}</td>
                                     <td style="padding: 12px;">{{ $user->email }}</td>
                                     <td style="padding: 12px;">
-                                        @if ($user->activeSubscriptionRelation)
-                                            {{ $user->activeSubscriptionRelation->plan->name }}
-                                        @else
-                                            <span style="color: var(--text-tertiary);">Aucun</span>
-                                        @endif
+                                        {{ $user->effective_plan_name }}
                                     </td>
                                     <td style="padding: 12px;">
                                         @if ($user->hasActiveSubscription())
@@ -146,6 +142,7 @@
                                                 style="background: rgba(107, 114, 128, 0.1); color: var(--gray-500);">Inactif</span>
                                         @endif
                                     </td>
+
                                     <td style="padding: 12px;">
                                         @if ($user->subscription_ends_at)
                                             {{ \Carbon\Carbon::parse($user->subscription_ends_at)->format('d/m/Y') }}

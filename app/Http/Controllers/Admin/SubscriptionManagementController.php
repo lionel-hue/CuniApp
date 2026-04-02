@@ -28,16 +28,33 @@ class SubscriptionManagementController extends Controller
         if ($request->has('status')) {
             $status = $request->status;
             if ($status === 'active') {
-                $query->whereHas('subscriptions', function ($q) {
-                    $q->where('status', 'active')
-                        ->where('end_date', '>=', now())
-                        ->whereNull('archived_at');
+                $query->where(function($q) {
+                    // Direct active subscription
+                    $q->whereHas('subscriptions', function ($sq) {
+                        $sq->where('status', 'active')
+                            ->where('end_date', '>=', now())
+                            ->whereNull('archived_at');
+                    })
+                    // OR Firm has active subscription (for employees)
+                    ->orWhereHas('firm.subscriptions', function ($sq) {
+                        $sq->where('status', 'active')
+                            ->where('end_date', '>=', now())
+                            ->whereNull('archived_at');
+                    });
                 });
             } elseif ($status === 'expired') {
-                $query->whereDoesntHave('subscriptions', function ($q) {
-                    $q->where('status', 'active')
-                        ->where('end_date', '>=', now())
-                        ->whereNull('archived_at');
+                // Not active (neither direct nor via firm)
+                $query->where(function($q) {
+                    $q->whereDoesntHave('subscriptions', function ($sq) {
+                        $sq->where('status', 'active')
+                            ->where('end_date', '>=', now())
+                            ->whereNull('archived_at');
+                    })
+                    ->whereDoesntHave('firm.subscriptions', function ($sq) {
+                        $sq->where('status', 'active')
+                            ->where('end_date', '>=', now())
+                            ->whereNull('archived_at');
+                    });
                 });
             } elseif ($status === 'cancelled') {
                 $query->whereHas('subscriptions', function ($q) {
@@ -45,6 +62,7 @@ class SubscriptionManagementController extends Controller
                 });
             }
         }
+
 
         // Search by name or email
         if ($request->has('search')) {
@@ -77,11 +95,14 @@ class SubscriptionManagementController extends Controller
      */
     public function show($userId)
     {
-        $user = User::with(['subscriptions.plan', 'paymentTransactions'])->findOrFail($userId);
+        $user = User::with(['subscriptions.plan', 'paymentTransactions', 'firm.activeSubscription.plan'])->findOrFail($userId);
 
         $subscriptions = Subscription::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+
+        // If employee and no direct subscriptions, maybe show firm's history? 
+        // For now, let's just make sure the view has access to the firm's active sub.
 
         $paymentHistory = PaymentTransaction::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
@@ -89,6 +110,7 @@ class SubscriptionManagementController extends Controller
 
         return view('admin.subscriptions.show', compact('user', 'subscriptions', 'paymentHistory'));
     }
+
 
     /**
      * Manually activate subscription

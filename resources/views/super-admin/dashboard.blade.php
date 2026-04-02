@@ -149,45 +149,48 @@
             <div class="cuni-card h-full">
                 <div class="card-header-custom py-3 flex items-center justify-between">
                     <h3 class="card-title text-sm"><i class="bi bi-activity"></i> Activité Globale</h3>
-                    <a href="{{ route('super.admin.firms') }}" class="btn-cuni sm secondary" style="font-size: 0.75rem; padding: 4px 8px;">
-                        Voir plus <i class="bi bi-arrow-right ml-1"></i>
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; font-size: 0.7rem;">
+                            {{ $activeUsers24h }} actifs (24h)
+                        </span>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <div class="flex flex-col gap-4">
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <span class="text-sm font-medium">Actifs (24h)</span>
-                            </div>
-                            <span class="text-lg font-bold text-blue-600">{{ $activeUsers24h }}</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center">
-                                    <i class="bi bi-person"></i>
-                                </div>
-                                <span class="text-sm font-medium">Total Comptes</span>
-                            </div>
-                            <span class="text-lg font-bold text-purple-600">{{ $stats['total_users'] }}</span>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-green-500 text-white flex items-center justify-center">
-                                    <i class="bi bi-check-all"></i>
-                                </div>
-                                <span class="text-sm font-medium">Entreprises Actives</span>
-                            </div>
-                            <span class="text-lg font-bold text-green-600">{{ $stats['active_firms'] }}</span>
-                        </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm" style="font-size: 0.8rem; margin: 0;">
+                            <thead>
+                                <tr style="background: var(--surface-alt);">
+                                    <th style="padding: 8px 12px;">Utilisateur</th>
+                                    <th style="padding: 8px 12px;">Entreprise</th>
+                                    <th style="padding: 8px 12px; text-align: right;">Vues</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentActivities as $activity)
+                                    <tr>
+                                        <td style="padding: 8px 12px;">
+                                            <div class="fw-semibold">{{ $activity->user->name ?? 'Inconnu' }}</div>
+                                            <div style="font-size: 0.7rem; color: var(--text-tertiary);">{{ $activity->updated_at->diffForHumans() }}</div>
+                                        </td>
+                                        <td style="padding: 8px 12px;">
+                                            {{ $activity->user->firm->name ?? 'N/A' }}
+                                        </td>
+                                        <td style="padding: 8px 12px; text-align: right; font-weight: bold; color: var(--primary);">
+                                            {{ $activity->hits }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">Aucune activité récente</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     {{-- Top Firms Leaderboard --}}

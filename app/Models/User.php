@@ -118,6 +118,35 @@ class User extends Authenticatable
             ->first();
     }
 
+    /**
+     * ✅ NEW: Get the effective subscription (own or firm's)
+     */
+    public function getEffectiveSubscriptionAttribute()
+    {
+        // 1. Direct subscription
+        $sub = $this->activeSubscription();
+        if ($sub) return $sub;
+
+        // 2. Firm subscription if employee
+        if ($this->isEmployee() && $this->firm) {
+            return $this->firm->activeSubscription()->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * ✅ NEW: Get the effective plan name
+     */
+    public function getEffectivePlanNameAttribute(): string
+    {
+        $sub = $this->effective_subscription;
+        if (!$sub) return 'Aucun';
+
+        return ($sub->plan->name ?? 'Plan Inconnu') . ($this->isEmployee() ? ' (Via Entreprise)' : '');
+    }
+
+
     // Add this method to User model
     public function customNotifications()
     {

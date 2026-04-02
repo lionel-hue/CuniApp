@@ -92,7 +92,8 @@ public function create(Request $request)
 
     // ✅ CORRECTION : Bloquer seulement si l'utilisateur a déjà un abonnement PAYANT actif
     // Autoriser l'upgrade depuis un essai gratuit (price = 0)
-    if ($currentSubscription && $currentSubscription->end_date->isFuture() && $currentSubscription->price > 0) {
+    if ($currentSubscription && optional($currentSubscription->end_date)->isFuture() && $currentSubscription->price > 0) {
+
         return redirect()->route('subscription.status')
             ->with('warning', 'Vous avez déjà un abonnement actif. Veuillez attendre son expiration ou le annuler pour souscrire à un nouveau plan.');
     }

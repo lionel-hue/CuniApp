@@ -81,15 +81,24 @@ class SuperAdminController extends Controller
             $signupCounts[] = $signupEvolution->get($date) ?? 0;  // 0 if no signups that day
         }
 
+        // Detailed Recent Activities (Last 48h)
+        $recentActivities = \App\Models\UserDailyActivity::with(['user.firm'])
+            ->where('date', '>=', now()->subDays(2))
+            ->orderByDesc('updated_at')
+            ->limit(10)
+            ->get();
+
         return view('super-admin.dashboard', compact(
             'stats',
             'topFirms',
             'recentSignups',
             'activeUsers24h',
-            'signupLabels',    // ✅ ADD THIS
-            'signupCounts'     // ✅ ADD THIS
+            'signupLabels',
+            'signupCounts',
+            'recentActivities'
         ));
     }
+
 
     public function firms(Request $request)
     {
