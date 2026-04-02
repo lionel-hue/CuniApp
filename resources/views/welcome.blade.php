@@ -1773,7 +1773,7 @@
             }, 8000);
 
             // ==================== TAB SWITCHING ====================
-            function switchTab(tabName) {
+            function switchTab(tabName, isInitialLoad = false) {
                 const tabs = document.querySelectorAll('.auth-tab');
                 const forms = document.querySelectorAll('.auth-form');
 
@@ -1788,10 +1788,12 @@
 
                 sessionStorage.setItem('cuniapp_current_tab', tabName);
 
-                // Clear validation errors when switching tabs
-                document.querySelectorAll('.alert-box.error').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.validation-message.error').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+                // Clear validation errors when switching tabs, unless initial load
+                if (!isInitialLoad) {
+                    document.querySelectorAll('.alert-box.error').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.validation-message.error').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+                }
             }
 
             const tabs = document.querySelectorAll('.auth-tab');
@@ -1804,12 +1806,12 @@
 
             // Restore saved tab
             @if ($errors->has('email') || $errors->has('password'))
-                switchTab('login');
-            @elseif ($errors->has('name') || $errors->has('password_confirmation'))
-                switchTab('register');
+                switchTab('login', true);
+            @elseif ($errors->has('name') || $errors->has('password_confirmation') || $errors->has('email_register'))
+                switchTab('register', true);
             @else
                 const savedTab = sessionStorage.getItem('cuniapp_current_tab');
-                if (savedTab) switchTab(savedTab);
+                if (savedTab) switchTab(savedTab, true);
             @endif
 
             // ==================== PASSWORD STRENGTH ====================

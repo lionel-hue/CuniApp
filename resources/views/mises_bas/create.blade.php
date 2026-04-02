@@ -65,7 +65,7 @@
                                 <option value="{{ $femelle->id }}" {{ old('femelle_id') == $femelle->id ? 'selected' : '' }}>
                                     {{ $femelle->nom }} ({{ $femelle->code }})
                                     @if($femelle->etat === 'Gestante')
-                                        <span style="color: var(--accent-orange);">● Gestante</span>
+                                        - ● Gestante
                                     @endif
                                 </option>
                             @endforeach
@@ -89,7 +89,7 @@
                         <input type="date" 
                                name="date_mise_bas" 
                                class="form-control" 
-                               value="{{ old('date_mise_bas', date('Y-m-d')) }}" 
+                               value="{{ old('date_mise_bas') }}" 
                                required>
                         <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 6px; display: block;">
                             <i class="bi bi-clock"></i>

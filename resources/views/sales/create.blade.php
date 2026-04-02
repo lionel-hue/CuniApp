@@ -64,7 +64,7 @@
                         <div class="form-group">
                             <label class="form-label">Date de vente *</label>
                             <input type="date" name="date_sale" class="form-control"
-                                value="{{ old('date_sale', date('Y-m-d')) }}" required>
+                                value="{{ old('date_sale') }}" required>
                         </div>
                     </div>
                 </div>

@@ -109,9 +109,9 @@
                         </small>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Date de sevrage prévue</label>
+                        <label class="form-label">Date de sevrage prévue *</label>
                         <input type="date" name="date_sevrage_prevue" class="form-control" 
-                               value="{{ old('date_sevrage_prevue') }}">
+                               value="{{ old('date_sevrage_prevue') }}" required>
                         <small style="color: var(--text-tertiary); font-size: 12px;">
                             <i class="bi bi-info-circle"></i> Recommandé: 6 semaines après la naissance
                         </small>

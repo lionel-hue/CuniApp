@@ -80,7 +80,7 @@ class FemelleController extends Controller
             'nom' => 'required|string',
             'race' => 'nullable|string',
             'origine' => 'required|in:Interne,Achat',
-            'date_naissance' => 'nullable|date',
+            'date_naissance' => 'required|date',
             'etat' => 'required|in:Active,Gestante,Allaitante,Vide,vendu',
         ]);
 
@@ -173,7 +173,7 @@ class FemelleController extends Controller
             'nom' => 'required|string',
             'race' => 'nullable|string',
             'origine' => 'required|in:Interne,Achat',
-            'date_naissance' => 'nullable|date',
+            'date_naissance' => 'required|date',
             'etat' => 'required|in:Active,Gestante,Allaitante,Vide,vendu',
         ]);
 

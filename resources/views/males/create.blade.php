@@ -97,9 +97,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Date de naissance</label>
+                    <label class="form-label">Date de naissance *</label>
                     <input type="date" name="date_naissance" class="form-control @error('date_naissance') is-invalid @enderror" 
-                           value="{{ old('date_naissance') }}">
+                           value="{{ old('date_naissance') }}" required>
                     @error('date_naissance')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

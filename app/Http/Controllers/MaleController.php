@@ -77,7 +77,7 @@ class MaleController extends Controller
             'nom' => 'required|string|max:255',
             'race' => 'nullable|string|max:255',
             'origine' => 'required|in:Interne,Achat',
-            'date_naissance' => 'nullable|date',
+            'date_naissance' => 'required|date',
             'etat' => 'required|in:Active,Inactive,Malade,vendu',
         ]);
 

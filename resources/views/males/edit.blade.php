@@ -69,8 +69,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Date de naissance</label>
-                    <input type="date" name="date_naissance" class="form-control" value="{{ old('date_naissance', $male->date_naissance) }}">
+                    <label class="form-label">Date de naissance *</label>
+                    <input type="date" name="date_naissance" class="form-control" value="{{ old('date_naissance', $male->date_naissance) }}" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">État *</label>
