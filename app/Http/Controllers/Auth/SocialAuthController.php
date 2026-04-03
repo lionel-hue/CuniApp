@@ -67,6 +67,15 @@ class SocialAuthController extends Controller
                     return redirect()->route('super.admin.dashboard');
                 }
 
+                // Security check: Subscription active? (Trial or Paid)
+                if ($user->firm && !$user->firm->activeSubscription()->exists()) {
+                    auth()->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return redirect()->route('welcome')->with('error', 'Votre abonnement a expiré. Veuillez contacter votre administrateur ou contact@anyxtech.com pour le réactiver.');
+                }
+
                 return redirect()->route('dashboard');
             }
 
