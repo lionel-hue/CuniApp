@@ -3106,7 +3106,7 @@
                                     Paramètres
                                 </a>
                             </li>
-                            @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                            @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <li>
                                     <a href="{{ route('invoices.index') }}">
                                         <i class="bi bi-chevron-right"></i>
