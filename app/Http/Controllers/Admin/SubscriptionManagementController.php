@@ -22,7 +22,7 @@ class SubscriptionManagementController extends Controller
      */
     public function index(Request $request)
     {
-        Log::info('SubscriptionManagementController@index called', ['status' => $request->status]);
+        $query = User::where('role', 'firm_admin')->with(['activeSubscriptionRelation.plan']);
 
         // La requête de base : on ne liste que les utilisateurs gérables (prospects ou abonnés non-archivés)
         $query = User::where(function($q) {
@@ -53,6 +53,14 @@ class SubscriptionManagementController extends Controller
                     $sq->where('status', 'cancelled')
                        ->whereNull('archived_at');
                 });
+            } elseif ($status === 'inactive') {
+                // User status is explicitly inactive
+                $query->where('status', 'inactive');
+            } elseif ($status === 'failed') {
+                // User has at least one failed payment transaction
+                $query->whereHas('paymentTransactions', function ($q) {
+                    $q->where('status', 'failed');
+                });
             }
         }
 
@@ -67,7 +75,7 @@ class SubscriptionManagementController extends Controller
         $users = $query->orderBy('created_at', 'desc')->paginate(20);
 
         $stats = [
-            'total_users' => User::count(),
+            'total_users' => User::where('role', 'firm_admin')->count(),
             'active_subscriptions' => Subscription::where('status', 'active')
                 ->where('end_date', '>=', now())
                 ->whereNull('archived_at')
@@ -91,6 +99,12 @@ class SubscriptionManagementController extends Controller
     public function show($userId)
     {
         $user = User::with(['subscriptions.plan', 'paymentTransactions', 'firm.activeSubscription.plan'])->findOrFail($userId);
+
+        // Security: Subscription management is only for firm owners/admins
+        if (!$user->isFirmAdmin() && !$user->isSuperAdmin()) {
+            return redirect()->route('admin.subscriptions.index')
+                ->with('error', 'Cet utilisateur n\'est pas un administrateur d\'entreprise. Les employés ne gèrent pas d\'abonnements.');
+        }
 
         $subscriptions = Subscription::where('user_id', $userId)
             ->whereNull('archived_at') // ✅ EXCLUDE ARCHIVED
@@ -131,18 +145,24 @@ class SubscriptionManagementController extends Controller
 
         DB::beginTransaction();
         try {
-            // Deactivate existing active subscriptions
-            Subscription::where('user_id', $user->id)
+            // ✅ STACKING LOGIC: Find existing active subscription to extend its end date
+            $existingActive = Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
-                ->update(['status' => 'cancelled']);
+                ->where('end_date', '>=', now())
+                ->latest()
+                ->first();
 
-            // Create new subscription
+            $startDate = $existingActive ? $existingActive->end_date : now();
+            $newEndDate = (clone $startDate)->addMonths($durationMonths);
+
+            // Create new subscription entry (we don't "update" the old one's ID, we add a new period)
             $subscription = Subscription::create([
                 'user_id' => $user->id,
+                'firm_id' => $user->firm_id, // ✅ CRITICAL: Assign firm_id for multi-tenancy
                 'subscription_plan_id' => $plan->id,
                 'status' => 'active',
-                'start_date' => now(),
-                'end_date' => now()->addMonths($durationMonths),
+                'start_date' => $startDate,
+                'end_date' => $newEndDate,
                 'price' => $plan->price,
                 'payment_method' => 'manual',
                 'payment_reference' => 'MANUAL-' . strtoupper(uniqid()),
@@ -178,10 +198,11 @@ class SubscriptionManagementController extends Controller
                 // Don't fail the activation if invoice creation fails
             }
 
-            // Update user
+            // Update user status and end date
             $user->update([
+                'status' => 'active', // Ensure user is active if they were inactive
                 'subscription_status' => 'active',
-                'subscription_ends_at' => $subscription->end_date,
+                'subscription_ends_at' => $newEndDate,
             ]);
 
             // ✅ SEND ACTIVATION NOTIFICATION (BEFORE commit)
@@ -258,6 +279,8 @@ class SubscriptionManagementController extends Controller
 
             // Update user
             $subscription->user->update([
+                'status' => 'active', // Ensure user is active
+                'subscription_status' => 'active',
                 'subscription_ends_at' => $subscription->end_date,
             ]);
 
@@ -277,7 +300,9 @@ class SubscriptionManagementController extends Controller
      */
     public function transactions(Request $request)
     {
-        $query = PaymentTransaction::with(['user', 'subscription']);
+        $query = PaymentTransaction::whereHas('user', function($q) {
+            $q->where('role', 'firm_admin');
+        })->with(['user', 'subscription']);
 
         // Filter by status
         if ($request->has('status')) {

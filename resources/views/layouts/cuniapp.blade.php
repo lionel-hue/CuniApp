@@ -2845,14 +2845,7 @@
                     <span>Mises Bas</span>
                 </a>
                 @endif
-                {{-- ✅ ENTREPRISE LINK (Firm Admins) --}}
-                @if (auth()->check() && auth()->user()->isFirmAdmin())
-                    <a href="{{ route('firm.index') }}" class="nav-link nav-item" data-priority="7"
-                        data-route="firm.*">
-                        <i class="bi bi-building"></i>
-                        <span>Entreprise</span>
-                    </a>
-                @endif
+                {{-- Entreprise link moved to user dropdown for cleaner nav --}}
 
                 {{-- ✅ MORE DROPDOWN - Will receive overflow items --}}
                 @if (!auth()->user()->isSuperAdmin())
@@ -2963,6 +2956,12 @@
                             <a href="{{ route('settings.index') }}" class="dropdown-item-custom">
                                 <i class="bi bi-gear"></i> Paramètres
                             </a>
+                            {{-- Entreprise link for firm admins --}}
+                            @if (auth()->check() && auth()->user()->isFirmAdmin())
+                                <a href="{{ route('firm.index') }}" class="dropdown-item-custom">
+                                    <i class="bi bi-building"></i> Mon Entreprise
+                                </a>
+                            @endif
                             {{-- Theme Selector --}}
                             <a href="{{ route('settings.index') }}#system-tab"
                                 class="dropdown-item-custom theme-switch-row" id="theme-selector">
@@ -3149,7 +3148,7 @@
                                     Paramètres
                                 </a>
                             </li>
-                            @if (auth()->check() && (auth()->user()->isFirmAdmin() || auth()->user()->isSuperAdmin()))
+                            @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <li>
                                     <a href="{{ route('invoices.index') }}">
                                         <i class="bi bi-chevron-right"></i>

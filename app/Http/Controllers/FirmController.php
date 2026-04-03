@@ -116,6 +116,7 @@ class FirmController extends Controller
                 'role' => 'employee',
                 'firm_id' => $firm->id,
                 'email_verified_at' => now(), // ✅ Auto-verify employees
+                'must_change_password' => true, // ✅ Force password change on first login
                 'theme' => 'light',
                 'language' => 'fr',
                 'status' => 'active',

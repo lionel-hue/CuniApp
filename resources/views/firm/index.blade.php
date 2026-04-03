@@ -183,7 +183,6 @@
                                     <td class="ps-4 fw-semibold text-dark">{{ $employee->name }}</td>
                                     <td class="text-muted">{{ $employee->email }}</td>
                                     <td>
-                                    <td>
                                         @if ($employee->isOnline())
                                             <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
                                                 <i class="bi bi-circle-fill" style="margin-right: 4px; font-size: 8px;"></i>
@@ -207,9 +206,16 @@
                                                 <i class="bi bi-graph-up"></i>
                                             </button>
                                             <button type="button" class="btn-cuni sm secondary"
-                                                onclick="showEditEmployeeModal({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ addslashes($employee->email) }}')">
+                                                onclick="showEditEmployeeModal({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ addslashes($employee->email) }}')" title="Modifier">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
+                                            <form action="{{ route('firm.employee.delete', $employee->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Supprimer définitivement cet employé ? Cette action est irréversible.')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-cuni sm danger" title="Supprimer">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

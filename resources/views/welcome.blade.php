@@ -1284,7 +1284,7 @@
                             <span>Aucune connexion réseau</span>
                         </div>
 
-                        <!-- Success Message (After Verification) -->
+                        <!-- Success/Error Messages -->
                         @if (session('success'))
                             <div class="alert-box success">
                                 <i class="bi bi-check-circle-fill"></i>
@@ -1292,11 +1292,18 @@
                             </div>
                         @endif
 
+                        @if (session('error'))
+                            <div class="alert-box error">
+                                <i class="bi bi-exclamation-octagon-fill"></i>
+                                <div>{{ session('error') }}</div>
+                            </div>
+                        @endif
+
                         <!-- Login Form -->
                         <form method="POST" action="{{ route('login') }}" class="auth-form active" id="form-login">
                             @csrf
 
-                            @if ($errors->has('email') || $errors->has('password'))
+                            @if ($errors->any())
                                 <div class="alert-box error">
                                     <i class="bi bi-exclamation-triangle-fill"></i>
                                     <div>
@@ -1800,18 +1807,18 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', function(e) {
                     e.preventDefault();
-                    switchTab(this.getAttribute('data-tab'));
+                    switchTab(this.getAttribute('data-tab'), true); // true = fromClick
                 });
             });
 
-            // Restore saved tab
+            // Restore saved tab - Initial Load (isInitialLoad = true, so fromClick = false)
             @if ($errors->has('email') || $errors->has('password'))
-                switchTab('login', true);
+                switchTab('login', false);
             @elseif ($errors->has('name') || $errors->has('password_confirmation') || $errors->has('email_register'))
-                switchTab('register', true);
+                switchTab('register', false);
             @else
                 const savedTab = sessionStorage.getItem('cuniapp_current_tab');
-                if (savedTab) switchTab(savedTab, true);
+                if (savedTab) switchTab(savedTab, false);
             @endif
 
             // ==================== PASSWORD STRENGTH ====================

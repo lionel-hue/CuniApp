@@ -27,19 +27,32 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
-        // ✅ ADD THIS: Check if user's firm is banned
         $user = auth()->user();
-        if ($user->firm && $user->firm->isBanned()) {
+        
+        // Security check: User deactivated or Firm banned
+        if ($user->status === 'inactive' || ($user->firm && $user->firm->isBanned())) {
+            $message = ($user->status === 'inactive') 
+                ? 'Votre compte est désactivé. Veuillez contacter contact@anyxtech.com'
+                : 'Votre entreprise a été suspendue. Veuillez contacter contact@anyxtech.com';
+
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('welcome')
-                ->withErrors(['error' => 'Votre entreprise a été suspendue. Contactez le support.']);
+            return redirect()->route('welcome')->withErrors(['email' => $message]);
         }
 
         if ($user->isSuperAdmin()) {
             return redirect()->intended(route('super.admin.dashboard'));
+        }
+
+        // Security check: Subscription active? (Trial or Paid)
+        if ($user->firm && !$user->firm->activeSubscription()->exists()) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('welcome')->with('error', 'Votre abonnement a expiré. Veuillez contacter votre administrateur ou contact@anyxtech.com pour le réactiver.');
         }
 
         return redirect()->intended(route('dashboard'));

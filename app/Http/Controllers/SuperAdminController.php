@@ -20,13 +20,17 @@ class SuperAdminController extends Controller
         // Global Stats
         $stats = [
             'total_firms' => Firm::count(),
-            'active_firms' => Firm::where(fn($q) => $q->where('status', 'active'))->count(),
-            'banned_firms' => Firm::where(fn($q) => $q->where('status', 'banned'))->count(),
-            'total_users' => User::count(),
-            'total_revenue_month' => PaymentTransaction::where(fn($q) => $q->where('status', 'completed'))
+            'active_firms' => Firm::where('status', 'active')->count(),
+            'banned_firms' => Firm::where('status', 'banned')->count(),
+            'total_users' => User::where('role', 'firm_admin')->count(),
+            'total_revenue_month' => PaymentTransaction::whereHas('user', function($q) {
+                    $q->where('role', 'firm_admin');
+                })->where('status', 'completed')
                 ->whereMonth('created_at', $now->month)
                 ->sum('amount'),
-            'total_revenue_year' => PaymentTransaction::where(fn($q) => $q->where('status', 'completed'))
+            'total_revenue_year' => PaymentTransaction::whereHas('user', function($q) {
+                    $q->where('role', 'firm_admin');
+                })->where('status', 'completed')
                 ->whereYear('created_at', $now->year)
                 ->sum('amount'),
             'active_subscriptions' => Subscription::where(fn($q) => $q->where('status', 'active'))
@@ -109,15 +113,18 @@ class SuperAdminController extends Controller
     {
         $query = Firm::with(['owner', 'activeSubscription']);
 
-        if ($request->has('status')) {
-            $query->where(fn($q) => $q->where('status', $request->status));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        if ($request->has('search')) {
-            $query->where('name', 'LIKE', "%{$request->search}%")
-                ->orWhereHas('owner', function ($q) use ($request) {
-                    $q->where('name', 'LIKE', "%{$request->search}%");
-                });
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhereHas('owner', function ($sq) use ($searchTerm) {
+                        $sq->where('name', 'LIKE', "%{$searchTerm}%");
+                    });
+            });
         }
 
         $firms = $query->orderByDesc('created_at')->paginate(20);
@@ -165,14 +172,16 @@ class SuperAdminController extends Controller
     // ✅ NEW: View Firm Details
     public function showFirm($id)
     {
-        $firm = Firm::with(['owner', 'activeSubscription.plan', 'users'])->findOrFail($id);
+        $firm = Firm::with(['owner', 'activeSubscription.plan', 'users' => function($q) {
+            $q->where('role', 'firm_admin');
+        }])->findOrFail($id);
 
         $stats = [
             'total_males' => $firm->total_males,
             'total_femelles' => $firm->total_femelles,
             'total_sales' => $firm->sales()->count(),
             'total_revenue' => $firm->total_revenue,
-            'user_count' => $firm->users()->count(),
+            'user_count' => $firm->users()->where('role', 'firm_admin')->count(),
             'subscription_limit' => $firm->subscription_limit,
         ];
 
