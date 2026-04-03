@@ -1773,7 +1773,7 @@
             }, 8000);
 
             // ==================== TAB SWITCHING ====================
-            function switchTab(tabName) {
+            function switchTab(tabName, fromClick = false) {
                 const tabs = document.querySelectorAll('.auth-tab');
                 const forms = document.querySelectorAll('.auth-form');
 
@@ -1788,17 +1788,19 @@
 
                 sessionStorage.setItem('cuniapp_current_tab', tabName);
 
-                // Clear validation errors when switching tabs
-                document.querySelectorAll('.alert-box.error').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.validation-message.error').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+                if (fromClick) {
+                    // Clear validation errors when switching tabs manually
+                    document.querySelectorAll('.alert-box.error').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.validation-message.error').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+                }
             }
 
             const tabs = document.querySelectorAll('.auth-tab');
             tabs.forEach(tab => {
                 tab.addEventListener('click', function(e) {
                     e.preventDefault();
-                    switchTab(this.getAttribute('data-tab'));
+                    switchTab(this.getAttribute('data-tab'), true);
                 });
             });
 

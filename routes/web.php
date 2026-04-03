@@ -81,6 +81,10 @@ Route::middleware('guest')->group(function () {
         ->name('social-login.google.redirect');
     Route::get('/customer/social-login/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])
         ->name('social-login.google.callback');
+    Route::get('/auth/google/complete', [SocialAuthController::class, 'showCompleteRegistration'])
+        ->name('auth.google.complete');
+    Route::post('/auth/google/complete', [SocialAuthController::class, 'completeRegistration'])
+        ->name('auth.google.complete.store');
 
     // Registration
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
