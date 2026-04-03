@@ -105,11 +105,17 @@
                             </div>
                         @else
                             <div class="form-group" style="grid-column: span 2;">
-                                <div class="alert-custom alert-custom-info" style="margin-bottom: 0;">
-                                    <i class="bi bi-google alert-icon"></i>
+                                <div class="alert-custom alert-custom-info" style="margin-bottom: 0; background: rgba(59, 130, 246, 0.05); border-left: 4px solid var(--primary);">
+                                    <i class="bi bi-google alert-icon" style="color: var(--primary);"></i>
                                     <div>
-                                        Vous êtes connecté via <strong>Google</strong>. La gestion du mot de passe se fait
-                                        directement sur votre compte Google.
+                                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--primary);">Compte lié à Google</h4>
+                                        <p style="font-size: 13px; line-height: 1.5; margin: 0; color: var(--text-primary);">
+                                            Vous êtes connecté via votre compte <strong>Google</strong>. 
+                                            Par mesure de sécurité, la gestion du mot de passe est directement gérée par Google.
+                                        </p>
+                                        <p style="font-size: 12px; margin-top: 8px; color: var(--text-secondary); font-style: italic;">
+                                            <i class="bi bi-info-circle"></i> Note : La connexion traditionnelle par mot de passe est désactivée pour ce profil. Utilisez toujours le bouton "Se connecter avec Google".
+                                        </p>
                                     </div>
                                 </div>
                             </div>

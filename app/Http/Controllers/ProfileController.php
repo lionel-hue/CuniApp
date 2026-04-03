@@ -47,7 +47,13 @@ class ProfileController extends Controller
 
         $user->name = $request->name;
         $user->email = $request->email;
+
         if ($request->filled('new_password')) {
+            // Security check: Google users should not be changing passwords here
+            if ($user->google_id) {
+                return back()->withErrors(['new_password' => 'La gestion du mot de passe n\'est pas disponible pour les comptes liés à Google.']);
+            }
+
             // Vérification de sécurité avec le mot de passe actuel
             if (!Hash::check($request->current_password, $user->password)) {
                 return back()->withErrors(['current_password' => 'Votre mot de passe actuel est incorrect.']);
