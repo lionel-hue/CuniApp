@@ -29,6 +29,7 @@ class User extends Authenticatable
         'firm_id',  // ✅ ADD THIS
         'role',     // ✅ Ensure this includes new roles
         'status',
+        'must_change_password', // ✅ New flag
     ];
 
     protected $hidden = [
@@ -46,6 +47,7 @@ class User extends Authenticatable
             'last_seen_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'must_change_password' => 'boolean',
         ];
     }
 

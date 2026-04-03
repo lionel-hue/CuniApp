@@ -86,6 +86,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/auth/google/complete', [SocialAuthController::class, 'completeRegistration'])
         ->name('auth.google.complete.store');
 
+    // ✅ FORCE PASSWORD CHANGE ROUTES
+    Route::get('/auth/password/change', [App\Http\Controllers\Auth\PasswordChangeController::class, 'showChangeForm'])
+        ->name('password.change.notice');
+    Route::post('/auth/password/change', [App\Http\Controllers\Auth\PasswordChangeController::class, 'updatePassword'])
+        ->name('password.change.update');
+
     // Registration
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store']);
