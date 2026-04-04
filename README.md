@@ -4,6 +4,11 @@
     <a href="#-cuniapp--gestion-d-élevage-cunicole-professionnel">🇫🇷 Français (Défaut)</a> | 
     <a href="#-cuniapp--professional-rabbit-breeding-management-system">🇺🇸 English</a>
   </p>
+  <p>
+    <a href="https://cuniapp.alwaysdata.net" target="_blank">
+      <img src="https://img.shields.io/badge/Live_Demo-Accéder_à_l'application-0BC37E?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Live Demo">
+    </a>
+  </p>
 </div>
 
 ---
@@ -59,10 +64,18 @@
 - **Paiements** : Suivi des statuts (Payé, En attente, Partiel).
 - **Ventes Groupées** : Gestion multis-lapidés en une seule transaction.
 
+<div align="center">
+  <img src="assets/sub-plans.png" alt="Subscription Plans" width="600" style="border-radius: 8px; margin: 15px 0;">
+</div>
+
 ### 💳 Infrastructure SaaS & Entreprise
 - **Abonnements** : Plans d'essai et abonnements payants intégrés.
 - **Paiements Locaux** : Intégration FedaPay (MoMo, Moov, Celtis).
 - **Multi-Entreprises** : Gestion de fermes distinctes avec collaborateurs.
+
+<div align="center">
+  <img src="assets/enterprise.png" alt="Enterprise Management" width="600" style="border-radius: 8px; margin: 15px 0;">
+</div>
 
 ---
 
@@ -114,6 +127,9 @@ npm run dev & php artisan serve
     <strong>A complete ERP solution for managing cuniculiculture operations (rabbit farms).</strong><br>
     Reproduction tracking, commercial management, SaaS, and multi-farm governance.
   </p>
+  <p>
+    <a href="https://cuniapp.alwaysdata.net" target="_blank"><b>Live Demo</b></a>
+  </p>
 </div>
 
 ---
@@ -127,10 +143,10 @@ npm run dev & php artisan serve
 - **SaaS Infrastructure**: Native FedaPay integration and subscription management.
 - **Enterprise Ready**: Multi-firm support with role-based access.
 
-### 🛠️ Tech Stack
-- **Engine**: Laravel 10
-- **UI/UX**: Tailwind CSS 3 & Alpine.js
-- **Payments**: FedaPay API
+<div align="center">
+  <img src="assets/sub-plans.png" alt="Subscription Plans" width="500">
+  <img src="assets/enterprise.png" alt="Enterprise" width="500">
+</div>
 
 ---
 
