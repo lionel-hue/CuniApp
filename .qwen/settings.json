@@ -3,7 +3,9 @@
     "allow": [
       "Bash(php *)",
       "Bash(cp *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(curl *)",
+      "Bash(mysql *)"
     ]
   },
   "$version": 3

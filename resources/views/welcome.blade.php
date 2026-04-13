@@ -1854,7 +1854,8 @@
                         <input type="hidden" name="email" value="{{ session('verification_email') }}">
                         <div class="verification-code-inputs">
                             <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]"
-                                inputmode="numeric" data-index="0" required autofocus>
+                                inputmode="numeric" data-index="0" required autofocus
+                                autocomplete="one-time-code">
                             <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]"
                                 inputmode="numeric" data-index="1" required>
                             <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]"
@@ -1983,7 +1984,7 @@
                                     @csrf
                                     <input type="hidden" name="email" value="${email}">
                                     <div class="verification-code-inputs">
-                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="0" required autofocus>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="0" required autofocus autocomplete="one-time-code">
                                         <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="1" required>
                                         <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="2" required>
                                         <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="3" required>
@@ -2000,6 +2001,9 @@
                     </div>`;
 
                     document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+                    // Attach event listeners to dynamically created inputs
+                    attachVerificationInputListeners();
                 }
 
                 // Force show the modal
@@ -2186,6 +2190,13 @@
                 });
             });
 
+            // Attach listeners to verification inputs NOW (DOM is already ready)
+            setTimeout(() => {
+                if (typeof attachVerificationInputListeners === 'function') {
+                    attachVerificationInputListeners();
+                }
+            }, 100);
+
             // ==================== VERIFICATION MODAL ====================
             let resendTimerInterval;
 
@@ -2200,27 +2211,98 @@
                 }
             };
 
-            // Verification Code Input Handling
-            document.querySelectorAll('.verification-code-input').forEach((input, index, inputs) => {
-                input.addEventListener('input', function() {
-                    if (this.value.length === 1) {
-                        this.classList.add('filled');
-                        if (index < inputs.length - 1) {
+            // ==================== VERIFICATION CODE INPUT HANDLING ====================
+            function attachVerificationInputListeners() {
+                const inputs = document.querySelectorAll('.verification-code-input');
+                if (inputs.length === 0) return; // No inputs yet, skip
+
+                inputs.forEach((input, index) => {
+                    // Skip if already has listeners
+                    if (input.dataset.listenerAttached) return;
+                    input.dataset.listenerAttached = 'true';
+
+                    // Handle character input
+                    input.addEventListener('input', function(e) {
+                        const val = this.value;
+                        // Only process single digits
+                        if (val && /^[0-9]$/.test(val.trim())) {
+                            this.value = val.trim();
+                            this.classList.add('filled');
+                            updateVerificationCode();
+                            // Auto-advance to next input
+                            if (index < inputs.length - 1) {
+                                setTimeout(() => inputs[index + 1].focus(), 50);
+                            } else {
+                                // Last digit entered - check if all inputs are filled and auto-submit
+                                setTimeout(() => {
+                                    let fullCode = '';
+                                    inputs.forEach(inp => fullCode += inp.value);
+                                    if (fullCode.length === 6) {
+                                        const form = document.getElementById('verificationForm');
+                                        if (form) {
+                                            console.log('🚀 All 6 digits entered, auto-submitting form...');
+                                            form.submit();
+                                        }
+                                    }
+                                }, 150);
+                            }
+                        } else if (val.length > 1) {
+                            // Handle paste of multiple digits
+                            const digits = val.replace(/[^0-9]/g, '').split('');
+                            if (digits.length > 0) {
+                                inputs.forEach((inp, i) => {
+                                    if (digits[i]) {
+                                        inp.value = digits[i];
+                                        inp.classList.add('filled');
+                                    }
+                                });
+                                updateVerificationCode();
+                                // Focus next empty input
+                                const nextIdx = Math.min(digits.length, inputs.length - 1);
+                                if (nextIdx < inputs.length) {
+                                    inputs[nextIdx].focus();
+                                }
+                            }
+                        } else if (val === '') {
+                            this.classList.remove('filled');
+                            updateVerificationCode();
+                        }
+                    });
+
+                    // Handle backspace and navigation via keydown
+                    input.addEventListener('keydown', function(e) {
+                        // Backspace: move to previous input if current is empty
+                        if (e.key === 'Backspace') {
+                            if (!this.value && index > 0) {
+                                e.preventDefault();
+                                inputs[index - 1].focus();
+                                inputs[index - 1].value = '';
+                                inputs[index - 1].classList.remove('filled');
+                                updateVerificationCode();
+                            }
+                        }
+                        // Arrow keys: navigate between inputs
+                        if (e.key === 'ArrowLeft' && index > 0) {
+                            e.preventDefault();
+                            inputs[index - 1].focus();
+                        }
+                        if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                            e.preventDefault();
                             inputs[index + 1].focus();
                         }
-                    }
-                    updateVerificationCode();
+                    });
+
+                    // Select content on focus for easy overwrite
+                    input.addEventListener('focus', function() {
+                        this.select();
+                    });
                 });
 
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Backspace' && this.value === '' && index > 0) {
-                        inputs[index - 1].focus();
-                        inputs[index - 1].value = '';
-                        inputs[index - 1].classList.remove('filled');
-                        updateVerificationCode();
-                    }
-                });
-            });
+                console.log(`✅ Verification input listeners attached to ${inputs.length} inputs`);
+            }
+
+            // Call immediately since DOM is already ready
+            attachVerificationInputListeners();
 
             function updateVerificationCode() {
                 let code = '';
@@ -2228,7 +2310,10 @@
                     code += input.value;
                 });
                 const codeInput = document.getElementById('verificationCodeInput');
-                if (codeInput) codeInput.value = code;
+                if (codeInput) {
+                    codeInput.value = code;
+                    console.log(`🔑 Verification code updated: ${code} (length: ${code.length})`);
+                }
             }
 
             function startResendTimer() {
