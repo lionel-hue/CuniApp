@@ -11,6 +11,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Verification modal data (always available for JS) -->
+    <meta name="verification-pending" content="{{ session('verification_pending') ? '1' : '0' }}">
+    <meta name="verification-email" content="{{ session('verification_email') ?? '' }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
@@ -1469,9 +1473,9 @@
                         <form method="POST" action="{{ route('login') }}" class="auth-form active" id="form-login">
                             @csrf
 
-                            <!-- ✅ Login-specific error display -->
+                            <!-- ✅ Login-specific error display (includes session('error') as fallback) -->
                             @if ($errors->has('email') || $errors->has('password') || $errors->has('auth') || session('error'))
-                                <div class="alert-box error">
+                                <div class="alert-box error" id="loginErrorAlert">
                                     <i class="bi bi-exclamation-triangle-fill"></i>
                                     <div>
                                         <strong>Erreur de connexion</strong>
@@ -1574,7 +1578,7 @@
                         <form method="POST" action="{{ route('register') }}" class="auth-form" id="form-register">
                             @csrf
 
-                            @if ($errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('password_confirmation'))
+                            @if ($errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('password_confirmation') || $errors->has('firm_name') || $errors->has('terms') || $errors->has('firm_description'))
                                 <div class="alert-box error">
                                     <i class="bi bi-exclamation-triangle-fill"></i>
                                     <div>
@@ -1583,24 +1587,7 @@
                                             @foreach ($errors->all() as $error)
                                                 <li>
                                                     <i class="bi bi-x-circle-fill"></i>
-                                                    <span>
-                                                        @if (str_contains($error, 'validation.unique'))
-                                                            Cette adresse email est déjà utilisée. Veuillez en choisir
-                                                            une autre.
-                                                        @elseif(str_contains($error, 'validation.email'))
-                                                            Format d'email invalide.
-                                                        @elseif(str_contains($error, 'validation.min'))
-                                                            Le champ est trop court.
-                                                        @elseif(str_contains($error, 'validation.required'))
-                                                            Ce champ est obligatoire.
-                                                        @elseif(str_contains($error, 'validation.confirmed'))
-                                                            Les mots de passe ne correspondent pas.
-                                                        @elseif(str_contains($error, 'validation.'))
-                                                            {{ str_replace('validation.', '', $error) }}
-                                                        @else
-                                                            {{ $error }}
-                                                        @endif
-                                                    </span>
+                                                    <span>{{ $error }}</span>
                                                 </li>
                                             @endforeach
                                         </ul>
@@ -1908,26 +1895,37 @@
                 const overlay = document.getElementById('verificationOverlay');
                 const verificationPending = {{ session('verification_pending') ? 'true' : 'false' }};
 
-                if (overlay && verificationPending) {
-                    // Force display
-                    overlay.style.display = 'flex';
-                    overlay.classList.add('active');
-                    document.body.style.overflow = 'hidden'; // Prevent scrolling
+                // Also check meta tag as fallback
+                const metaTag = document.querySelector('meta[name="verification-pending"]');
+                const metaValue = metaTag ? metaTag.getAttribute('content') : '0';
+                const shouldShow = verificationPending || metaValue === '1';
 
-                    // Focus first input after short delay
-                    setTimeout(() => {
-                        const firstInput = document.querySelector('.verification-code-input');
-                        if (firstInput) {
-                            firstInput.focus();
+                if (shouldShow) {
+                    if (overlay) {
+                        // Force display
+                        overlay.style.display = 'flex';
+                        overlay.classList.add('active');
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling
+
+                        // Focus first input after short delay
+                        setTimeout(() => {
+                            const firstInput = document.querySelector('.verification-code-input');
+                            if (firstInput) {
+                                firstInput.focus();
+                            }
+                        }, 300);
+
+                        // Start resend timer
+                        if (typeof startResendTimer === 'function') {
+                            startResendTimer();
                         }
-                    }, 300);
 
-                    // Start resend timer
-                    if (typeof startResendTimer === 'function') {
-                        startResendTimer();
+                        console.log('✅ Verification modal opened');
+                    } else {
+                        // Modal HTML not rendered - fallback: show alert
+                        const email = document.querySelector('meta[name="verification-email"]')?.getAttribute('content') || 'votre email';
+                        console.warn('⚠️ Verification modal HTML missing. Check @@if(session("verification_pending")) in blade.');
                     }
-
-                    console.log('✅ Verification modal opened');
                 }
             });
         </script>
@@ -1951,6 +1949,74 @@
             window.addEventListener('offline', updateNetworkStatus);
             updateNetworkStatus();
 
+            // ==================== VERIFICATION MODAL FALLBACK ====================
+            // If session says verification is pending but modal HTML is missing, build it via JS
+            const verificationMeta = document.querySelector('meta[name="verification-pending"]');
+            const verificationEmailMeta = document.querySelector('meta[name="verification-email"]');
+            if (verificationMeta && verificationMeta.getAttribute('content') === '1') {
+                const existingOverlay = document.getElementById('verificationOverlay');
+                if (!existingOverlay) {
+                    console.warn('⚠️ Verification modal HTML not rendered by Blade, building via JS fallback...');
+                    const email = verificationEmailMeta ? verificationEmailMeta.getAttribute('content') : 'votre email';
+
+                    // Build modal HTML
+                    const modalHTML = `
+                    <!-- Success banner -->
+                    @if(session('success'))
+                    <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1001;
+                        background:#10B981;color:white;padding:12px 24px;border-radius:12px;
+                        box-shadow:0 10px 25px rgba(16,185,129,0.3);font-size:14px;font-weight:600;
+                        display:flex;align-items:center;gap:8px;max-width:90%;">
+                        <i class="bi bi-check-circle-fill" style="font-size:18px;"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                    @endif
+                    <div class="verification-overlay active" id="verificationOverlay" style="display:flex;">
+                        <div class="verification-modal">
+                            <div class="verification-header">
+                                <h3><i class="bi bi-shield-check"></i> Vérification Email</h3>
+                                <button type="button" class="modal-close" onclick="closeVerificationModal()"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                            <div class="verification-body">
+                                <p class="verification-message">Un code de vérification a été envoyé à<br><strong id="verificationEmailDisplay">${email}</strong></p>
+                                <form id="verificationForm" method="POST" action="{{ route('verification.code.verify') }}">
+                                    @csrf
+                                    <input type="hidden" name="email" value="${email}">
+                                    <div class="verification-code-inputs">
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="0" required autofocus>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="1" required>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="2" required>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="3" required>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="4" required>
+                                        <input type="text" class="verification-code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="5" required>
+                                    </div>
+                                    <input type="hidden" name="code" id="verificationCodeInput">
+                                    <button type="submit" class="btn-submit"><span>Vérifier</span><i class="bi bi-check-circle"></i></button>
+                                </form>
+                                <div class="verification-info"><p>Vous n'avez pas reçu le code ? <a href="#" id="resendCode" onclick="resendVerificationCode(event)">Renvoyer</a></p></div>
+                                <div class="resend-timer disabled" id="resendTimer">Renvoyer dans <span id="timerCount">60</span>s</div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    document.body.insertAdjacentHTML('beforeend', modalHTML);
+                }
+
+                // Force show the modal
+                const overlay = document.getElementById('verificationOverlay');
+                overlay.style.display = 'flex';
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                setTimeout(() => {
+                    const firstInput = document.querySelector('.verification-code-input');
+                    if (firstInput) firstInput.focus();
+                }, 300);
+
+                if (typeof startResendTimer === 'function') startResendTimer();
+                console.log('✅ Verification modal shown');
+            }
+
             // Auto-hide validation errors after 12 seconds (except login errors which stay visible)
             setTimeout(() => {
                 const hideElements = (selector) => {
@@ -1970,7 +2036,7 @@
             }, 12000);
 
             // ==================== TAB SWITCHING ====================
-            function switchTab(tabName, isInitialLoad = false) {
+            function switchTab(tabName, fromClick = false) {
                 const tabs = document.querySelectorAll('.auth-tab');
                 const forms = document.querySelectorAll('.auth-form');
 
@@ -1985,8 +2051,9 @@
 
                 sessionStorage.setItem('cuniapp_current_tab', tabName);
 
-                // Clear validation errors when switching tabs, unless initial load
-                if (!isInitialLoad) {
+                // Clear validation errors ONLY when user manually clicks a tab
+                // NEVER clear errors on initial page load (fromClick=false)
+                if (fromClick) {
                     document.querySelectorAll('.alert-box.error').forEach(el => el.style.display = 'none');
                     document.querySelectorAll('.validation-message.error').forEach(el => el.style.display = 'none');
                     document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
@@ -1997,19 +2064,30 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', function(e) {
                     e.preventDefault();
-                    switchTab(this.getAttribute('data-tab'), true); // true = fromClick
+                    switchTab(this.getAttribute('data-tab'), true); // true = user clicked
                 });
             });
 
-            // Restore saved tab - Initial Load (isInitialLoad = true, so fromClick = false)
-            @if ($errors->has('email') || $errors->has('password'))
-                switchTab('login', false);
-            @elseif ($errors->has('name') || $errors->has('password_confirmation') || $errors->has('email_register'))
-                switchTab('register', false);
-            @else
-                const savedTab = sessionStorage.getItem('cuniapp_current_tab');
-                if (savedTab) switchTab(savedTab, false);
-            @endif
+            // Restore correct tab on page load (fromClick=false → preserves errors)
+            @php
+                // Use old() input to determine which form was submitted
+                $wasRegistrationForm = old('name') !== null || old('firm_name') !== null || old('firm_description') !== null;
+                $wasLoginForm = old('email') !== null && !$wasRegistrationForm && !old('firm_name');
+
+                if ($wasRegistrationForm) {
+                    // Any error after registration submission → show register tab
+                    echo "switchTab('register', false);";
+                } elseif ($wasLoginForm) {
+                    // Only email+password submitted → show login tab
+                    echo "switchTab('login', false);";
+                } elseif (session('verification_pending')) {
+                    // Successful registration → show register tab (modal will overlay)
+                    echo "switchTab('register', false);";
+                } else {
+                    // No form data → use saved tab or default to login
+                    echo "const savedTab = sessionStorage.getItem('cuniapp_current_tab'); if (savedTab) switchTab(savedTab, false);";
+                }
+            @endphp
 
             // ==================== PASSWORD STRENGTH ====================
             const registerPassword = document.getElementById('registerPassword');
