@@ -1835,6 +1835,17 @@
 
     <!-- ==================== VERIFICATION MODAL ==================== -->
     @if (session('verification_pending'))
+        <!-- Success message shown above the modal -->
+        @if (session('success'))
+            <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1001;
+                        background: #10B981; color: white; padding: 12px 24px; border-radius: 12px;
+                        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); font-size: 14px; font-weight: 600;
+                        display: flex; align-items: center; gap: 8px; max-width: 90%;">
+                <i class="bi bi-check-circle-fill" style="font-size: 18px;"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
         <div class="verification-overlay active" id="verificationOverlay" style="display: flex;">
             <div class="verification-modal">
                 <div class="verification-header">
