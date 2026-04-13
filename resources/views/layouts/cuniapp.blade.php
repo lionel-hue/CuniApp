@@ -2790,7 +2790,7 @@
                             @endif
                         </h1>
                     </a>
-                    <p class="brand-tagline">Gestion intelligente de votre cheptel</p>
+                    <p class="brand-tagline">{{ __('Gestion intelligente de votre cheptel') }}</p>
                 </div>
             </div>
 
@@ -2802,47 +2802,47 @@
                     <a href="{{ route('super.admin.dashboard') }}" class="nav-link nav-item" data-priority="1"
                         data-route="super.admin.dashboard" style="color: var(--accent-orange); font-weight: 700;">
                         <i class="bi bi-star-fill"></i>
-                        <span>Super Admin</span>
+                        <span>{{ __('Super Admin') }}</span>
                     </a>
                     <a href="{{ route('admin.subscriptions.index') }}" class="nav-link nav-item" data-priority="1.1"
                         data-route="admin.subscriptions.index">
                         <i class="bi bi-card-checklist"></i>
-                        <span>Abonnements</span>
+                        <span>{{ __('Gestion Abonnements') }}</span>
                     </a>
                     <a href="{{ route('super.admin.firms') }}" class="nav-link nav-item" data-priority="1.2"
                         data-route="super.admin.firms">
                         <i class="bi bi-buildings"></i>
-                        <span>Entreprises</span>
+                        <span>{{ __('Entreprises') }}</span>
                     </a>
                     <a href="{{ route('admin.subscriptions.transactions') }}" class="nav-link nav-item" data-priority="1.3"
                         data-route="admin.subscriptions.transactions">
                         <i class="bi bi-cash-stack"></i>
-                        <span>Transactions</span>
+                        <span>{{ __('Transactions') }}</span>
                     </a>
                 @endif
 
                 @if (!auth()->user()->isSuperAdmin())
                 <a href="{{ route('dashboard') }}" class="nav-link nav-item" data-priority="2" data-route="dashboard">
                     <i class="bi bi-speedometer2"></i>
-                    <span>Tableau de bord</span>
+                    <span>{{ __('Tableau de bord') }}</span>
                 </a>
                 <a href="{{ route('males.index') }}" class="nav-link nav-item" data-priority="3" data-route="males.*">
                     <i class="bi bi-arrow-up-right-square"></i>
-                    <span>Mâles</span>
+                    <span>{{ __('Mâles') }}</span>
                 </a>
                 <a href="{{ route('femelles.index') }}" class="nav-link nav-item" data-priority="4"
                     data-route="femelles.*">
                     <i class="bi bi-arrow-down-right-square"></i>
-                    <span>Femelles</span>
+                    <span>{{ __('Femelles') }}</span>
                 </a>
                 <a href="{{ route('lapins.index') }}" class="nav-link nav-item" data-priority="5" data-route="lapins.*">
                     <i class="bi bi-collection"></i>
-                    <span>Tous les Lapins</span>
+                    <span>{{ __('Tous les Lapins') }}</span>
                 </a>
                 <a href="{{ route('mises-bas.index') }}" class="nav-link nav-item" data-priority="6"
                     data-route="mises-bas.*">
                     <i class="bi bi-egg"></i>
-                    <span>Mises Bas</span>
+                    <span>{{ __('Mises Bas') }}</span>
                 </a>
                 @endif
                 {{-- Entreprise link moved to user dropdown for cleaner nav --}}
@@ -2853,7 +2853,7 @@
                     <button class="nav-link" type="button" onclick="toggleMoreDropdown(event)" id="moreButton"
                         style="position: relative;">
                         <i class="bi bi-three-dots"></i>
-                        <span>Plus</span>
+                        <span>{{ __('Plus') }}</span>
                         <i class="bi bi-chevron-down" style="font-size: 10px;"></i>
                     </button>
                     {{-- ✅ DROPDOWN MENU --}}
@@ -2862,30 +2862,30 @@
                         {{-- Static items always in dropdown --}}
                         @if (!auth()->user()->isSuperAdmin())
                         <a href="{{ route('saillies.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-heart"></i> Saillies
+                            <i class="bi bi-heart"></i> {{ __('Saillies') }}
                         </a>
                         <a href="{{ route('naissances.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-egg-fill"></i> Naissances
+                            <i class="bi bi-egg-fill"></i> {{ __('Naissances') }}
                         </a>
                         <a href="{{ route('sales.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-cart"></i> Ventes
+                            <i class="bi bi-cart"></i> {{ __('Ventes') }}
                         </a>
                         <a href="{{ route('activites.index') }}" class="dropdown-item-custom static-dropdown-item">
-                            <i class="bi bi-clock-history"></i> Activités
+                            <i class="bi bi-clock-history"></i> {{ __('Activités') }}
                         </a>
                         @endif
-                        
+
                         @if (auth()->check() && auth()->user()->isFirmAdmin())
                             <a href="{{ route('invoices.index') }}" class="dropdown-item-custom static-dropdown-item">
                                 <i class="bi bi-receipt"></i>
-                                <span>Mes Factures</span>
+                                <span>{{ __('Mes Factures') }}</span>
                             </a>
 
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <a href="{{ route('subscription.plans') }}" class="dropdown-item-custom"
                                 style="position:relative; {{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
                                 <i class="bi bi-credit-card"></i>
-                                <span style="flex: 1;">Abonnement</span>
+                                <span style="flex: 1;">{{ __('Abonnement') }}</span>
                                 @if (!auth()->user()->hasActiveSubscription())
                                     <span class="notification-badge"
                                         style="background: var(--accent-orange); position: absolute; top: 8px; right: 12px; min-width: 18px; height: 18px; font-size: 10px;">!</span>
@@ -2893,13 +2893,13 @@
                             </a>
                             <a href="{{ route('subscription.status') }}" class="dropdown-item-custom">
                                 <i class="bi bi-pie-chart"></i>
-                                <span>Mon Abonnement</span>
+                                <span>{{ __('Mon Abonnement') }}</span>
                                 @if (auth()->user()->hasActiveSubscription())
                                     <span class="badge"
-                                        style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-size: 10px; margin-left: auto;">Actif</span>
+                                        style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-size: 10px; margin-left: auto;">{{ __('Actif') }}</span>
                                 @else
                                     <span class="badge"
-                                        style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">Inactif</span>
+                                        style="background: rgba(239, 68, 68, 0.1); color: var(--accent-red); font-size: 10px; margin-left: auto;">{{ __('Inactif') }}</span>
                                 @endif
                             </a>
                         @endif
@@ -2960,7 +2960,7 @@
                             {{-- Entreprise link for firm admins --}}
                             @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <a href="{{ route('firm.index') }}" class="dropdown-item-custom">
-                                    <i class="bi bi-building"></i> Mon Entreprise
+                                    <i class="bi bi-building"></i> {{ __('Mon Entreprise') }}
                                 </a>
                             @endif
                             {{-- Theme Selector --}}
@@ -2968,16 +2968,16 @@
                                 class="dropdown-item-custom theme-switch-row" id="theme-selector">
                                 <div class="theme-info" style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                     <i class="bi bi-palette" id="theme-icon-main" style="color: var(--primary);"></i>
-                                    <span>Thème</span>
+                                    <span>{{ __('Thème') }}</span>
                                 </div>
                                 <div class="theme-status-badge" id="theme-badge">
                                     @php
                                         $themeValue = auth()->user()->theme ?? 'system';
                                         $themeLabel = match ($themeValue) {
-                                            'system' => 'Système',
-                                            'light' => 'Clair',
-                                            'dark' => 'Sombre',
-                                            default => 'Système',
+                                            'system' => __('Système'),
+                                            'light' => __('Clair'),
+                                            'dark' => __('Sombre'),
+                                            default => __('Système'),
                                         };
                                     @endphp
                                     <span id="theme-text">{{ $themeLabel }}</span>
@@ -2987,20 +2987,20 @@
                             @if (auth()->check() && auth()->user()->role === 'admin')
                                 <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                                 <div class="dropdown-header" style="background: var(--surface-alt);">
-                                    <span style="font-size: 12px; color: var(--text-tertiary);">👑 Administration</span>
+                                    <span style="font-size: 12px; color: var(--text-tertiary);">👑 {{ __('Administration') }}</span>
                                 </div>
                                 <a href="{{ route('admin.subscriptions.index') }}" class="dropdown-item-custom">
-                                    <i class="bi bi-shield-lock"></i> Gestion Abonnements
+                                    <i class="bi bi-shield-lock"></i> {{ __('Gestion Abonnements') }}
                                 </a>
                                 <a href="{{ route('admin.subscriptions.transactions') }}" class="dropdown-item-custom">
-                                    <i class="bi bi-receipt"></i> Transactions
+                                    <i class="bi bi-receipt"></i> {{ __('Transactions') }}
                                 </a>
                             @endif
                             <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 8px 0;">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="dropdown-item-custom logout-btn" style="width: 100%;">
-                                    <i class="bi bi-box-arrow-right"></i> Déconnexion
+                                    <i class="bi bi-box-arrow-right"></i> {{ __('Déconnexion') }}
                                 </button>
                             </form>
                         </div>
@@ -3012,61 +3012,61 @@
         {{-- ✅ MOBILE NAV OVERLAY --}}
         <div class="mobile-nav-overlay" id="mobileNavOverlay">
             <div class="mobile-nav-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--surface-border);">
-                <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Menu</h3>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 600;">{{ __('Menu') }}</h3>
                 <button class="mobile-nav-close" onclick="toggleMobileNav()" style="background: none; border: none; font-size: 24px; color: var(--text-primary); cursor: pointer;"><i class="bi bi-x"></i></button>
             </div>
             <div class="mobile-nav-links" style="padding: 20px;">
                 @if (auth()->check() && auth()->user()->isSuperAdmin())
                     <div class="mobile-nav-divider"></div>
-                    <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange); font-weight: 700;"><i class="bi bi-star-fill"></i> Super Admin</a>
-                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-card-checklist"></i> Gestion Abonnements</a>
-                    <a href="{{ route('super.admin.firms') }}" class="mobile-nav-link"><i class="bi bi-buildings"></i> Toutes les Entreprises</a>
-                    <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link"><i class="bi bi-cash-stack"></i> Transactions </a>
+                    <a href="{{ route('super.admin.dashboard') }}" class="mobile-nav-link" style="color: var(--accent-orange); font-weight: 700;"><i class="bi bi-star-fill"></i> {{ __('Super Admin') }}</a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-card-checklist"></i> {{ __('Gestion Abonnements') }}</a>
+                    <a href="{{ route('super.admin.firms') }}" class="mobile-nav-link"><i class="bi bi-buildings"></i> {{ __('Toutes les Entreprises') }}</a>
+                    <a href="{{ route('admin.subscriptions.transactions') }}" class="mobile-nav-link"><i class="bi bi-cash-stack"></i> {{ __('Transactions') }} </a>
                 @endif
 
                 @if (!auth()->user()->isSuperAdmin())
-                <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> Tableau de bord</a>
-                
-                <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> Mâles</a>
-                <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> Femelles</a>
-                <a href="{{ route('lapins.index') }}" class="mobile-nav-link"><i class="bi bi-collection"></i> Tous les Lapins</a>
-                <a href="{{ route('mises-bas.index') }}" class="mobile-nav-link"><i class="bi bi-egg"></i> Mises Bas</a>
-                
+                <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i> {{ __('Tableau de bord') }}</a>
+
+                <a href="{{ route('males.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-up-right-square"></i> {{ __('Mâles') }}</a>
+                <a href="{{ route('femelles.index') }}" class="mobile-nav-link"><i class="bi bi-arrow-down-right-square"></i> {{ __('Femelles') }}</a>
+                <a href="{{ route('lapins.index') }}" class="mobile-nav-link"><i class="bi bi-collection"></i> {{ __('Tous les Lapins') }}</a>
+                <a href="{{ route('mises-bas.index') }}" class="mobile-nav-link"><i class="bi bi-egg"></i> {{ __('Mises Bas') }}</a>
+
                 <div class="mobile-nav-divider"></div>
-                
-                <a href="{{ route('saillies.index') }}" class="mobile-nav-link"><i class="bi bi-heart"></i> Saillies</a>
-                <a href="{{ route('naissances.index') }}" class="mobile-nav-link"><i class="bi bi-egg-fill"></i> Naissances</a>
-                <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> Ventes</a>
-                <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> Activités</a>
+
+                <a href="{{ route('saillies.index') }}" class="mobile-nav-link"><i class="bi bi-heart"></i> {{ __('Saillies') }}</a>
+                <a href="{{ route('naissances.index') }}" class="mobile-nav-link"><i class="bi bi-egg-fill"></i> {{ __('Naissances') }}</a>
+                <a href="{{ route('sales.index') }}" class="mobile-nav-link"><i class="bi bi-cart"></i> {{ __('Ventes') }}</a>
+                <a href="{{ route('activites.index') }}" class="mobile-nav-link"><i class="bi bi-clock-history"></i> {{ __('Activités') }}</a>
                 @endif
-                
+
                 @if (auth()->check() && auth()->user()->isFirmAdmin())
-                    <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> Mes Factures</a>
+                    <a href="{{ route('invoices.index') }}" class="mobile-nav-link"><i class="bi bi-receipt"></i> {{ __('Mes Factures') }}</a>
                     <div class="mobile-nav-divider"></div>
-                    <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> Entreprise</a>
+                    <a href="{{ route('firm.index') }}" class="mobile-nav-link"><i class="bi bi-building"></i> {{ __('Mon Entreprise') }}</a>
                 @endif
 
                 <div class="mobile-nav-divider"></div>
-                <a href="{{ route('profile.edit') }}" class="mobile-nav-link"><i class="bi bi-person"></i> Profil</a>
-                <a href="{{ route('settings.index') }}" class="mobile-nav-link"><i class="bi bi-gear"></i> Paramètres</a>
+                <a href="{{ route('profile.edit') }}" class="mobile-nav-link"><i class="bi bi-person"></i> {{ __('Profil') }}</a>
+                <a href="{{ route('settings.index') }}" class="mobile-nav-link"><i class="bi bi-gear"></i> {{ __('Paramètres') }}</a>
 
                 @if (auth()->check() && auth()->user()->role !== 'admin' && !auth()->user()->isSuperAdmin())
                     <div class="mobile-nav-divider"></div>
                     <a href="{{ route('subscription.plans') }}" class="mobile-nav-link" style="{{ !auth()->user()->hasActiveSubscription() ? 'color: var(--accent-orange);' : '' }}">
-                        <i class="bi bi-credit-card"></i> Abonnement
+                        <i class="bi bi-credit-card"></i> {{ __('Abonnement') }}
                     </a>
                 @endif
-                
+
                 @if (auth()->check() && auth()->user()->role === 'admin')
                     <div class="mobile-nav-divider"></div>
-                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-shield-lock"></i> Gestion Abonnements</a>
+                    <a href="{{ route('admin.subscriptions.index') }}" class="mobile-nav-link"><i class="bi bi-shield-lock"></i> {{ __('Gestion Abonnements') }}</a>
                 @endif
 
                 <div class="mobile-nav-divider"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="mobile-nav-link" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: var(--accent-red);">
-                        <i class="bi bi-box-arrow-right"></i> Déconnexion
+                        <i class="bi bi-box-arrow-right"></i> {{ __('Déconnexion') }}
                     </button>
                 </form>
             </div>
@@ -3093,8 +3093,8 @@
                         <div class="footer-logo-text">CuniApp <span>Élevage</span></div>
                     </div>
                     <p class="footer-tagline">
-                        La solution complète pour la gestion intelligente de votre élevage de lapins.
-                        Suivez vos reproductions, naissances et performances en toute simplicité.
+                        {{ __('La solution complète pour la gestion intelligente de votre élevage de lapins.') }}
+                        {{ __('Suivez vos reproductions, naissances et performances en toute simplicité.') }}
                     </p>
 
                 </div>
@@ -3104,7 +3104,7 @@
                     <h4 onclick="toggleFooterSection(this)">
                         <span style="display:flex;align-items:center;gap:8px;">
                             <i class="bi bi-compass"></i>
-                            Navigation
+                            {{ __('Navigation') }}
                         </span>
                         <i class="bi bi-chevron-down footer-section-toggle"></i>
                     </h4>
@@ -3114,19 +3114,19 @@
                             <li>
                                 <a href="{{ route('dashboard') }}">
                                     <i class="bi bi-chevron-right"></i>
-                                    Tableau de bord
+                                    {{ __('Tableau de bord') }}
                                 </a>
                             </li>
                             <li>
                                 <a href="{{ route('activites.index') }}">
                                     <i class="bi bi-chevron-right"></i>
-                                    Activités
+                                    {{ __('Activités') }}
                                 </a>
                             </li>
                             @endif
                             <li>
                                 <a href="{{ route('notifications.index') }}">
-                                    <i class="bi bi-chevron-right"></i> Notifications
+                                    <i class="bi bi-chevron-right"></i> {{ __('Notifications') }}
                                     @php
                                         $unread = \App\Models\Notification::where('user_id', auth()->id() ?? 0)
                                             ->where('is_read', false)
@@ -3140,20 +3140,20 @@
                             <li>
                                 <a href="{{ route('profile.edit') }}">
                                     <i class="bi bi-chevron-right"></i>
-                                    Mon Profil
+                                    {{ __('Mon Profil') }}
                                 </a>
                             </li>
                             <li>
                                 <a href="{{ route('settings.index') }}">
                                     <i class="bi bi-chevron-right"></i>
-                                    Paramètres
+                                    {{ __('Paramètres') }}
                                 </a>
                             </li>
                             @if (auth()->check() && auth()->user()->isFirmAdmin())
                                 <li>
                                     <a href="{{ route('invoices.index') }}">
                                         <i class="bi bi-chevron-right"></i>
-                                        Mes Factures
+                                        {{ __('Mes Factures') }}
                                     </a>
                                 </li>
                             @endif
@@ -3161,7 +3161,7 @@
                                 <li>
                                     <a href="{{ route('firm.index') }}">
                                         <i class="bi bi-chevron-right"></i>
-                                        Entreprise
+                                        {{ __('Mon Entreprise') }}
                                     </a>
                                 </li>
                             @endif
@@ -3169,7 +3169,7 @@
                                 <li>
                                     <a href="{{ route('super.admin.dashboard') }}" style="color: var(--accent-orange);">
                                         <i class="bi bi-chevron-right"></i>
-                                        Super Admin
+                                        {{ __('Super Admin') }}
                                     </a>
                                 </li>
                             @endif
@@ -3178,7 +3178,7 @@
                                 <li>
                                     <a href="{{ route('subscription.plans') }}">
                                         <i class="bi bi-chevron-right"></i>
-                                        Abonnement
+                                        {{ __('Abonnement') }}
                                         @if (!auth()->user()->hasActiveSubscription())
                                             <span class="badge-notification">!</span>
                                         @endif
@@ -3190,13 +3190,13 @@
                                 <li>
                                     <a href="{{ route('admin.subscriptions.index') }}">
                                         <i class="bi bi-chevron-right"></i>
-                                        Gestion Abonnements
+                                        {{ __('Gestion Abonnements') }}
                                     </a>
                                 </li>
                                 <li>
                                     <a href="{{ route('admin.subscriptions.transactions') }}">
                                         <i class="bi bi-chevron-right"></i>
-                                        Transactions
+                                        {{ __('Transactions') }}
                                     </a>
                                 </li>
                             @endif
@@ -3210,19 +3210,19 @@
                     <h4 onclick="toggleFooterSection(this)">
                         <span style="display:flex;align-items:center;gap:8px;">
                             <i class="bi bi-briefcase"></i>
-                            Gestion d’Élevage
+                            {{ __("Gestion d'Élevage") }}
                         </span>
                         <i class="bi bi-chevron-down footer-section-toggle"></i>
                     </h4>
                     <div class="footer-section-body">
                         <ul class="footer-links">
-                            <li><a href="{{ route('males.index') }}"><i class="bi bi-chevron-right"></i> Mâles</a></li>
-                            <li><a href="{{ route('femelles.index') }}"><i class="bi bi-chevron-right"></i> Femelles</a></li>
-                            <li><a href="{{ route('lapins.index') }}"><i class="bi bi-chevron-right"></i> Tous les Lapins</a></li>
-                            <li><a href="{{ route('saillies.index') }}"><i class="bi bi-chevron-right"></i> Saillies</a></li>
-                            <li><a href="{{ route('mises-bas.index') }}"><i class="bi bi-chevron-right"></i> Mises Bas</a></li>
-                            <li><a href="{{ route('naissances.index') }}"><i class="bi bi-chevron-right"></i> Naissances</a></li>
-                            <li><a href="{{ route('sales.index') }}"><i class="bi bi-chevron-right"></i> Ventes</a></li>
+                            <li><a href="{{ route('males.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Mâles') }}</a></li>
+                            <li><a href="{{ route('femelles.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Femelles') }}</a></li>
+                            <li><a href="{{ route('lapins.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Tous les Lapins') }}</a></li>
+                            <li><a href="{{ route('saillies.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Saillies') }}</a></li>
+                            <li><a href="{{ route('mises-bas.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Mises Bas') }}</a></li>
+                            <li><a href="{{ route('naissances.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Naissances') }}</a></li>
+                            <li><a href="{{ route('sales.index') }}"><i class="bi bi-chevron-right"></i> {{ __('Ventes') }}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -3233,7 +3233,7 @@
                     <h4 onclick="toggleFooterSection(this)">
                         <span style="display:flex;align-items:center;gap:8px;">
                             <i class="bi bi-envelope"></i>
-                            Contact &amp; Infos
+                            {{ __('Contact & Infos') }}
                         </span>
                         <i class="bi bi-chevron-down footer-section-toggle"></i>
                     </h4>
@@ -3280,7 +3280,7 @@
                 <p>
                     &copy; {{ date('Y') }}
                     <a href="{{ route('dashboard') }}">CuniApp Élevage</a>.
-                    Tous droits réservés.
+                    {{ __('Tous droits réservés.') }}
                 </p>
                 <p class="footer-version">
                     Version {{ config('app.version', '1.0.0') }}
@@ -3292,31 +3292,31 @@
             <div class="footer-legal">
                 <a href="{{ route('privacy') }}">
                     <i class="bi bi-shield-check"></i>
-                    Confidentialité
+                    {{ __('Confidentialité') }}
                 </a>
                 <a href="{{ route('terms') }}">
                     <i class="bi bi-file-text"></i>
-                    Conditions
+                    {{ __('Conditions') }}
                 </a>
                 <a href="{{ route('contact') }}">
                     <i class="bi bi-headset"></i>
-                    Support
+                    {{ __('Support') }}
                 </a>
                 <a href="{{ route('health.check') }}" target="_blank">
                     <i class="bi bi-activity"></i>
-                    État du système
+                    {{ __('État du système') }}
                 </a>
             </div>
         </div>
 
         <!-- Back to Top Button -->
-        <button id="backToTop" class="back-to-top" title="Retour en haut">
+        <button id="backToTop" class="back-to-top" title="{{ __('Retour en haut') }}">
             <i class="bi bi-arrow-up-short"></i>
         </button>
         </div>
     </footer>
 
-    <button id="backToTop" class="back-to-top" title="Retour en haut">
+    <button id="backToTop" class="back-to-top" title="{{ __('Retour en haut') }}">
         <i class="bi bi-arrow-up-short"></i>
     </button>
 
@@ -3389,8 +3389,8 @@
                 applyTheme = getSystemTheme();
             }
             applyThemeVisuals(applyTheme, theme);
-            const label = theme === 'system' ? 'Système' : (theme === 'light' ? 'Clair' : 'Sombre');
-            showToast('Thème mis à jour: ' + label);
+            const label = theme === 'system' ? '{{ __('Système') }}' : (theme === 'light' ? '{{ __('Clair') }}' : '{{ __('Sombre') }}');
+            showToast('{{ __('Thème mis à jour') }}: ' + label);
             setTimeout(() => {
                 window.location.reload();
             }, 500);
