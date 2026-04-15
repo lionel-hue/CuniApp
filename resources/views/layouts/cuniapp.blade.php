@@ -2789,6 +2789,25 @@
         @media (max-width: 1100px) {
             /* Most items will move to dropdown on smaller screens */
         }
+
+
+
+
+        /* ✅ Badges de statut vaccination */
+        .status-vaccinated {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+        }
+
+        .status-pending-reminder {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-orange);
+        }
+
+        .status-not-vaccinated {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--gray-500);
+        }
     </style>
 </head>
 
@@ -3081,7 +3100,7 @@
                             class="bi bi-cash-stack"></i> {{ __('Transactions') }} </a>
                 @endif
 
-                @if(auth()->check() && !auth()->user()->isSuperAdmin())
+                @if (auth()->check() && !auth()->user()->isSuperAdmin())
                     <a href="{{ route('dashboard') }}" class="mobile-nav-link"><i class="bi bi-speedometer2"></i>
                         {{ __('Tableau de bord') }}</a>
 
