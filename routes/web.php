@@ -235,6 +235,8 @@ Route::middleware('auth')->group(function () {
                 Route::put('/{id}', [LapinController::class, 'update'])->name('update');
                 Route::delete('/{id}', [LapinController::class, 'destroy'])->name('destroy');
                 Route::get('/check-code', [LapinController::class, 'checkCode'])->name('check-code');
+
+                Route::get('/{lapin}', [LapinController::class, 'show'])->name('show');
             });
 
             // NAISSANCES
