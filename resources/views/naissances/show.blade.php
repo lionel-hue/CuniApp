@@ -1,7 +1,6 @@
 @extends('layouts.cuniapp')
 
-@section('title', 'Détails Naissance #{{ $naissance->id }}')
-
+@section('title', 'Détails Naissance #' . $naissance->id)
 @section('content')
 <div class="page-header">
     <div>

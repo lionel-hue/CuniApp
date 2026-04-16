@@ -248,8 +248,6 @@
                             <th class="ps-4 text-uppercase text-muted fw-semibold small">Date</th>
                             <th class="text-uppercase text-muted fw-semibold small">Femelle</th>
                             <th class="text-uppercase text-muted fw-semibold small">Vivants</th>
-                            <th class="text-uppercase text-muted fw-semibold small">Mort-nés</th>
-                            <th class="text-uppercase text-muted fw-semibold small">Total</th>
                             <th class="text-uppercase text-muted fw-semibold small">Santé</th>
                             <th class="text-uppercase text-muted fw-semibold small">Vérification</th>
                             <th class="text-uppercase text-muted fw-semibold small">Sevrage</th>
@@ -280,8 +278,7 @@
                                         {{ $naissance->nb_vivant }}
                                     </span>
                                 </td>
-                                <td class="text-muted">{{ $naissance->nb_mort_ne }}</td>
-                                <td class="fw-semibold">{{ $naissance->nb_total }}</td>
+                               
                                 <td>
                                     @php
                                         $healthColors = [

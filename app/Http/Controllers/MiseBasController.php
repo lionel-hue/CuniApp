@@ -61,21 +61,82 @@ class MiseBasController extends Controller
         return view('mises_bas.create', compact('femelles', 'saillies'));
     }
 
+    // public function store(Request $request)
+    // {
+    //     // ✅ CRITICAL: Check if user has a firm (todo.md Step 4)
+    //     if (!auth()->user()->firm_id) {
+    //         return back()
+    //             ->withErrors(['error' => 'Votre compte n\'est associé à aucune entreprise. Contactez le support.'])
+    //             ->withInput();
+    //     }
+
+    //     $validated = $request->validate([
+    //         'femelle_id' => 'required|exists:femelles,id',
+    //         'saillie_id' => 'nullable|exists:saillies,id',
+    //         'date_mise_bas' => 'required|date|before_or_equal:today',
+    //         'date_sevrage' => 'nullable|date|after:date_mise_bas',
+    //         'poids_moyen_sevrage' => 'nullable|numeric|min:0|max:5',
+    //     ]);
+
+    //     // Verify saillie belongs to same femelle
+    //     if (!empty($validated['saillie_id'])) {
+    //         $saillie = Saillie::find($validated['saillie_id']);
+    //         if ($saillie->femelle_id !== $validated['femelle_id']) {
+    //             return back()->withErrors(['saillie_id' => 'La saillie sélectionnée ne correspond pas à cette femelle.']);
+    //         }
+    //     }
+
+    //     $miseBas = MiseBas::create($validated);
+
+    //     // ✅ TODO.MD STEP 4: Pass null for firm_id to let Model handle auto-detection
+    //     FirmAuditLog::log(
+    //         null,  // ✅ Safe detection
+    //         auth()->id(),
+    //         'misebas_created',
+    //         'nb_vivant',
+    //         null,
+    //         $miseBas->nb_vivant
+    //     );
+
+    //     // Update femelle status
+    //     $femelle = Femelle::find($validated['femelle_id']);
+    //     if ($femelle && $femelle->etat === 'Gestante') {
+    //         $femelle->update(['etat' => 'Allaitante']);
+    //     }
+
+    //     $this->notifyUser([
+    //         'type' => 'success',
+    //         'title' => '🐰 Mise Bas Enregistrée',
+    //         'message' => "Mise bas de {$femelle->nom} enregistrée. Ajoutez les lapereaux maintenant.",
+    //         'action_url' => route('naissances.create', ['mise_bas_id' => $miseBas->id]),
+    //     ]);
+
+    //     return redirect()->route('naissances.create', ['mise_bas_id' => $miseBas->id])
+    //         ->with('success', 'Mise bas enregistrée ! Maintenant, enregistrez les lapereaux.');
+    // }
+
+
+
     public function store(Request $request)
     {
-        // ✅ CRITICAL: Check if user has a firm (todo.md Step 4)
+        // ✅ CRITICAL: Check if user has a firm
         if (!auth()->user()->firm_id) {
             return back()
                 ->withErrors(['error' => 'Votre compte n\'est associé à aucune entreprise. Contactez le support.'])
                 ->withInput();
         }
 
+        // ✅ VALIDATION CORRIGÉE : Ajout de nb_vivant et nb_mort_ne
         $validated = $request->validate([
             'femelle_id' => 'required|exists:femelles,id',
             'saillie_id' => 'nullable|exists:saillies,id',
             'date_mise_bas' => 'required|date|before_or_equal:today',
             'date_sevrage' => 'nullable|date|after:date_mise_bas',
             'poids_moyen_sevrage' => 'nullable|numeric|min:0|max:5',
+
+            // ✅ NOUVEAU : Ces champs étaient manquants !
+            'nb_vivant' => 'required|integer|min:0',
+            'nb_mort_ne' => 'nullable|integer|min:0',
         ]);
 
         // Verify saillie belongs to same femelle
@@ -86,11 +147,12 @@ class MiseBasController extends Controller
             }
         }
 
+        // ✅ Création avec TOUS les champs validés
         $miseBas = MiseBas::create($validated);
 
-        // ✅ TODO.MD STEP 4: Pass null for firm_id to let Model handle auto-detection
+        // ✅ Audit log (mis à jour avec les bons champs)
         FirmAuditLog::log(
-            null,  // ✅ Safe detection
+            null,
             auth()->id(),
             'misebas_created',
             'nb_vivant',
@@ -114,6 +176,10 @@ class MiseBasController extends Controller
         return redirect()->route('naissances.create', ['mise_bas_id' => $miseBas->id])
             ->with('success', 'Mise bas enregistrée ! Maintenant, enregistrez les lapereaux.');
     }
+
+
+
+
 
     public function show(MiseBas $miseBas)
     {
@@ -147,33 +213,74 @@ class MiseBasController extends Controller
         return view('mises_bas.edit', compact('miseBas', 'femelles', 'saillies'));
     }
 
+    // public function update(Request $request, MiseBas $miseBas)
+    // {
+    //     // ✅ SECURITY FIX: Explicit Ownership Check (todo.md Step 4)
+    //     if ($miseBas->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+    //         abort(403, 'Unauthorized access to this record.');
+    //     }
+
+    //     // ✅ CRITICAL: Check if user has a firm (todo.md Step 4)
+    //     if (!auth()->user()->firm_id) {
+    //         return back()
+    //             ->withErrors(['error' => 'Votre compte n\'est associé à aucune entreprise. Contactez le support.'])
+    //             ->withInput();
+    //     }
+
+    //     $validated = $request->validate([
+    //         'femelle_id' => 'required|exists:femelles,id',
+    //         'saillie_id' => 'nullable|exists:saillies,id',
+    //         'date_mise_bas' => 'required|date',
+    //         'date_sevrage' => 'nullable|date|after:date_mise_bas',
+    //         'poids_moyen_sevrage' => 'nullable|numeric|min:0|max:5',
+    //     ]);
+
+    //     $miseBas->update($validated);
+
+    //     // ✅ TODO.MD STEP 4: Pass null for firm_id to let Model handle auto-detection
+    //     FirmAuditLog::log(
+    //         null,  // ✅ Safe detection
+    //         auth()->id(),
+    //         'misebas_updated',
+    //         'date_mise_bas',
+    //         $miseBas->getOriginal('date_mise_bas'),
+    //         $miseBas->date_mise_bas
+    //     );
+
+    //     return redirect()->route('mises-bas.show', $miseBas)
+    //         ->with('success', 'Mise bas mise à jour !');
+    // }
+
+
     public function update(Request $request, MiseBas $miseBas)
     {
-        // ✅ SECURITY FIX: Explicit Ownership Check (todo.md Step 4)
+        // ✅ Sécurité (inchangé)
         if ($miseBas->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403, 'Unauthorized access to this record.');
+            abort(403, 'Accès non autorisé.');
         }
-
-        // ✅ CRITICAL: Check if user has a firm (todo.md Step 4)
         if (!auth()->user()->firm_id) {
-            return back()
-                ->withErrors(['error' => 'Votre compte n\'est associé à aucune entreprise. Contactez le support.'])
-                ->withInput();
+            return back()->withErrors(['error' => 'Aucune entreprise liée.'])->withInput();
         }
 
+        // ✅ VALIDATION CORRIGÉE : Ajout de nb_vivant et nb_mort_ne
         $validated = $request->validate([
             'femelle_id' => 'required|exists:femelles,id',
             'saillie_id' => 'nullable|exists:saillies,id',
             'date_mise_bas' => 'required|date',
             'date_sevrage' => 'nullable|date|after:date_mise_bas',
             'poids_moyen_sevrage' => 'nullable|numeric|min:0|max:5',
+
+            // ✅ NOUVEAU : Ces champs étaient manquants !
+            'nb_vivant' => 'required|integer|min:0',
+            'nb_mort_ne' => 'nullable|integer|min:0',
         ]);
 
+        // ✅ Mise à jour avec TOUS les champs validés
         $miseBas->update($validated);
 
-        // ✅ TODO.MD STEP 4: Pass null for firm_id to let Model handle auto-detection
+        // ✅ Audit log (inchangé)
         FirmAuditLog::log(
-            null,  // ✅ Safe detection
+            null,
             auth()->id(),
             'misebas_updated',
             'date_mise_bas',
@@ -181,9 +288,11 @@ class MiseBasController extends Controller
             $miseBas->date_mise_bas
         );
 
-        return redirect()->route('mises_bas.show', $miseBas)
+        // ✅ Redirection avec le BON nom de route (tiret, pas underscore)
+        return redirect()->route('mises-bas.show', $miseBas)
             ->with('success', 'Mise bas mise à jour !');
     }
+
 
     public function destroy(MiseBas $miseBas)
     {
@@ -218,10 +327,10 @@ class MiseBasController extends Controller
             'type' => 'warning',
             'title' => '🗑️ Mise Bas Supprimée',
             'message' => "Mise bas de {$femelleName} ({$totalLapereaux} lapereaux) supprimée.",
-            'action_url' => route('mises_bas.index'),
+            'action_url' => route('mises-bas.index'),
         ]);
 
-        return redirect()->route('mises_bas.index')
+        return redirect()->route('mises-bas.index')
             ->with('success', 'Mise bas supprimée !');
     }
 }
