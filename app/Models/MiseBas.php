@@ -22,11 +22,15 @@ class MiseBas extends Model
         'date_mise_bas',
         'date_sevrage',
         'poids_moyen_sevrage',
+        'nb_vivant',
+        'nb_mort_ne',
     ];
 
     protected $casts = [
         'date_mise_bas' => 'date',
         'date_sevrage' => 'date',
+        'nb_vivant' => 'integer',
+        'nb_mort_ne' => 'integer',
         'poids_moyen_sevrage' => 'decimal:2',
     ];
 
@@ -50,27 +54,48 @@ class MiseBas extends Model
         return $this->hasManyThrough(Lapereau::class, Naissance::class);
     }
 
-    // ✅ CALCULATED: Total rabbits from this birth
-    public function getTotalLapereauxAttribute(): int
-    {
-        return $this->lapereaux()->count();
-    }
+    // // ✅ CALCULATED: Total rabbits from this birth
+    // public function getTotalLapereauxAttribute(): int
+    // {
+    //     return $this->lapereaux()->count();
+    // }
 
-    // ✅ CALCULATED: Living rabbits
-    public function getNbVivantAttribute(): int
+    // // ✅ CALCULATED: Living rabbits
+    // public function getNbVivantAttribute(): int
+    // {
+    //     return $this->lapereaux()->where('etat', 'vivant')->count();
+    // }
+
+    // // ✅ CALCULATED: Dead rabbits
+    // public function getNbMortNeAttribute(): int
+    // {
+    //     return $this->lapereaux()->where('etat', 'mort')->count();
+    // }
+
+    // // ✅ CALCULATED: Sold rabbits
+    // public function getNbVenduAttribute(): int
+    // {
+    //     return $this->lapereaux()->where('etat', 'vendu')->count();
+    // }
+
+
+    public function getLapereauxVivantsCountAttribute(): int
     {
         return $this->lapereaux()->where('etat', 'vivant')->count();
     }
 
-    // ✅ CALCULATED: Dead rabbits
-    public function getNbMortNeAttribute(): int
+    public function getLapereauxMortsCountAttribute(): int
     {
         return $this->lapereaux()->where('etat', 'mort')->count();
     }
 
-    // ✅ CALCULATED: Sold rabbits
-    public function getNbVenduAttribute(): int
+    public function getLapereauxVendusCountAttribute(): int
     {
         return $this->lapereaux()->where('etat', 'vendu')->count();
+    }
+
+    public function getTotalLapereauxCountAttribute(): int
+    {
+        return $this->lapereaux()->count();
     }
 }
